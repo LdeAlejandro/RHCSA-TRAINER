@@ -1,4 +1,4 @@
-name: Build RPM & Publish DNF repo
+name: Pages Build & Deploy
 
 on:
   push:

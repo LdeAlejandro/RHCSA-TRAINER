@@ -2,6 +2,13 @@
 # RHCSA mini-trainer — by Alejandro Amoroso
 set -euo pipefail
 
+# Colors
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+CYAN="\e[36m"
+RESET="\e[0m"
+
 # ===== Exercício Q1 =====
 Q1_DESC="Usar o vim para criar e salvar um arquivo hello.txt contendo 'hello world'"
 
@@ -19,14 +26,26 @@ check_Q1() {
   return 1
 }
 
+
 # ===== Infra do Trainer =====
 TASKS=(Q1)
 declare -A STATUS
 
 evaluate_all() {
   for id in "${TASKS[@]}"; do
-    if "check_${id}"; then STATUS[$id]="PASSED"; else STATUS[$id]="PENDING"; fi
+    if "check_${id}"; then
+      STATUS[$id]="${GREEN}PASSED${RESET}"
+    else
+      STATUS[$id]="${RED}PENDING${RESET}"
+    fi
   done
+}
+
+reset_all() {
+  for id in "${TASKS[@]}"; do
+    STATUS[$id]="PENDING"
+  done
+  echo ">> Progress reset: all tasks are now PENDING."
 }
 
 board() {
@@ -44,6 +63,7 @@ Usage: rhcsa-trainer [command]
 Commands:
   board   mostra status dos exercícios
   eval    reavalia os checks
+  reset   marca todos como PENDING
   help    esta ajuda
 EOF
 }
