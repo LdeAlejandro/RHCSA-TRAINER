@@ -1,0 +1,51 @@
+name: Build & Release RPM
+
+on:
+  push:
+    tags:
+      - 'v*'      # ex: v0.1.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: fedora:40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vars from tag
+        id: vars
+        run: |
+          TAG="${GITHUB_REF_NAME}"              # ex: v0.1.0
+          VERSION="${TAG#v}"                    # 0.1.0
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "release=1%{?dist}" >> $GITHUB_OUTPUT
+
+      - name: Install build deps
+        run: dnf -y install rpm-build make which tar gzip
+
+      - name: Build RPM
+        run: |
+          rpmbuild -ba SPECS/rhcsa-trainer.spec \
+            --define "_sourcedir $GITHUB_WORKSPACE/SOURCES" \
+            --define "version ${{ steps.vars.outputs.version }}" \
+            --define "release ${{ steps.vars.outputs.release }}"
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          cp -v ~/rpmbuild/RPMS/noarch/*.rpm artifacts/ || true
+          cp -v ~/rpmbuild/SRPMS/*.src.rpm artifacts/ || true
+
+      - name: Upload artifacts (CI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-build
+          path: artifacts/*
+
+      - name: Create GitHub Release & upload RPMs
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
