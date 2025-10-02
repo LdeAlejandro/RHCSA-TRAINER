@@ -2,11 +2,11 @@ name: Build RPM & Publish DNF repo
 
 on:
   push:
-    tags: ['v*']          # runs when you push v0.x.y
+    tags: ['v*']
   workflow_dispatch: {}
 
 permissions:
-  contents: write         # needed for gh-pages + release upload
+  contents: write
 
 jobs:
   build:
@@ -33,6 +33,7 @@ jobs:
         run: |
           rpmbuild -ba SPECS/rhcsa-trainer.spec \
             --define "_sourcedir $GITHUB_WORKSPACE/SOURCES" \
+            --define "_specdir   $GITHUB_WORKSPACE/SPECS" \
             --define "version ${{ steps.vars.outputs.version }}" \
             --define "release ${{ steps.vars.outputs.release }}" \
             --define "dist .el9"
@@ -44,12 +45,10 @@ jobs:
           cp -v ~/rpmbuild/SRPMS/*.src.rpm artifacts/ || true
           ls -l artifacts
 
-      # === Update the DNF repo on GitHub Pages ===
       - name: Make DNF repo (EL9)
         run: |
           mkdir -p repo/el9
           cp -v artifacts/*.rpm repo/el9/
-          # rebuild metadata from scratch to ensure latest is visible
           rm -rf repo/el9/repodata || true
           createrepo_c repo/el9
 
@@ -59,10 +58,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: repo
-          # set this if you ever see old files lingering:
-          # force_orphan: true
 
-      # === Upload RPMs to the GitHub Release for this tag ===
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
