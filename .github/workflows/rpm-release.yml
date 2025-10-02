@@ -11,7 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: registry.access.redhat.com/ubi9/ubi:9.4
+    container: rockylinux:9   # <— swap UBI9 -> Rocky 9
 
     steps:
       - name: Install tools
