@@ -2,8 +2,8 @@ name: Build RPM & Publish DNF repo
 
 on:
   push:
-    tags: ['v*']         # runs on tag pushes like v0.1.4
-  workflow_dispatch: {}  # manual trigger
+    tags: ['v*']         # runs when you push a tag like v0.1.8
+  workflow_dispatch: {}  # allow manual trigger
 
 permissions:
   contents: write
