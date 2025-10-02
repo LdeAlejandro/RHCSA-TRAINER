@@ -43,6 +43,11 @@ reset_all() {
     STATUS[$id]="${YELLOW}PENDING${RESET}"
   done
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
+   # clean bash history
+  : > "$HOME/.bash_history" 2>/dev/null || true
+
+  #delete hello.txt
+  rm -f hello.txt
 }
 
 board() {
