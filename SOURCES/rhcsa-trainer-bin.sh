@@ -2,28 +2,25 @@
 # RHCSA mini-trainer — by Alejandro Amoroso
 set -euo pipefail
 
-# ===== Cores com fallback =====
+# Cores com fallback
 if command -v tput >/dev/null && [ -t 1 ]; then
   RED=$(tput setaf 1); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3); CYAN=$(tput setaf 6); RESET=$(tput sgr0)
 else
   RED=""; GREEN=""; YELLOW=""; CYAN=""; RESET=""
 fi
 
-# Use o HISTFILE real (não dependa de ~/.bash_history)
 HISTFILE="${HISTFILE:-$HOME/.bash_history}"
 
 # ===== Exercício Q1 =====
 Q1_DESC="Usar o vim para criar e salvar um arquivo hello.txt contendo 'hello world'"
 
 check_Q1() {
-  # sincronia extra (se o shell chamador não fez flush por algum motivo)
   builtin history -a 2>/dev/null || true
   builtin history -n 2>/dev/null || true
 
-  # Arquivo e conteúdo
   [[ -f hello.txt ]] && grep -qx "hello world" hello.txt || return 1
 
-  # Versão estrita (apenas 'vim hello.txt' ou 'vi hello.txt' e './hello.txt')
+  # Estrito: 'vim hello.txt' ou 'vi hello.txt' (aceita ./hello.txt)
   if grep -Eq '(^|[[:space:]])(vi|vim)[[:space:]]+(\./)?hello\.txt([[:space:]]|$)' "$HISTFILE"; then
     return 0
   else
@@ -46,7 +43,6 @@ evaluate_all() {
 reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt || true
-  # limpa histórico em disco e (se possível) em memória
   : > "$HISTFILE" 2>/dev/null || true
   builtin history -c 2>/dev/null || true
   builtin history -w 2>/dev/null || true
