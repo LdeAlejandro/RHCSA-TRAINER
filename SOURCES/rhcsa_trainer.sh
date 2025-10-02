@@ -14,7 +14,7 @@ Q1_DESC="Usar o vim para criar e salvar um arquivo hello.txt contendo 'hello wor
 
 check_Q1() {
   if [[ -f hello.txt ]] && grep -qx "hello world" hello.txt; then
-    if grep -Eq "vim(\s+\./)?hello\.txt" ~/.bash_history 2>/dev/null; then
+    if grep -Eq '^[[:space:]]*(vi|vim)[[:space:]].*([.]/)?hello\.txt([[:space:]]|$)' ~/.bash_history; then
       return 0
     else
       echo "[FALHOU] Arquivo correto, mas não encontrei uso de 'vim hello.txt' no histórico."
