@@ -2,8 +2,8 @@ name: Build RPM & Publish DNF repo
 
 on:
   push:
-    tags: ['v*']   # dispara quando você cria tag v0.1.0 etc
-  workflow_dispatch: {}  # botão manual "Run workflow"
+    tags: ['v*']         # runs on tag pushes like v0.1.4
+  workflow_dispatch: {}  # manual trigger
 
 permissions:
   contents: write
@@ -19,6 +19,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Vars from tag
         id: vars
