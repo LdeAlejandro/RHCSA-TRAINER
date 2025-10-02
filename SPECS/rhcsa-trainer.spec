@@ -1,21 +1,21 @@
 Name:           rhcsa-trainer
 Version:        %{version}
-Release:        %{release}
+Release:        %{release}%{?dist}
 Summary:        RHCSA mini-trainer script
 License:        MIT
 URL:            https://github.com/LdeAlejandro/RHCSA-TRAINER
-Source0:        rhcsa_trainer.sh
+Source0:        rhcsa-trainer
 BuildArch:      noarch
 Requires:       bash, coreutils
 
 %description
-Pequeno script de treino para RHCSA.
+Small trainer for RHCSA tasks.
 
 %prep
 %build
 
 %install
-install -D -m 0755 %{SOURCE0} %{buildroot}/usr/local/bin/rhcsa-trainer
+install -D -m 0755 %{SOURCE0} %{buildroot}%{_bindir}/rhcsa-trainer
 
 %files
-/usr/local/bin/rhcsa-trainer
+%{_bindir}/rhcsa-trainer
