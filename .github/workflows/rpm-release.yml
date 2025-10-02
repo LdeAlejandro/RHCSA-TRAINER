@@ -1,13 +1,10 @@
 name: Build & Release RPM
-on:
-  push:
-    tags: ['v*']
-  workflow_dispatch: {}   # allows “Run workflow” button
 
 on:
   push:
     tags:
       - 'v*'   # e.g., v0.1.0
+    workflow_dispatch: {}   # allows “Run workflow” button
 
 permissions:
   contents: write   # needed to create a Release
