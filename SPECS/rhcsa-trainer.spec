@@ -3,8 +3,8 @@ Version:        %{version}
 Release:        %{release}
 Summary:        RHCSA mini-trainer script
 License:        MIT
-URL:            https://github.com/LdeAlejandro/rhcsa-trainer
-Source0:        rhcsa-trainer
+URL:            https://github.com/LdeAlejandro/RHCSA-TRAINER
+Source0:        rhcsa_trainer.sh
 BuildArch:      noarch
 Requires:       bash, coreutils
 
