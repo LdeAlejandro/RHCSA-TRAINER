@@ -3,9 +3,9 @@ set -euo pipefail
 
 APP="rhcsa-trainer"
 RAW_BASE="${RAW_BASE:-https://raw.githubusercontent.com/LdeAlejandro/rhcsa-trainer/main}"
-TARGET="${TARGET:-}"  # permite forçar destino via env
+TARGET="${TARGET:-}"
 
-# Decide destino: /usr/local/bin (se tiver sudo) senão ~/.local/bin
+# Decide destino: /usr/local/bin (com sudo) senão ~/.local/bin
 if [[ -z "${TARGET}" ]]; then
   if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
     TARGET="/usr/local/bin/$APP"
@@ -26,12 +26,12 @@ TMP="$(mktemp)"
 curl -fsSL "$RAW_BASE/$APP" -o "$TMP"
 chmod +x "$TMP"
 
-# (Opcional) verificação de hash: export SHA256 esperado e ele será checado
+# (Opcional) checagem de integridade
 if [[ -n "${SHA256-}" ]]; then
   echo "$SHA256  $TMP" | sha256sum -c -
 fi
 
-# move com ou sem sudo
+# Instala
 if [[ "$TARGET" == /usr/local/bin/* ]]; then
   sudo install -m 0755 "$TMP" "$TARGET"
 else
