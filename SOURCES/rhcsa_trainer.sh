@@ -13,8 +13,15 @@ RESET=$(tput sgr0)
 Q1_DESC="Usar o vim para criar e salvar um arquivo hello.txt contendo 'hello world'"
 
 check_Q1() {
+  # garante que o histórico atual foi salvo
+  if [ -n "${BASH_VERSION-}" ]; then
+    builtin history -a 2>/dev/null || true
+  fi
+
+  # Arquivo existe e conteúdo correto?
   if [[ -f hello.txt ]] && grep -qx "hello world" hello.txt; then
-    if grep -Eq '^[[:space:]]*(vi|vim)[[:space:]].*([.]/)?hello\.txt([[:space:]]|$)' ~/.bash_history; then
+    # Procurar por "vim hello.txt" ou "vim ./hello.txt" no histórico
+    if grep -Eq '(vim|vi)[[:space:]]+(\./)?hello\.txt' ~/.bash_history; then
       return 0
     else
       echo "[FALHOU] Arquivo correto, mas não encontrei uso de 'vim hello.txt' no histórico."
