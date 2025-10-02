@@ -3,27 +3,30 @@ name: Build & Release RPM
 on:
   push:
     tags:
-      - 'v*'      # ex: v0.1.0
+      - 'v*'   # e.g., v0.1.0
+
+permissions:
+  contents: write   # needed to create a Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: fedora:40
+    container: registry.access.redhat.com/ubi9/ubi:9.4
 
     steps:
+      - name: Install base tooling (for checkout & build)
+        run: dnf -y install git rpm-build which tar gzip
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Vars from tag
         id: vars
         run: |
-          TAG="${GITHUB_REF_NAME}"              # ex: v0.1.0
-          VERSION="${TAG#v}"                    # 0.1.0
+          TAG="${GITHUB_REF_NAME}"           # e.g., v0.1.0
+          VERSION="${TAG#v}"                 # 0.1.0
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "release=1%{?dist}" >> $GITHUB_OUTPUT
-
-      - name: Install build deps
-        run: dnf -y install rpm-build make which tar gzip
+          echo "release=1" >> $GITHUB_OUTPUT # spec should append %{?dist}
 
       - name: Build RPM
         run: |
