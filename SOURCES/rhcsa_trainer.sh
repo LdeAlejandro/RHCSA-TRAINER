@@ -11,24 +11,40 @@ RESET=$(tput sgr0)
 
 # ===== Start trainer =====
 start_monitor() {
-  RHCSA_SHM_DIR="$RHCSA_SHM_DIR" expect <<'EOF'
+  RHCSA_SHM_DIR="$RHCSA_SHM_DIR" EXPECT_DEBUG="${EXPECT_DEBUG:-0}" expect <<'EOF'
+    # mantenha o script vivo até o usuário sair
     set timeout -1
+
+    # debug opcional: export EXPECT_DEBUG=1 rhcsa-trainer start
+    if {[info exists env(EXPECT_DEBUG)] && $env(EXPECT_DEBUG) == 1} {
+      exp_internal 1
+    }
+
+    # diretório de flags
     set shm_dir $env(RHCSA_SHM_DIR)
     file mkdir $shm_dir
 
-    # cria o flag no tmpfs
+    # helper: cria um flag no tmpfs
     proc mark {name} {
       global shm_dir
       catch {exec sh -c "touch $shm_dir/$name"}
     }
 
-    # abre bash interativo “limpo”
+    # abre bash interativo "limpo"
     spawn bash --noprofile --norc -i
 
-    # monitora comandos: vi|vim hello.txt ou ./hello.txt
+    # muda o prompt pra ficar claro que é o shell monitorado
+    send "export PS1='[RHCSA] \\u@\\h:\\w\\$ '\r"
+
+    # mantém o shell aberto E monitora o que você digita
+    # - se digitar vi|vim hello.txt (ou ./hello.txt), marca a flag
     interact \
       -re {^(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} {
         mark "Q1.vim_used"
+      } \
+      -re {^exit([ \t]|$)} {
+        # deixa o 'exit' funcionar normalmente
+        send "exit\r"
       }
 EOF
 }
