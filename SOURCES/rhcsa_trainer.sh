@@ -11,25 +11,39 @@ RESET=$(tput sgr0)
 
 # ===== Start trainer =====
 start_monitor() {
-  RHCSA_SHM_DIR="$RHCSA_SHM_DIR" expect <<'EOF'
-    set timeout -1
-    # flags directory
-    set d $env(RHCSA_SHM_DIR)
-    file mkdir $d
+  # workspace for flags & temp files (tmpfs)
+  RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
+  mkdir -p "$RHCSA_SHM_DIR"
 
-    # helper to create the flag
-    proc mark {n} { global d; catch {exec sh -c "touch $d/$n"} }
+  FIFO="$RHCSA_SHM_DIR/cmd.fifo"
+  RCFILE="$RHCSA_SHM_DIR/mon.rc"
 
-    # start clean interactive bash (absolute path)
-    spawn /usr/bin/bash --noprofile --norc -i
+  # fresh FIFO
+  rm -f "$FIFO"
+  mkfifo "$FIFO"
 
-    # minimal instrumentation: print every command the user executes
-    send "trap 'echo __CMD__:\$BASH_COMMAND' DEBUG\r"
+  # background watcher: mark when the user runs vi|vim hello.txt
+  (
+    while IFS= read -r line; do
+      if [[ $line =~ ^(vi|vim)[[:space:]]+(\./)?hello\.txt([[:space:]]|$) ]]; then
+        : > "$RHCSA_SHM_DIR/Q1.vim_used"
+      fi
+    done <"$FIFO"
+  ) &
+  WATCH_PID=$!
 
-    # stay attached and mark when vim/vi hello.txt is executed
-    interact -nobuffer \
-      -re {__CMD__:(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} { mark Q1.vim_used }
-EOF
+  # clean up when this monitored session ends
+  cleanup() { kill "$WATCH_PID" 2>/dev/null || true; rm -f "$FIFO" "$RCFILE"; }
+  trap cleanup EXIT
+
+  # minimal bash rc that streams each executed command to the FIFO
+  cat >"$RCFILE" <<EOFRC
+# stream every executed command to the FIFO (no history involved)
+trap 'printf "%s\n" "\$BASH_COMMAND" > "$FIFO"' DEBUG
+EOFRC
+
+  # launch a clean interactive bash that sources only our rcfile
+  exec /usr/bin/bash --noprofile --norc --rcfile "$RCFILE" -i
 }
 
 # ===== Check expect and install if not found =====
