@@ -15,26 +15,30 @@ mkdir -p "$RHCSA_SHM_DIR"
 
 # ===== Start monitored shell (robust) =====
 start_monitor() {
-  local LOG="$RHCSA_SHM_DIR/cmd.log"
-  local TMPHOME="$RHCSA_SHM_DIR/home.$$"  # per-session HOME
-  mkdir -p "$TMPHOME"
-  touch "$LOG"
+  RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
+  mkdir -p "$RHCSA_SHM_DIR"
 
-  # Minimal ~/.bashrc for the child shell: log every executed command
-  cat >"$TMPHOME/.bashrc" <<EOFRC
-# auto-logged interactive shell for RHCSA trainer
+  local LOG="$RHCSA_SHM_DIR/cmd.log"
+  local TMPHOME="$RHCSA_SHM_DIR/home.$$"   # per-session HOME
+  local RCFILE="$RHCSA_SHM_DIR/mon.rc"     # explicit rcfile
+  : > "$LOG"
+  mkdir -p "$TMPHOME"
+
+  # rcfile loaded by the child bash
+  cat >"$RCFILE" <<EOFRC
+# RHCSA trainer rcfile (loaded)
+echo "[rhcsa] monitored shell active"
 LOG_FILE="$LOG"
 trap 'printf "%s\n" "\$BASH_COMMAND" >> "\$LOG_FILE"' DEBUG
-# (optional) make it obvious you're in the monitored shell:
+# Optional: clearly mark the prompt
 # PS1="[RHCSA] \\u@\\h:\\w\\$ "
 EOFRC
 
-  # Clean up temp HOME when this process exits
+  # cleanup temp HOME on exit
   trap 'rm -rf "$TMPHOME" 2>/dev/null || true' EXIT
 
-  # Launch an interactive bash that will source $TMPHOME/.bashrc
-  # Use env HOME=... so bash reads *our* ~/.bashrc reliably
-  exec env HOME="$TMPHOME" /usr/bin/bash --noprofile -i
+  # Launch interactive bash that MUST read our rcfile; also set HOME so no other rc interferes
+  exec env HOME="$TMPHOME" /usr/bin/bash --noprofile --norc --rcfile "$RCFILE" -i
 }
 
 # ===== Exercise Q1 =====
