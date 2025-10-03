@@ -21,7 +21,8 @@ start_monitor() {
     }
 
     spawn bash --noprofile --norc -i
-    send_user "\n[RHCSA TRAINER] Shell monitorado. Digite 'exit' para sair.\n"
+    send_user "\n\[RHCSA TRAINER] Shell monitorado. Digite 'exit' para sair.\n"
+
 
     interact {
       -o -re {^vim[ \t]+(\./)?hello\.txt(\s|$)} {
