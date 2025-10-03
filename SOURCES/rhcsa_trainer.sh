@@ -11,24 +11,24 @@ RESET=$(tput sgr0)
 
 # ===== Start trainer =====
 start_monitor() {
-  # runs Expect inline; no heredoc, so spawn executes inside Expect (not bash)
-  RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
-  mkdir -p "$RHCSA_SHM_DIR"
-
   expect -c '
     set timeout -1
-    # flags dir from env
-    set d $env(RHCSA_SHM_DIR)
+
+    # flags dir: use env(RHCSA_SHM_DIR) if set, else default
+    if {[info exists env(RHCSA_SHM_DIR)]} {
+      set d $env(RHCSA_SHM_DIR)
+    } else {
+      set d "/dev/shm/rhcsa-trainer"
+    }
     file mkdir $d
 
-    # flag helper
+    # create-flag helper
     proc mark {n} { global d; catch {exec sh -c "touch $d/$n"} }
 
-    # start a clean interactive bash (absolute path)
+    # start clean interactive bash (absolute path)
     spawn /usr/bin/bash --noprofile --norc -i
 
-    # watch the USER input: when the line is "vi|vim hello.txt", set the flag
-    # -input $user_spawn_id hooks keystrokes before they go to bash
+    # watch USER input; when they press Enter on vi|vim hello.txt, set flag
     interact -nobuffer \
       -input $user_spawn_id -re {^(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} { mark Q1.vim_used; return }
   '
