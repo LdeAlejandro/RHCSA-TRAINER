@@ -11,39 +11,27 @@ RESET=$(tput sgr0)
 
 # ===== Start trainer =====
 start_monitor() {
-  # workspace for flags & temp files (tmpfs)
+  # runs Expect inline; no heredoc, so spawn executes inside Expect (not bash)
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
 
-  FIFO="$RHCSA_SHM_DIR/cmd.fifo"
-  RCFILE="$RHCSA_SHM_DIR/mon.rc"
+  expect -c '
+    set timeout -1
+    # flags dir from env
+    set d $env(RHCSA_SHM_DIR)
+    file mkdir $d
 
-  # fresh FIFO
-  rm -f "$FIFO"
-  mkfifo "$FIFO"
+    # flag helper
+    proc mark {n} { global d; catch {exec sh -c "touch $d/$n"} }
 
-  # background watcher: mark when the user runs vi|vim hello.txt
-  (
-    while IFS= read -r line; do
-      if [[ $line =~ ^(vi|vim)[[:space:]]+(\./)?hello\.txt([[:space:]]|$) ]]; then
-        : > "$RHCSA_SHM_DIR/Q1.vim_used"
-      fi
-    done <"$FIFO"
-  ) &
-  WATCH_PID=$!
+    # start a clean interactive bash (absolute path)
+    spawn /usr/bin/bash --noprofile --norc -i
 
-  # clean up when this monitored session ends
-  cleanup() { kill "$WATCH_PID" 2>/dev/null || true; rm -f "$FIFO" "$RCFILE"; }
-  trap cleanup EXIT
-
-  # minimal bash rc that streams each executed command to the FIFO
-  cat >"$RCFILE" <<EOFRC
-# stream every executed command to the FIFO (no history involved)
-trap 'printf "%s\n" "\$BASH_COMMAND" > "$FIFO"' DEBUG
-EOFRC
-
-  # launch a clean interactive bash that sources only our rcfile
-  exec /usr/bin/bash --noprofile --norc --rcfile "$RCFILE" -i
+    # watch the USER input: when the line is "vi|vim hello.txt", set the flag
+    # -input $user_spawn_id hooks keystrokes before they go to bash
+    interact -nobuffer \
+      -input $user_spawn_id -re {^(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} { mark Q1.vim_used; return }
+  '
 }
 
 # ===== Check expect and install if not found =====
