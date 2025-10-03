@@ -12,28 +12,24 @@ RESET=$(tput sgr0)
 # ===== Start trainer =====
 start_monitor() {
   RHCSA_SHM_DIR="$RHCSA_SHM_DIR" expect <<'EOF'
+    set timeout -1
     set shm_dir $env(RHCSA_SHM_DIR)
     file mkdir $shm_dir
 
+    # cria o flag no tmpfs
     proc mark {name} {
       global shm_dir
       catch {exec sh -c "touch $shm_dir/$name"}
     }
 
+    # abre bash interativo “limpo”
     spawn bash --noprofile --norc -i
-    send_user "\n RHCSA TRAINER Shell monitorado. Digite 'exit' para sair.\n"
 
-
-    interact {
-      -o -re {^vim[ \t]+(\./)?hello\.txt(\s|$)} {
+    # monitora comandos: vi|vim hello.txt ou ./hello.txt
+    interact \
+      -re {^(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} {
         mark "Q1.vim_used"
-        send_user "\n>> ✅ Detectado 'vim hello.txt'\n"
       }
-      -o -re {^vi[ \t]+(\./)?hello\.txt(\s|$)} {
-        mark "Q1.vim_used"
-        send_user "\n>> ✅ Detectado 'vi hello.txt'\n"
-      }
-    }
 EOF
 }
 
