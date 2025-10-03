@@ -36,6 +36,14 @@ start_monitor() {
 EOF
 }
 
+# ===== Check expect and install if not found =====
+if ! command -v expect >/dev/null 2>&1; then
+  echo ">> 'expect' não encontrado, instalando..."
+  sudo dnf install -y expect || sudo yum install -y expect || {
+    echo "ERRO: não consegui instalar 'expect'. Instale manualmente."; exit 1;
+  }
+fi
+
 # ===== Question flags directory =====
 RHCSA_SHM_DIR="/dev/shm/rhcsa-trainer"
 mkdir -p "$RHCSA_SHM_DIR"
