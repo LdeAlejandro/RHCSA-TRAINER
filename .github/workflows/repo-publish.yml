@@ -2,8 +2,8 @@ name: Build RPM & Publish DNF repo
 
 on:
   push:
-    tags: ['v*']
-  workflow_dispatch: {}
+    tags: ['v*']         # runs when you push a tag like v0.1.8
+  workflow_dispatch: {}  # allow manual trigger
 
 permissions:
   contents: write
@@ -33,23 +33,14 @@ jobs:
         run: |
           rpmbuild -ba SPECS/rhcsa-trainer.spec \
             --define "_sourcedir $GITHUB_WORKSPACE/SOURCES" \
-            --define "_specdir   $GITHUB_WORKSPACE/SPECS" \
             --define "version ${{ steps.vars.outputs.version }}" \
             --define "release ${{ steps.vars.outputs.release }}" \
             --define "dist .el9"
 
-      - name: Collect artifacts
-        run: |
-          mkdir -p artifacts
-          cp -v ~/rpmbuild/RPMS/noarch/*.rpm artifacts/
-          cp -v ~/rpmbuild/SRPMS/*.src.rpm artifacts/ || true
-          ls -l artifacts
-
       - name: Make DNF repo (EL9)
         run: |
           mkdir -p repo/el9
-          cp -v artifacts/*.rpm repo/el9/
-          rm -rf repo/el9/repodata || true
+          cp -v ~/rpmbuild/RPMS/noarch/*.rpm repo/el9/
           createrepo_c repo/el9
 
       - name: Publish to GitHub Pages
@@ -58,9 +49,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: repo
-
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/*
-          generate_release_notes: true
+          keep_files: true
