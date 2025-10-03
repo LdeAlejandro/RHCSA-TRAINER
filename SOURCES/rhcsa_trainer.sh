@@ -11,27 +11,38 @@ RESET=$(tput sgr0)
 
 # ===== Start trainer =====
 start_monitor() {
-  expect -c '
-    set timeout -1
+  RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
+  mkdir -p "$RHCSA_SHM_DIR"
 
-    # flags dir: use env(RHCSA_SHM_DIR) if set, else default
-    if {[info exists env(RHCSA_SHM_DIR)]} {
-      set d $env(RHCSA_SHM_DIR)
-    } else {
-      set d "/dev/shm/rhcsa-trainer"
-    }
-    file mkdir $d
+  LOG="$RHCSA_SHM_DIR/cmd.log"
+  FLAG="$RHCSA_SHM_DIR/Q1.vim_used"
+  RCFILE="$RHCSA_SHM_DIR/mon.rc"
 
-    # create-flag helper
-    proc mark {n} { global d; catch {exec sh -c "touch $d/$n"} }
+  # fresh log
+  : > "$LOG"
 
-    # start clean interactive bash (absolute path)
-    spawn /usr/bin/bash --noprofile --norc -i
+  # watcher: mark flag when the exact command is executed
+  (
+    tail -F "$LOG" 2>/dev/null | while IFS= read -r line; do
+      if [[ $line =~ ^(vi|vim)[[:space:]]+(\./)?hello\.txt([[:space:]]|$) ]]; then
+        : > "$FLAG"
+      fi
+    done
+  ) &
+  WATCH_PID=$!
 
-    # watch USER input; when they press Enter on vi|vim hello.txt, set flag
-    interact -nobuffer \
-      -input $user_spawn_id -re {^(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} { mark Q1.vim_used; return }
-  '
+  # clean up when the monitored shell exits
+  cleanup() { kill "$WATCH_PID" 2>/dev/null || true; rm -f "$RCFILE"; }
+  trap cleanup EXIT
+
+  # child bash rc: stream every executed command to $LOG (no history involved)
+  cat >"$RCFILE" <<EOFRC
+# write each executed command to the trainer log
+trap 'printf "%s\n" "\$BASH_COMMAND" >> "$LOG"' DEBUG
+EOFRC
+
+  # launch a clean interactive shell that sources ONLY our rc
+  exec /usr/bin/bash --noprofile --norc --rcfile "$RCFILE" -i
 }
 
 # ===== Check expect and install if not found =====
