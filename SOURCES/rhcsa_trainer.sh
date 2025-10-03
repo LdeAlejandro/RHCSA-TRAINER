@@ -13,21 +13,22 @@ RESET=$(tput sgr0)
 start_monitor() {
   RHCSA_SHM_DIR="$RHCSA_SHM_DIR" expect <<'EOF'
     set timeout -1
-    set shm_dir $env(RHCSA_SHM_DIR)
-    file mkdir $shm_dir
+    # flags directory
+    set d $env(RHCSA_SHM_DIR)
+    file mkdir $d
 
-    # create flag helper
-    proc mark {name} { global shm_dir; catch {exec sh -c "touch $shm_dir/$name"} }
+    # helper to create the flag
+    proc mark {n} { global d; catch {exec sh -c "touch $d/$n"} }
 
-    # IMPORTANT: use absolute bash path; keep Expect owning the TTY
+    # start clean interactive bash (absolute path)
     spawn /usr/bin/bash --noprofile --norc -i
 
-    # (optional prompt change; if you keep it, brackets must be escaped)
-    # send "export PS1='\\[RHCSA\\] \\u@\\h:\\w\\$ '\r"
+    # minimal instrumentation: print every command the user executes
+    send "trap 'echo __CMD__:\$BASH_COMMAND' DEBUG\r"
 
-    # watch for vi|vim hello.txt and set the flag
+    # stay attached and mark when vim/vi hello.txt is executed
     interact -nobuffer \
-      -re {^(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} { mark "Q1.vim_used" }
+      -re {__CMD__:(vi|vim)[ \t]+(\./)?hello\.txt([ \t]|$)} { mark Q1.vim_used }
 EOF
 }
 
