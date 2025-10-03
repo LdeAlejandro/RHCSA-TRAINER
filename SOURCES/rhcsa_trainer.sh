@@ -13,22 +13,28 @@ fi
 RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
 mkdir -p "$RHCSA_SHM_DIR"
 
-# ===== Start monitored shell =====
+# ===== Start monitored shell (robust) =====
 start_monitor() {
   local LOG="$RHCSA_SHM_DIR/cmd.log"
-  local RCFILE="$RHCSA_SHM_DIR/mon.rc"
-
-  # ensure log exists (we append to it)
+  local TMPHOME="$RHCSA_SHM_DIR/home.$$"  # per-session HOME
+  mkdir -p "$TMPHOME"
   touch "$LOG"
 
-  # child bash rc: append every executed command to LOG (no history involved)
-  cat >"$RCFILE" <<EOFRC
-# log each executed command from this subshell
-trap 'printf "%s\n" "\$BASH_COMMAND" >> "$LOG"' DEBUG
+  # Minimal ~/.bashrc for the child shell: log every executed command
+  cat >"$TMPHOME/.bashrc" <<EOFRC
+# auto-logged interactive shell for RHCSA trainer
+LOG_FILE="$LOG"
+trap 'printf "%s\n" "\$BASH_COMMAND" >> "\$LOG_FILE"' DEBUG
+# (optional) make it obvious you're in the monitored shell:
+# PS1="[RHCSA] \\u@\\h:\\w\\$ "
 EOFRC
 
-  # launch a clean interactive shell that sources ONLY our rc
-  exec /usr/bin/bash --noprofile --norc --rcfile "$RCFILE" -i
+  # Clean up temp HOME when this process exits
+  trap 'rm -rf "$TMPHOME" 2>/dev/null || true' EXIT
+
+  # Launch an interactive bash that will source $TMPHOME/.bashrc
+  # Use env HOME=... so bash reads *our* ~/.bashrc reliably
+  exec env HOME="$TMPHOME" /usr/bin/bash --noprofile -i
 }
 
 # ===== Exercise Q1 =====
@@ -66,7 +72,7 @@ evaluate_all() {
 reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
-  rm -f "$RHCSA_SHM_DIR"/cmd.log "$RHCSA_SHM_DIR"/mon.rc 2>/dev/null || true
+  rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
 
