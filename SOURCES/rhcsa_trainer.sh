@@ -19,26 +19,20 @@ start_monitor() {
   mkdir -p "$RHCSA_SHM_DIR"
 
   local LOG="$RHCSA_SHM_DIR/cmd.log"
-  local TMPHOME="$RHCSA_SHM_DIR/home.$$"   # per-session HOME
-  local RCFILE="$RHCSA_SHM_DIR/mon.rc"     # explicit rcfile
+  local RCFILE="$RHCSA_SHM_DIR/mon.rc"
   : > "$LOG"
-  mkdir -p "$TMPHOME"
 
-  # rcfile loaded by the child bash
+  # RC file that sets up DEBUG trap
   cat >"$RCFILE" <<EOFRC
-# RHCSA trainer rcfile (loaded)
+# RHCSA trainer rcfile
 echo "[rhcsa] monitored shell active"
 LOG_FILE="$LOG"
 trap 'printf "%s\n" "\$BASH_COMMAND" >> "\$LOG_FILE"' DEBUG
-# Optional: clearly mark the prompt
-# PS1="[RHCSA] \\u@\\h:\\w\\$ "
+PS1="[RHCSA] \u@\h:\w\$ "
 EOFRC
 
-  # cleanup temp HOME on exit
-  trap 'rm -rf "$TMPHOME" 2>/dev/null || true' EXIT
-
-  # Launch interactive bash that MUST read our rcfile; also set HOME so no other rc interferes
-  exec env HOME="$TMPHOME" /usr/bin/bash --noprofile --norc --rcfile "$RCFILE" -i
+  # Start shell with rcfile explicitly loaded
+  exec /usr/bin/bash --rcfile "$RCFILE" -i
 }
 
 # ===== Exercise Q1 =====
