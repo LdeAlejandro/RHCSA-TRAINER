@@ -53,8 +53,26 @@ check_Q1() {
   fi
 }
 
+# ===== Exercise Q2 =====
+Q2_DESC="Generate an SSH key and configure key-based login to remote server master-server@192.168.15.14"
+
+check_Q2() {
+  local LOG="$RHCSA_SHM_DIR/cmd.log"
+
+  # 1) Check key pair exists
+  [[ -f ~/.ssh/id_rsa.pub ]] || return 1
+
+  # 2) Check remote authorized_keys has this key
+  if ssh -o PasswordAuthentication=no -o ConnectTimeout=3 master-server@192.168.15.14 t rue 2>/dev/null; then
+    return 0
+  else
+    echo "[FAIL] Could not log in without password. Did you copy the key with ssh-copy-id?"
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1)
+TASKS=(Q1 Q2)
 declare -A STATUS
 
 evaluate_all() {
