@@ -102,8 +102,28 @@ check_Q2() {
   return 1
 }
 
+# ===== Exercise Q3 =====
+Q3_DESC="Use journalctl or /var/log/secure to check recent system logs for errors"
+
+check_Q3() {
+  local LOG="$RHCSA_SHM_DIR/cmd.log"
+
+  # 1) Verifica se houve atividade registrada
+  [[ -f "$LOG" ]] || { echo "[FAIL] No monitored session found. Run via 'rhcsa-trainer start'."; return 1; }
+
+  # 2) Procura comandos usados para visualizar logs
+  if grep -Eq 'journalctl[[:space:]]+-xe' "$LOG" || grep -Eq 'cat[[:space:]]+/var/log/secure' "$LOG"; then
+    echo "[OK] Log inspection command detected."
+    return 0
+  else
+    echo "[FAIL] Did not detect 'journalctl -xe' or 'cat /var/log/secure' in monitored session."
+    echo "       Try again: run 'rhcsa-trainer start' and use one of those commands."
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2)
+TASKS=(Q1 Q2 Q3)
 declare -A STATUS
 
 evaluate_all() {
