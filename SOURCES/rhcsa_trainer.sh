@@ -57,16 +57,22 @@ check_Q1() {
 Q2_DESC="Generate an SSH key and configure key-based login to remote server master-server@192.168.15.14"
 
 check_Q2() {
-  local LOG="$RHCSA_SHM_DIR/cmd.log"
+  # 1) Require at least one public key locally
+  if ! ls ~/.ssh/*.pub >/dev/null 2>&1; then
+    echo "[FAIL] No public key found in ~/.ssh"
+    return 1
+  fi
 
-  # 1) Check key pair exists
-  [[ -f ~/.ssh/id_rsa.pub ]] || return 1
-
-  # 2) Check remote authorized_keys has this key
-  if ssh -o PasswordAuthentication=no -o ConnectTimeout=3 master-server@192.168.15.14 t rue 2>/dev/null; then
+  # 2) Try passwordless SSH. BatchMode=yes ensures failure if a password is needed.
+  if ssh -o BatchMode=yes \
+        -o PasswordAuthentication=no \
+        -o PubkeyAuthentication=yes \
+        -o StrictHostKeyChecking=accept-new \
+        -o ConnectTimeout=5 \
+        master-server@192.168.15.14 true 2>/dev/null; then
     return 0
   else
-    echo "[FAIL] Could not log in without password. Did you copy the key with ssh-copy-id?"
+    echo "[FAIL] Could not log in without password. Did you run ssh-copy-id?"
     return 1
   fi
 }
