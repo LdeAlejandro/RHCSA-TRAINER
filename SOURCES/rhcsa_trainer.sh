@@ -57,24 +57,49 @@ check_Q1() {
 Q2_DESC="Generate an SSH key and configure key-based login to remote server master-server@192.168.15.14"
 
 check_Q2() {
-  # 1) Require at least one public key locally
-  if ! ls ~/.ssh/*.pub >/dev/null 2>&1; then
-    echo "[FAIL] No public key found in ~/.ssh"
+  local REMOTE_USER="${Q2_USER:-master-server}"
+  local REMOTE_HOST="${Q2_HOST:-192.168.15.14}"
+
+  # 1) Local public key must exist
+  local PUBKEY
+  PUBKEY="$(find ~/.ssh -maxdepth 1 -type f -name '*.pub' -print -quit)"
+  if [[ -z "$PUBKEY" ]]; then
+    echo "[FAIL] No public key found under ~/.ssh (*.pub). Generate one with: ssh-keygen -t rsa -b 4096"
     return 1
   fi
 
-  # 2) Try passwordless SSH. BatchMode=yes ensures failure if a password is needed.
-  if ssh -o BatchMode=yes \
-        -o PasswordAuthentication=no \
-        -o PubkeyAuthentication=yes \
-        -o StrictHostKeyChecking=accept-new \
-        -o ConnectTimeout=5 \
-        master-server@192.168.15.14 true 2>/dev/null; then
-    return 0
-  else
-    echo "[FAIL] Could not log in without password. Did you run ssh-copy-id?"
+  # 2) Quick reachability check (optional but helpful)
+  if ! ping -c1 -W1 "$REMOTE_HOST" >/dev/null 2>&1; then
+    echo "[FAIL] Host $REMOTE_HOST not reachable (ping failed)."
     return 1
   fi
+
+  # 3) Try passwordless SSH (no prompts; fail fast if password is needed)
+  if ssh -o BatchMode=yes \
+         -o PasswordAuthentication=no \
+         -o PubkeyAuthentication=yes \
+         -o StrictHostKeyChecking=accept-new \
+         -o ConnectTimeout=5 \
+         "${REMOTE_USER}@${REMOTE_HOST}" true 2>/dev/null; then
+    echo "[OK] Passwordless SSH is working for ${REMOTE_USER}@${REMOTE_HOST}."
+    return 0
+  fi
+
+  # 4) Diagnose why it failed: is our key present on the remote?
+  local KEY_FINGERPRINT
+  KEY_FINGERPRINT="$(cut -d' ' -f2 < "$PUBKEY")"
+
+  if ssh -o ConnectTimeout=5 "${REMOTE_USER}@${REMOTE_HOST}" \
+       "test -f ~/.ssh/authorized_keys && grep -q \"$KEY_FINGERPRINT\" ~/.ssh/authorized_keys" 2>/dev/null; then
+    echo "[FAIL] Key is present on remote but auth still failed."
+    echo "       Likely permissions/contexts. On the remote, try:"
+    echo "       chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys && restorecon -Rv ~/.ssh"
+  else
+    echo "[FAIL] Your public key is NOT on the remote."
+    echo "       Fix with: ssh-copy-id -i \"$PUBKEY\" ${REMOTE_USER}@${REMOTE_HOST}"
+  fi
+
+  return 1
 }
 
 # ===== Infra =====

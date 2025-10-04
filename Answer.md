@@ -22,11 +22,14 @@ ssh-keygen -t rsa -b 4096
 # -> Press ENTER again for empty passphrase (RHCSA)
 
 # 2. Copy the public key to the remote server
-ssh-copy-id usuario@servidor
+ssh-copy-id ssh_username@server_ip_or_hostname
 # (Enter password once)
 
-# 3. Test SSH login (should not ask for password)
-ssh usuario@servidor
+# 3. (Optional) Fix ownership on the remote server (only if needed)
+sudo chown -R ssh_username:ssh_username /home/ssh_username/.ssh
+
+# 4. Test SSH login (should not ask for password)
+ssh ssh_username@server_ip_or_hostname
 ```
 
 ```bash
