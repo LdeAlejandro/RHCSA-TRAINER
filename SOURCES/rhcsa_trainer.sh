@@ -18,10 +18,14 @@ start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
 
+  sudo mkdir -p /trainer
+  sudo chmod 777 /trainer
   mkdir -p /trainer/Documents
   mkdir -p /trainer/DocumentBackup
   mkdir -p /trainer/files
-  touch "/trainer/files/move me to document and copy me to DocumentBackup"
+  tee "/trainer/files/move_me.txt" <<EOF
+move me to document and copy me to backup
+EOF
 
   local LOG="$RHCSA_SHM_DIR/cmd.log"
   local RCFILE="$RHCSA_SHM_DIR/mon.rc"

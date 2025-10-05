@@ -50,3 +50,20 @@ sudo cat /var/log/secure
 
 # 3. (Optional) Filter logs for a specific service
 sudo journalctl -u sshd
+
+Perfect 👌 — here’s **Question 4** rewritten in the exact same format and style as your Question 3 example:
+
+---
+
+## Question 4: Move and Copy Files
+
+### Answer:
+
+```bash
+# 1. Move the file from 'files' to 'Documents'
+mv "/trainer/files/move me to document and copy me to backup" /trainer/Documents/
+
+# 2. Copy the file from 'Documents' to 'DocumentBackup'
+cp "/trainer/Documents/move me to document and copy me to backup" /trainer/DocumentBackup/
+```
+---
