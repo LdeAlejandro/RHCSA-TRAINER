@@ -133,9 +133,9 @@ check_Q3() {
 Q4_DESC="Move the file from /trainer/files to /trainer/Documents and copy it to /trainer/DocumentBackup"
 
 check_Q4() {
-  local SRC_DIR="~/trainer/files"
-  local DOC_DIR="~/trainer/Documents"
-  local BAK_DIR="~/trainer/DocumentBackup"
+  local SRC_DIR="/trainer/files"
+  local DOC_DIR="/trainer/Documents"
+  local BAK_DIR="/trainer/DocumentBackup"
   local FILENAME="move_me.txt"
 
   # File should NOT exist in source anymore (it was moved)
