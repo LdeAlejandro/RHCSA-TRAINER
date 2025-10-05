@@ -18,6 +18,11 @@ start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
 
+  mkdir -p /trainer/Documents
+  mkdir -p /trainer/DocumentBackup
+  mkdir -p /trainer/files
+  touch "/trainer/files/move me to document and copy me to DocumentBackup"
+
   local LOG="$RHCSA_SHM_DIR/cmd.log"
   local RCFILE="$RHCSA_SHM_DIR/mon.rc"
   : > "$LOG"
@@ -103,7 +108,7 @@ check_Q2() {
 }
 
 # ===== Exercise Q3 =====
-Q3_DESC="Use journalctl or /var/log/secure to check recent system logs for errors"
+Q3_DESC="Check recent system logs"
 
 check_Q3() {
   local LOG="$RHCSA_SHM_DIR/cmd.log"
@@ -112,7 +117,7 @@ check_Q3() {
   [[ -f "$LOG" ]] || { echo "[FAIL] No monitored session found. Run via 'rhcsa-trainer start'."; return 1; }
 
   # 2) Procura comandos usados para visualizar logs
-  if grep -Eq 'journalctl[[:space:]]+-xe' "$LOG" || grep -Eq 'cat[[:space:]]+/var/log/secure' "$LOG"; then
+  if grep -Eq 'journalctl[[:space:]]+-xe' "$LOG" || grep -Eq 'cat[[:space:]]+/var/log/secure' "$LOG" || grep -Eq 'vim[[:space:]]+/var/log/secure' "$LOG" || grep -Eq 'vi[[:space:]]+/var/log/secure' "$LOG"; then
     echo "[OK] Log inspection command detected."
     return 0
   else
@@ -122,8 +127,39 @@ check_Q3() {
   fi
 }
 
+# ===== Exercise Q4 =====
+Q4_DESC="Move the file from /trainer/files to /trainer/Documents and copy it to /trainer/DocumentBackup"
+
+check_Q4() {
+  local SRC_DIR="/trainer/files"
+  local DOC_DIR="/trainer/Documents"
+  local BAK_DIR="/trainer/DocumentBackup"
+  local FILENAME="move me to document and copy me to backup"
+
+  # File should NOT exist in source anymore (it was moved)
+  if [[ -e "$SRC_DIR/$FILENAME" ]]; then
+    echo "[FAIL] File still exists in $SRC_DIR — it should have been moved."
+    return 1
+  fi
+
+  # File must exist in Documents
+  if [[ ! -e "$DOC_DIR/$FILENAME" ]]; then
+    echo "[FAIL] File not found in $DOC_DIR — move step missing."
+    return 1
+  fi
+
+  # File must exist in DocumentBackup as a copy
+  if [[ ! -e "$BAK_DIR/$FILENAME" ]]; then
+    echo "[FAIL] File not found in $BAK_DIR — copy step missing."
+    return 1
+  fi
+
+  echo "[OK] File correctly moved to Documents and copied to Backup."
+  return 0
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3)
+TASKS=(Q1 Q2 Q3 Q4)
 declare -A STATUS
 
 evaluate_all() {

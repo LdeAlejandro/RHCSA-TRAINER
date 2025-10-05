@@ -36,3 +36,17 @@ ssh ssh_username@server_ip_or_hostname
 #to check progress:
 check with rhcsa-trainer eval
 ```
+
+## Question 3: Check System Logs
+
+### Answer:
+
+```bash
+# 1. View recent system logs with explanations
+sudo journalctl -xe
+
+# 2. Check authentication and SSH logs
+sudo cat /var/log/secure
+
+# 3. (Optional) Filter logs for a specific service
+sudo journalctl -u sshd
