@@ -20,10 +20,10 @@ start_monitor() {
 
   sudo mkdir -p /trainer
   sudo chmod 777 /trainer
-  mkdir -p /trainer/Documents
-  mkdir -p /trainer/DocumentBackup
-  mkdir -p /trainer/files
-  tee "/trainer/files/move_me.txt" <<EOF
+  mkdir -p /home/trainer/Documents
+  mkdir -p /home/trainer/DocumentBackup
+  mkdir -p /home/trainer/files
+  tee "/home/trainer/files/move_me.txt" <<EOF
 move me to document and copy me to backup
 EOF
 
@@ -180,7 +180,9 @@ reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
+  rm -rf /home/trainer
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
+
 }
 
 board() {
