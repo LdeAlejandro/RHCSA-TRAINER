@@ -262,8 +262,41 @@ check_Q6() {
   fi
 }
 
+# ===== Exercise Q7 =====
+Q7_DESC="File Links - Create a file file_a in shorts directory and a soft link file_b pointing to file_a"
+
+check_Q7() {
+  # 1. Check if directory exists
+  if [[ ! -d /shorts ]]; then
+    echo "❌ /shorts directory missing."
+    return 1
+  fi
+
+  # 2. Check if file_a exists
+  if [[ ! -f /shorts/file_a ]]; then
+    echo "❌ /shorts/file_a not found."
+    return 1
+  fi
+
+  # 3. Check if file_b is a symlink and target matches
+  if [[ ! -L /file_b ]]; then
+    echo "❌ /file_b is not a symlink."
+    return 1
+  fi
+
+  # 4. Verify the symlink target
+  target=$(readlink /file_b)
+  if [[ "$target" != "/shorts/file_a" ]]; then
+    echo "❌ /file_b points to '$target' instead of '/shorts/file_a'."
+    return 1
+  fi
+
+  echo "✅ Q7 passed: /file_b correctly links to /shorts/file_a."
+  return 0
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7)
 declare -A STATUS
 
 evaluate_all() {
@@ -282,6 +315,7 @@ reset_all() {
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf "$HOME/trainer/files"
   rm -rf "$HOME/vaults"
+  rm -rf "$HOME/shorts"
    # root file (no TTY)
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."

@@ -73,7 +73,8 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
 ```bash
 # 1. Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
  sudo grep Listen /etc/httpd/conf/httpd.conf >> /root/web.txt
- #OR
+
+ #OR (if not from root user)
  sudo bash -c 'grep Listen /etc/httpd/conf/httpd.conf >> /root/web.txt'
  ```
 ---
@@ -87,5 +88,24 @@ mkdir /home/vaults
 
 #compresse files
 tar cvfz /home/vaults/etc_vault.tar.gz /etc
+```
+---
+
+## Question 7: File Links - Shortcuts (soft links) 
+
+#### Create a file file_a
+
+#### Create soft link file_b pointing to file_a
+
+### Answer:
+```bash
+# Create directory
+mkdir /shorts
+
+#Create file
+touch /shorts/file_a
+
+#create softlink
+ln -s /shorts/file_a /file_b
 ```
 ---
