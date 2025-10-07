@@ -84,18 +84,14 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
 ### Answer:
 ```bash
 # Create directory
-mkdir /home/vaults
+mkdir /vaults
 
 #compresse files
-tar cvfz /home/vaults/etc_vault.tar.gz /etc
+tar cvfz /vaults/etc_vault.tar.gz /etc
 ```
 ---
 
-## Question 7: File Links - Shortcuts (soft links) 
-
-#### Create a file file_a
-
-#### Create soft link file_b pointing to file_a
+## Question 7: File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
 
 ### Answer:
 ```bash

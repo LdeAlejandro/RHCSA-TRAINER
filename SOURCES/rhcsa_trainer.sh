@@ -294,7 +294,6 @@ TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7)
 declare -A STATUS
 
 evaluate_all() {
-  cd ~
   for id in "${TASKS[@]}"; do
     if "check_${id}"; then
       STATUS[$id]="${GREEN}PASSED${RESET}"
@@ -308,8 +307,7 @@ reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
-  rm -rf "$HOME/trainer/files"
-  rm -rf "$HOME/vaults"
+  rm -rf /trainer/files
   rm -rf /vaults
   rm -rf /shorts
   rm -f /file_b
