@@ -233,8 +233,37 @@ check_Q5() {
   fi
 }
 
+# ===== Exercise Q6 =====
+Q6_DESC="Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /home/vaults directory"
+
+check_Q6() {
+  local DEST_DIR="/home/vaults"
+  local TAR_FILE="$DEST_DIR/etc_vault.tar.gz"
+
+  # 1. Check if the directory exists
+  if [[ ! -d "$DEST_DIR" ]]; then
+    echo "[FAIL] Directory $DEST_DIR not found — did you create it with mkdir /home/vaults?"
+    return 1
+  fi
+
+  # 2. Check if the tar.gz archive exists
+  if [[ ! -f "$TAR_FILE" ]]; then
+    echo "[FAIL] File $TAR_FILE not found — did you create it with tar cvfz?"
+    return 1
+  fi
+
+  # 3. Validate that it's a gzip-compressed tar archive
+  if file "$TAR_FILE" | grep -q "gzip compressed data"; then
+    echo "[OK] Correct — $TAR_FILE is a valid gzip-compressed tar archive."
+    return 0
+  else
+    echo "[FAIL] $TAR_FILE exists but is not a gzip-compressed archive."
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6)
 declare -A STATUS
 
 evaluate_all() {
@@ -252,6 +281,7 @@ reset_all() {
   rm -f hello.txt
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf ~/trainer/files
+  rm -rf ~/vaults
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 
 }
