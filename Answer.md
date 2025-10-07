@@ -90,7 +90,6 @@ mkdir /vaults
 tar cvfz /vaults/etc_vault.tar.gz /etc
 ```
 ---
-
 ## Question 7: File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
 
 ### Answer:
@@ -103,5 +102,19 @@ touch /shorts/file_a
 
 #create softlink
 ln -s /shorts/file_a /file_b
+
+## if the link was created and is having error sudo 
+ln -snf /shorts/file_a /file_b
+
+```
+---
+
+
+## Question 8: File Links - Create a hard link of the file in hardfiles directory to file_c
+
+### Answer:
+```bash
+#create hardlink
+ln /hardfiles/file_data /file_c
 ```
 ---

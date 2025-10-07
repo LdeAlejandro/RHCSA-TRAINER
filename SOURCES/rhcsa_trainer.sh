@@ -18,6 +18,8 @@ start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
   echo "Creating directories and files for exercises..."
+  sudo mkdir -p /hardfiles
+  echo "hard file content" >> /hardfiles/file_data
   sudo mkdir -p /etc/httpd/conf && sudo touch /etc/httpd/conf/httpd.conf && sudo tee /etc/httpd/conf/httpd.conf > /dev/null <<EOF
 # =============================
 # Basic Apache Configuration
@@ -294,6 +296,23 @@ check_Q7() {
   fi
 }
 
+# ===== Exercise Q8 =====
+Q8_DESC="File Links - Create a file file_a in shorts directory and a soft link file_b pointing to file_a"
+
+check_Q8() {
+
+
+  # 3. Check hardlink
+  if [ -f /file_c ] && [ "$(stat -c %h /hardfiles/file_data)" -eq "$(stat -c %h /file_c)" ]; then
+    echo "✅ Q8 passed: /file_c is a hard link to /hardfiles/file_data."
+    return 0
+  else
+    echo "❌ /file_c is missing or not a hard link to /hardfiles/file_data."
+    return 1
+  fi
+  
+}
+
 # ===== Infra =====
 TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7)
 declare -A STATUS
@@ -315,7 +334,7 @@ reset_all() {
   rm -rf /trainer/files
   rm -rf /vaults
   rm -rf /shorts
-  rm -f ~/file_b
+  rm -f /file_b
    # root file (no TTY)
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."

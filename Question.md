@@ -10,4 +10,7 @@
 
 ## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /vaults directory. within home
 
+## Question 7: File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
+
+## Question 8: File Links - Create a hard link of the file in hardfiles directory to file_c
 
