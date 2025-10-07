@@ -294,6 +294,7 @@ TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7)
 declare -A STATUS
 
 evaluate_all() {
+  cd ~
   for id in "${TASKS[@]}"; do
     if "check_${id}"; then
       STATUS[$id]="${GREEN}PASSED${RESET}"
@@ -309,8 +310,9 @@ reset_all() {
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf "$HOME/trainer/files"
   rm -rf "$HOME/vaults"
-  rm -rf "$HOME/shorts"
-  rm -f "$HOME/file_b"
+  rm -rf /vaults
+  rm -rf /shorts
+  rm -f /file_b
    # root file (no TTY)
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
