@@ -279,14 +279,14 @@ check_Q7() {
   fi
 
   # 3. Check if file_b is a symlink pointing to file_a
-  if [ -h /file_b ] && [ "$(readlink ~/file_b)" = "/shorts/file_a" ]; then
-    echo "✅ /file_b correctly links to /shorts/file_a."
-    echo "✅ Q7 passed."
-    return 0
-  else
-    echo "❌ Link incorrect or missing."
-    return 1
-  fi
+  if { [ -h /file_b ] && [ "$(readlink /file_b)" = "/shorts/file_a" ]; } ||
+   { [ -h "$HOME/file_b" ] && [ "$(readlink "$HOME/file_b")" = "/shorts/file_a" ]; }; then
+  echo "✅ Q7 passed."
+  return 0
+else
+  echo "❌ Link incorrect or missing."
+  return 1
+fi
 }
 
 # ===== Infra =====
