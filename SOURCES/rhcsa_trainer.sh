@@ -297,7 +297,7 @@ check_Q7() {
 }
 
 # ===== Exercise Q8 =====
-Q8_DESC="File Links - Create a file file_a in shorts directory and a soft link file_b pointing to file_a"
+Q8_DESC="File Links - Create a hard link of the file in hardfiles directory to file_c"
 
 check_Q8() {
 
@@ -333,8 +333,10 @@ reset_all() {
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf /trainer/files
   rm -rf /vaults
+  rm -rf /hardfiles
   rm -rf /shorts
   rm -f /file_b
+  rm -f /file_c
    # root file (no TTY)
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
