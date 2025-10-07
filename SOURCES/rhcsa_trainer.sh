@@ -130,12 +130,12 @@ check_Q3() {
 }
 
 # ===== Exercise Q4 =====
-Q4_DESC="Move the file from /trainer/files to /trainer/Documents and copy it to /trainer/DocumentBackup"
+Q4_DESC="Move the file from the files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory."
 
 check_Q4() {
-  local SRC_DIR="~/trainer/files"
-  local DOC_DIR="~/trainer/Documents"
-  local BAK_DIR="~/trainer/DocumentBackup"
+  local SRC_DIR="$HOME/trainer/files"
+  local DOC_DIR="$HOME/trainer/Documents"
+  local BAK_DIR="$HOME/trainer/DocumentBackup"
   local FILENAME="move_me.txt"
 
   # File should NOT exist in source anymore (it was moved)
