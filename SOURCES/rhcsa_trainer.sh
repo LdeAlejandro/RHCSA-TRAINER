@@ -279,7 +279,7 @@ check_Q7() {
   fi
 
   # 3. Check if file_b is a symlink pointing to file_a
-  if [ -h /file_b ] && [ "$(readlink /file_b)" = "/shorts/file_a" ]; then
+  if [ -h /file_b ] && [ "$(readlink ~/file_b)" = "/shorts/file_a" ]; then
     echo "✅ /file_b correctly links to /shorts/file_a."
     echo "✅ Q7 passed."
     return 0
@@ -310,7 +310,7 @@ reset_all() {
   rm -rf /trainer/files
   rm -rf /vaults
   rm -rf /shorts
-  rm -f /file_b
+  rm -f ~/file_b
    # root file (no TTY)
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
