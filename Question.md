@@ -8,4 +8,6 @@
 
 ## Question 5: Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
 
-## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /vaults directory.
+## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /vaults directory. within home
+
+

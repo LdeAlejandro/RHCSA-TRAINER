@@ -282,6 +282,8 @@ reset_all() {
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf "$HOME/trainer/files"
   rm -rf "$HOME/vaults"
+   # root file (no TTY)
+  sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 
 }

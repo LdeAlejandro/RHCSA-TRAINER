@@ -72,6 +72,20 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
 
 ```bash
 # 1. Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
- sudo grep Listen /etc/httpd/conf/httpd.conf >> sudo /root/web.txt
+ sudo grep Listen /etc/httpd/conf/httpd.conf >> /root/web.txt
+ #OR
+ sudo bash -c 'grep Listen /etc/httpd/conf/httpd.conf >> /root/web.txt'
+ ```
 ---
 
+## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /vaults directory. within home
+
+### Answer:
+```bash
+# Create directory
+mkdir /home/vaults
+
+#compresse files
+tar cvfz /home/vaults/etc_vault.tar.gz /etc
+```
+---
