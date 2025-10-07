@@ -18,7 +18,7 @@ start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
   echo "Creating directories and files for exercises..."
-  sudo mkdir -p /etc/httpd/conf && sudo touch /etc/httpd/conf/httpd.conf && sudo tee /etc/httpd/conf/httpd.conf <<EOF
+  sudo mkdir -p /etc/httpd/conf && sudo touch /etc/httpd/conf/httpd.conf && sudo tee /etc/httpd/conf/httpd.conf > /dev/null <<EOF
 # =============================
 # Basic Apache Configuration
 # =============================
@@ -61,7 +61,7 @@ EOF
   mkdir -p ~/trainer/Documents
   mkdir -p ~/trainer/DocumentBackup
   mkdir -p ~/trainer/files
-  tee ~/trainer/files/move_me.txt <<EOF
+  tee ~/trainer/files/move_me.txt > /dev/null <<EOF
   file and content created: move me to document and copy me to backup
 EOF
 
@@ -209,18 +209,26 @@ check_Q5() {
   local CONF_FILE="/etc/httpd/conf/httpd.conf"
   local OUTPUT_FILE="/root/web.txt"
 
-  # Check if output file exists
-  if [[ ! -f "$OUTPUT_FILE" ]]; then
-    echo "[FAIL] File $OUTPUT_FILE not found — did you redirect the grep output?"
+  # 0) Ensure the source file actually has 'Listen'
+  if ! grep -q "Listen" "$CONF_FILE" 2>/dev/null; then
+    echo "[FAIL] '$CONF_FILE' does not contain 'Listen' (did you create/populate it?)."
     return 1
   fi
 
-  # Check if it contains the expected 'Listen' lines from the config
-  if grep -q "Listen" "$CONF_FILE" && grep -q "Listen" "$OUTPUT_FILE"; then
-    echo "[OK] Correct — 'Listen' lines were found and saved to /root/web.txt."
+  # 1) Does /root/web.txt exist? (need sudo to see inside /root)
+  if ! sudo -n test -f "$OUTPUT_FILE" 2>/dev/null; then
+    echo "[FAIL] $OUTPUT_FILE not found. Hint: use:"
+    echo "  sudo sh -c 'grep \"Listen\" \"$CONF_FILE\" > \"$OUTPUT_FILE\"'"
+    return 1
+  fi
+
+  # 2) Does /root/web.txt actually contain 'Listen'?
+  if sudo -n grep -q "Listen" "$OUTPUT_FILE" 2>/dev/null; then
+    echo "[OK] Correct — 'Listen' lines saved to $OUTPUT_FILE."
     return 0
   else
-    echo "[FAIL] The output file does not contain the expected 'Listen' lines."
+    echo "[FAIL] $OUTPUT_FILE exists but does not contain 'Listen'."
+    echo "Hint: sudo sh -c 'grep \"Listen\" \"$CONF_FILE\" > \"$OUTPUT_FILE\"'"
     return 1
   fi
 }
