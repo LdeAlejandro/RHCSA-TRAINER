@@ -280,8 +280,8 @@ reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
-  rm -rf ~/trainer/files
-  rm -rf ~/vaults
+  rm -rf "$HOME/trainer/files"
+  rm -rf "$HOME/vaults"
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 
 }
