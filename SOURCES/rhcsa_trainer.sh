@@ -17,13 +17,55 @@ mkdir -p "$RHCSA_SHM_DIR"
 start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
+  echo "Creating directories and files for exercises..."
+  sudo mkdir -p /etc/httpd/conf && sudo touch /etc/httpd/conf/httpd.conf && sudo tee /etc/httpd/conf/httpd.conf <<EOF
+# =============================
+# Basic Apache Configuration
+# =============================
 
+# Porta padrão
+Listen 80
+
+# Nome do servidor
+ServerName localhost
+
+# Diretório raiz dos arquivos web
+DocumentRoot "/var/www/html"
+
+<Directory "/var/www/html">
+    Options Indexes FollowSymLinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+# Logs básicos
+ErrorLog "/var/log/httpd/error_log"
+CustomLog "/var/log/httpd/access_log" combined
+
+# Mimetype padrão
+TypesConfig /etc/mime.types
+
+# Inclui arquivos adicionais de configuração, se existirem
+IncludeOptional conf.d/*.conf
+
+# ServerAdmin (email fictício)
+ServerAdmin admin@example.com
+
+# Mantém processos persistentes
+KeepAlive On
+MaxKeepAliveRequests 100
+KeepAliveTimeout 5
+EOF   
+
+  sudo touch /root/web.txt
   mkdir -p ~/trainer/Documents
   mkdir -p ~/trainer/DocumentBackup
   mkdir -p ~/trainer/files
   tee ~/trainer/files/move_me.txt <<EOF
   file and content created: move me to document and copy me to backup
 EOF
+
+  
 
   local LOG="$RHCSA_SHM_DIR/cmd.log"
   local RCFILE="$RHCSA_SHM_DIR/mon.rc"
@@ -160,8 +202,31 @@ check_Q4() {
   return 0
 }
 
+# ===== Exercise Q5 =====
+Q5_DESC="Find the string 'Listen' in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt"
+
+check_Q5() {
+  local CONF_FILE="/etc/httpd/conf/httpd.conf"
+  local OUTPUT_FILE="/root/web.txt"
+
+  # Check if output file exists
+  if [[ ! -f "$OUTPUT_FILE" ]]; then
+    echo "[FAIL] File $OUTPUT_FILE not found — did you redirect the grep output?"
+    return 1
+  fi
+
+  # Check if it contains the expected 'Listen' lines from the config
+  if grep -q "Listen" "$CONF_FILE" && grep -q "Listen" "$OUTPUT_FILE"; then
+    echo "[OK] Correct — 'Listen' lines were found and saved to /root/web.txt."
+    return 0
+  else
+    echo "[FAIL] The output file does not contain the expected 'Listen' lines."
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4)
+TASKS=(Q1 Q2 Q3 Q4 Q5)
 declare -A STATUS
 
 evaluate_all() {
