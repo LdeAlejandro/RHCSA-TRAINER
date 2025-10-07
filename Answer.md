@@ -67,3 +67,37 @@ mv "/trainer/files/move me to document and copy me to backup" /trainer/Documents
 cp "/trainer/Documents/move me to document and copy me to backup" /trainer/DocumentBackup/
 ```
 ---
+
+## Question 3: Check System Logs
+
+### Answer:
+
+```bash
+# 1. View recent system logs with explanations
+sudo journalctl -xe
+
+# 2. Check authentication and SSH logs
+sudo cat /var/log/secure
+
+# 3. (Optional) Filter logs for a specific service
+sudo journalctl -u sshd
+
+Perfect 👌 — here’s **Question 4** rewritten in the exact same format and style as your Question 3 example:
+
+---
+
+## Question 4: Move the file from the files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory.
+
+### Answer:
+
+```bash
+# 1. Move the file from 'files' to 'Documents'
+mv ~/trainer/files/move_me.txt ~/trainer/Documents/
+
+# 2. Copy the file from 'Documents' to 'DocumentBackup'
+cp ~/trainer/Documents/move_me.txt ~/trainer/DocumentBackup/
+```
+
+---
+
+
