@@ -348,12 +348,12 @@ check_Q10() {
 }
 
 # ===== Exercise Q11 =====
-Q11_DESC="Question 11: Find all files owned by user rhel and copy them to /root/rhel-files."
+Q11_DESC="Question 11: Find all files owned by user rhel and copy them to /var/tmp/rhel-files."
 
 check_Q11() {
   # 1. Check if files were copied
-  if [ "$(ls -A /root/rhel-files/)" ]; then
-    echo "✅ Q11 passed: Files copied to /root/rhel-files/."
+  if [ "$(ls -A /var/tmp/rhel-files/)" ]; then
+    echo "✅ Q11 passed: Files copied to /var/tmp/rhel-files/."
     return 0
   else
     echo "❌ Q11 failed: No files found matching criteria."
@@ -390,7 +390,7 @@ reset_all() {
   rm -f  /file_b /file_c 2>/dev/null || true
   rm -rf /bigfiles 2>/dev/null || true
   rm -rf /var/tmp/twenty/ 2>/dev/null || true
-  rm -rf /root/rhel-files/ 2>/dev/null || true
+  rm -rf /var/tmp/rhel-files 2>/dev/null || true
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
