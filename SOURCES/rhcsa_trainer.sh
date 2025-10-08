@@ -364,16 +364,22 @@ check_Q11() {
 # ===== Exercise Q12 =====
 Q12_DESC="Question 12: Find a file named 'httpd.conf' and save the absolute paths to /root/httpd-paths.txt."
 
+
 check_Q12() {
-  # 1. Check if files were copied
-  if [ -f /root/httpd-paths.txt ]; then
-    echo "✅ Q12 passed: Paths saved to /root/httpd-paths.txt."
-    return 0
+  if sudo -n test -f /root/httpd-paths.txt 2>/dev/null; then
+    if sudo -n grep -q '^/' /root/httpd-paths.txt 2>/dev/null; then
+      echo "✅ Q12 passed: File contains absolute paths."
+      return 0
+    else
+      echo "❌ Q12 failed: File exists but does not contain absolute paths."
+      return 1
+    fi
   else
     echo "❌ Q12 failed: /root/httpd-paths.txt not found."
     return 1
   fi
 }
+
 # ===== Infra =====
 TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12)
 declare -A STATUS

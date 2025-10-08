@@ -159,8 +159,8 @@ sudo find /home /var /etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
 ```bash
 #find and copy the file to directory
 
-find / -type f -name httpd.conf > /root/httpd-paths.txt
+find / -type f -name httpd.conf >> /root/httpd-paths.txt
 #OR
-sudo sh -c 'find / -type f -name httpd.conf > /root/httpd-paths.txt'
+sudo sh -c 'find / -type f -name httpd.conf >> /root/httpd-paths.txt'
 ```
 --- 
