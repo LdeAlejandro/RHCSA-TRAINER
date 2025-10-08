@@ -60,10 +60,10 @@ KeepAliveTimeout 5
 EOF   
 
   sudo touch /root/web.txt
-  mkdir -p ~/trainer/Documents
-  mkdir -p ~/trainer/DocumentBackup
-  mkdir -p ~/trainer/files
-  tee ~/trainer/files/move_me.txt > /dev/null <<EOF
+  mkdir -p "$HOME/trainer/Documents"
+  mkdir -p "$HOME/trainer/DocumentBackup"
+  mkdir -p "$HOME/trainer/files"
+  tee "$HOME/trainer/files/move_me.txt" > /dev/null <<EOF
   file and content created: move me to document and copy me to backup
 EOF
 
@@ -174,7 +174,7 @@ check_Q3() {
 }
 
 # ===== Exercise Q4 =====
-Q4_DESC="Move the file from the files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory."
+Q4_DESC="Move the file from the /trainer/files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory."
 
 check_Q4() {
   local SRC_DIR="$HOME/trainer/files"
@@ -330,6 +330,7 @@ evaluate_all() {
 reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
+  rm -rf "$HOME/.ssh/"*
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf /trainer/files
   rm -rf /vaults
