@@ -302,8 +302,6 @@ check_Q7() {
 Q8_DESC="File Links - Create a hard link of the file in hardfiles directory to file_c"
 
 check_Q8() {
-
-
   # 3. Check hardlink
   if [ -f /file_c ] && [ "$(stat -c %h /hardfiles/file_data)" -eq "$(stat -c %h /file_c)" ]; then
     echo "✅ Q8 passed: /file_c is a hard link to /hardfiles/file_data."
@@ -315,8 +313,28 @@ check_Q8() {
   
 }
 
+# ===== Exercise Q9 =====
+Q9_DESC="Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory."
+
+check_Q9() {
+  # 1. Check if /bigfiles directory exists
+  if [ ! -d /bigfiles ]; then
+    echo "❌ /bigfiles directory missing."
+    return 1
+  fi
+
+  # 2. Check if files were copied
+  if [ "$(ls -A /bigfiles)" ]; then
+    echo "✅ Q9 passed: Files copied to /bigfiles."
+    return 0
+  else
+    echo "❌ Q9 failed: No files found matching criteria."
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9)
 declare -A STATUS
 
 evaluate_all() {
@@ -342,6 +360,7 @@ reset_all() {
   rm -rf "${TRAINER_HOME}/vaults"        2>/dev/null || true
   rm -rf /hardfiles /shorts 2>/dev/null || true
   rm -f  /file_b /file_c 2>/dev/null || true
+  rm -rf /bigfiles 2>/dev/null || true
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
