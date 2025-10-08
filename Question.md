@@ -18,6 +18,6 @@
 
 ## Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/.
 
-## Question 11:Find all files owned by user hadoga and copy them to /root/h-files.
+## Question 11:Find all files owned by user rhel and copy them to /root/rhel-files.
 
 ## Question 12 named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.

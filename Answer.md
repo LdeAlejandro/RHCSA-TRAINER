@@ -139,11 +139,18 @@ mkdir /bigfiles
 
 #find files
 sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
-
-
 ```
 --- 
 
-## Question 11:Find all files owned by user hadoga and copy them to /root/h-files.
+## Question 11:Find all temp files owned by user rhel and copy them to /var/tmp/rhel-files.
+
+### Answer:
+```bash
+#create directory
+sudo mkdir -p /var/tmp/rhel-files
+#find files
+sudo find /home /var /etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
+```
+--- 
 
 ## Question 12 named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
