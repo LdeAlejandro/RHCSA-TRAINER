@@ -135,7 +135,7 @@ find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
 ### Answer:
 ```bash
 #create directory
-mkdir /bigfiles
+mkdir /var/tmp/twenty
 
 #find files
 sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
@@ -149,7 +149,7 @@ sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
 #create directory
 sudo mkdir -p /var/tmp/rhel-files
 #find files
-sudo find /home /var /etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
+sudo find /home/var/etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
 ```
 --- 
 

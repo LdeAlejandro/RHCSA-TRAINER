@@ -388,10 +388,10 @@ reset_all() {
   rm -rf "${TRAINER_HOME}/vaults"        2>/dev/null || true
   rm -rf /hardfiles /shorts 2>/dev/null || true
   rm -f  /file_b /file_c 2>/dev/null || true
-  rm -rf /bigfiles 2>/dev/null || true
-  rm -rf /var/tmp/twenty/ 2>/dev/null || true
-  rm -rf /var/tmp/rhel-files 2>/dev/null || true
-  sudo -n rm -f -- /root/web.txt 2>/dev/null || true
+  sudo rm -rf /bigfiles 2>/dev/null || true
+  sudo rm -rf /var/tmp/twenty/ 2>/dev/null || true
+  sudo rm -rf /var/tmp/rhel-files 2>/dev/null || true
+  sudo rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
 
