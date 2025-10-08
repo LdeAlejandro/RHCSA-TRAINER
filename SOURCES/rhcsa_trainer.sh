@@ -176,6 +176,7 @@ check_Q3() {
 Q4_DESC="Move the file from the /trainer/files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory."
 
 check_Q4() {
+  
   local TRAINER_HOME="$(resolve_home)"
   local SRC_DIR="$TRAINER_HOME/trainer/files"
   local DOC_DIR="$TRAINER_HOME/trainer/Documents"
@@ -236,21 +237,22 @@ check_Q5() {
 }
 
 # ===== Exercise Q6 =====
-Q6_DESC="Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /home/vaults directory"
+Q6_DESC="Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in ~/vaults directory"
 
 check_Q6() {
-  local DEST_DIR="/home/vaults"
+  local TRAINER_HOME="$(resolve_home)"
+  local DEST_DIR="$TRAINER_HOME/vaults"
   local TAR_FILE="$DEST_DIR/etc_vault.tar.gz"
 
   # 1. Check if the directory exists
   if [[ ! -d "$DEST_DIR" ]]; then
-    echo "[FAIL] Directory $DEST_DIR not found — did you create it with mkdir /home/vaults?"
+    echo "[FAIL] Directory $DEST_DIR not found — did you create it with mkdir ~/vaults?"
     return 1
   fi
 
   # 2. Check if the tar.gz archive exists
   if [[ ! -f "$TAR_FILE" ]]; then
-    echo "[FAIL] File $TAR_FILE not found — did you create it with tar cvfz?"
+    echo "[FAIL] File $TAR_FILE not found — did you create it with tar czvf?"
     return 1
   fi
 
@@ -328,20 +330,20 @@ evaluate_all() {
 }
 
 reset_all() {
+  local TRAINER_HOME
+  TRAINER_HOME="$(resolve_home)"
+  [[ -n "$TRAINER_HOME" ]] || TRAINER_HOME="${HOME:-/root}"
+
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
-  rm -rf "$TRAINER_HOME/.ssh/"*
-  rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
-  rm -rf /trainer/files
-  rm -rf /vaults
-  rm -rf /hardfiles
-  rm -rf /shorts
-  rm -f /file_b
-  rm -f /file_c
-   # root file (no TTY)
+  rm -rf "${TRAINER_HOME}/.ssh/"* 2>/dev/null || true
+  rm -f  "$RHCSA_SHM_DIR/cmd.log" 2>/dev/null || true
+  rm -rf "${TRAINER_HOME}/trainer/files" 2>/dev/null || true
+  rm -rf "${TRAINER_HOME}/vaults"        2>/dev/null || true
+  rm -rf /hardfiles /shorts 2>/dev/null || true
+  rm -f  /file_b /file_c 2>/dev/null || true
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
-
 }
 
 board() {

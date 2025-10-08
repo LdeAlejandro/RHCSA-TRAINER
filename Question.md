@@ -8,7 +8,7 @@
 
 ## Question 5: Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
 
-## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /vaults directory. within home
+## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in your home directory under vaults (~/vaults).
 
 ## Question 7: File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
 

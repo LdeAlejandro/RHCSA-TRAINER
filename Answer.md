@@ -79,15 +79,15 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
  ```
 ---
 
-## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in /vaults directory. within home
+## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in your home directory under vaults (~/vaults).
 
 ### Answer:
 ```bash
 # Create directory
-mkdir /vaults
+mkdir ~/vaults
 
 #compresse files
-tar cvfz /vaults/etc_vault.tar.gz /etc
+tar ~cvfz /vaults/etc_vault.tar.gz /etc
 ```
 ---
 ## Question 7: File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
