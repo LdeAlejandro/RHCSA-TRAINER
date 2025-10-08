@@ -14,3 +14,10 @@
 
 ## Question 8: File Links - Create a hard link of the file in hardfiles directory to file_c
 
+## Question 9: Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory.
+
+## Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/.
+
+## Question 11:Find all files owned by user hadoga and copy them to /root/h-files.
+
+## Question 12 named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.

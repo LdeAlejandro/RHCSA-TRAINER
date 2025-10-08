@@ -122,13 +122,27 @@ ln /hardfiles/file_data /file_c
 ```bash
 #create directory
 mkdir /bigfiles
-find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
+
 #find and copy files to directory
+find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
+
 
 ```
 --- 
 
-## Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/.
+## Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/
+
+### Answer:
+```bash
+#create directory
+mkdir /bigfiles
+
+#find files
+sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
+
+
+```
+--- 
 
 ## Question 11:Find all files owned by user hadoga and copy them to /root/h-files.
 
