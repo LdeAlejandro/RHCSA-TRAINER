@@ -237,7 +237,7 @@ check_Q5() {
 }
 
 # ===== Exercise Q6 =====
-Q6_DESC="Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in ~/vaults directory"
+Q6_DESC="Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in the ~/vaults directory"
 
 check_Q6() {
   local TRAINER_HOME="$(resolve_home)"
@@ -246,17 +246,17 @@ check_Q6() {
 
   # 1. Check if the directory exists
   if [[ ! -d "$DEST_DIR" ]]; then
-    echo "[FAIL] Directory $DEST_DIR not found — did you create it with mkdir ~/vaults?"
+    echo "[FAIL] Directory $DEST_DIR not found — create it with: mkdir ~/vaults"
     return 1
   fi
 
   # 2. Check if the tar.gz archive exists
   if [[ ! -f "$TAR_FILE" ]]; then
-    echo "[FAIL] File $TAR_FILE not found — did you create it with tar czvf?"
+    echo "[FAIL] File $TAR_FILE not found — create it with: tar czvf ~/vaults/etc_vault.tar.gz /etc"
     return 1
   fi
 
-  # 3. Validate that it's a gzip-compressed tar archive
+  # 3. Validate that it's gzip-compressed
   if file "$TAR_FILE" | grep -q "gzip compressed data"; then
     echo "[OK] Correct — $TAR_FILE is a valid gzip-compressed tar archive."
     return 0
