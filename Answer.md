@@ -121,10 +121,10 @@ ln /hardfiles/file_data /file_c
 ### Answer:
 ```bash
 #create directory
-mkdir /bigfiles
+sudo mkdir /bigfiles
 
 #find and copy files to directory
-find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
+sudo find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
 
 
 ```
@@ -135,7 +135,7 @@ find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
 ### Answer:
 ```bash
 #create directory
-mkdir /var/tmp/twenty
+sudo mkdir /var/tmp/twenty
 
 #find files
 sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
@@ -149,8 +149,18 @@ sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
 #create directory
 sudo mkdir -p /var/tmp/rhel-files
 #find files
-sudo find /home/var/etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
+sudo find /home /var /etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
 ```
 --- 
 
-## Question 12 named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
+## Question 12: Find a file named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
+
+### Answer:
+```bash
+#find and copy the file to directory
+
+find / -type f -name httpd.conf > /root/httpd-paths.txt
+#OR
+sudo sh -c 'find / -type f -name httpd.conf > /root/httpd-paths.txt'
+```
+--- 

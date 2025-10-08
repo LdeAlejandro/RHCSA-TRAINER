@@ -361,8 +361,21 @@ check_Q11() {
   fi
 }
 
+# ===== Exercise Q12 =====
+Q12_DESC="Question 12: Find a file named 'httpd.conf' and save the absolute paths to /root/httpd-paths.txt."
+
+check_Q12() {
+  # 1. Check if files were copied
+  if [ -f /root/httpd-paths.txt ]; then
+    echo "✅ Q12 passed: Paths saved to /root/httpd-paths.txt."
+    return 0
+  else
+    echo "❌ Q12 failed: /root/httpd-paths.txt not found."
+    return 1
+  fi
+}
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12)
 declare -A STATUS
 
 evaluate_all() {
@@ -391,6 +404,7 @@ reset_all() {
   sudo rm -rf /bigfiles 2>/dev/null || true
   sudo rm -rf /var/tmp/twenty/ 2>/dev/null || true
   sudo rm -rf /var/tmp/rhel-files 2>/dev/null || true
+  sudo rm -rf /root/httpd-paths.txt 2>/dev/null || true
   sudo rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
