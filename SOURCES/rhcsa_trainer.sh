@@ -333,6 +333,20 @@ check_Q9() {
   fi
 }
 
+# ===== Exercise Q10 =====
+Q10_DESC="Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/"
+
+check_Q10() {
+  # 1. Check if files were copied
+  if [ "$(ls -A /var/tmp/twenty/)" ]; then
+    echo "✅ Q10 passed: Files copied to /var/tmp/twenty/."
+    return 0
+  else
+    echo "❌ Q10 failed: No files found matching criteria."
+    return 1
+  fi
+}
+
 # ===== Infra =====
 TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9)
 declare -A STATUS
@@ -356,11 +370,12 @@ reset_all() {
   rm -f hello.txt
   rm -rf "${TRAINER_HOME}/.ssh/"* 2>/dev/null || true
   rm -f  "$RHCSA_SHM_DIR/cmd.log" 2>/dev/null || true
-  rm -rf "${TRAINER_HOME}/trainer/files" 2>/dev/null || true
+  rm -rf "${TRAINER_HOME}/trainer" 2>/dev/null || true
   rm -rf "${TRAINER_HOME}/vaults"        2>/dev/null || true
   rm -rf /hardfiles /shorts 2>/dev/null || true
   rm -f  /file_b /file_c 2>/dev/null || true
   rm -rf /bigfiles 2>/dev/null || true
+  rm -rf /var/tmp/twenty/ 2>/dev/null || true
   sudo -n rm -f -- /root/web.txt 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
