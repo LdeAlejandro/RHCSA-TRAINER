@@ -13,67 +13,67 @@ fi
 RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
 mkdir -p "$RHCSA_SHM_DIR"
 
+# ===== Resolve correct HOME =====
+resolve_home() {
+  if [[ $EUID -eq 0 && -n "${SUDO_USER-}" ]]; then
+    # Ex.: chamou com sudo; usa HOME do usuário original
+    eval echo "~${SUDO_USER}"
+  else
+    echo "$HOME"
+  fi
+}
+
 # ===== Start monitored shell (robust) =====
 start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
   mkdir -p "$RHCSA_SHM_DIR"
   echo "Creating directories and files for exercises..."
+
+  # 1) GARANTA as pastas do trainer primeiro, e no HOME correto:
+  TRAINER_HOME="$(resolve_home)"
+  mkdir -p "$TRAINER_HOME/trainer/Documents" \
+           "$TRAINER_HOME/trainer/DocumentBackup" \
+           "$TRAINER_HOME/trainer/files"
+  tee "$TRAINER_HOME/trainer/files/move_me.txt" > /dev/null <<'EOF'
+file and content created: move me to document and copy me to backup
+EOF
+
+  # 2) Só depois faça operações privilegiadas:
   sudo mkdir -p /hardfiles
-  echo "hard file content" >> /hardfiles/file_data
-  sudo mkdir -p /etc/httpd/conf && sudo touch /etc/httpd/conf/httpd.conf && sudo tee /etc/httpd/conf/httpd.conf > /dev/null <<EOF
+  echo "hard file content" | sudo tee -a /hardfiles/file_data >/dev/null
+
+  sudo mkdir -p /etc/httpd/conf
+  sudo touch /etc/httpd/conf/httpd.conf
+  # Se falhar por sudo/senha, não derruba o script:
+  sudo tee /etc/httpd/conf/httpd.conf > /dev/null <<'EOF' || echo "[WARN] Could not write httpd.conf; continuing."
 # =============================
 # Basic Apache Configuration
 # =============================
-
-# Porta padrão
 Listen 80
-
-# Nome do servidor
 ServerName localhost
-
-# Diretório raiz dos arquivos web
 DocumentRoot "/var/www/html"
-
 <Directory "/var/www/html">
     Options Indexes FollowSymLinks
     AllowOverride None
     Require all granted
 </Directory>
-
-# Logs básicos
 ErrorLog "/var/log/httpd/error_log"
 CustomLog "/var/log/httpd/access_log" combined
-
-# Mimetype padrão
 TypesConfig /etc/mime.types
-
-# Inclui arquivos adicionais de configuração, se existirem
 IncludeOptional conf.d/*.conf
-
-# ServerAdmin (email fictício)
 ServerAdmin admin@example.com
-
-# Mantém processos persistentes
 KeepAlive On
 MaxKeepAliveRequests 100
 KeepAliveTimeout 5
-EOF   
-
-  sudo touch /root/web.txt
-  mkdir -p "$HOME/trainer/Documents"
-  mkdir -p "$HOME/trainer/DocumentBackup"
-  mkdir -p "$HOME/trainer/files"
-  tee "$HOME/trainer/files/move_me.txt" > /dev/null <<EOF
-  file and content created: move me to document and copy me to backup
 EOF
 
-  
+  sudo touch /root/web.txt
 
+  # ... (restante do seu código igual)
   local LOG="$RHCSA_SHM_DIR/cmd.log"
   local RCFILE="$RHCSA_SHM_DIR/mon.rc"
   : > "$LOG"
 
-  # RC file that sets up DEBUG trap
   cat >"$RCFILE" <<EOFRC
 # RHCSA trainer rcfile
 echo "[rhcsa] monitored shell active"
@@ -82,7 +82,6 @@ trap 'printf "%s\n" "\$BASH_COMMAND" >> "\$LOG_FILE"' DEBUG
 PS1="[RHCSA] \u@\h:\w\$ "
 EOFRC
 
-  # Start shell with rcfile explicitly loaded
   exec /usr/bin/bash --rcfile "$RCFILE" -i
 }
 
