@@ -108,8 +108,6 @@ ln -snf /shorts/file_a /file_b
 
 ```
 ---
-
-
 ## Question 8: File Links - Create a hard link of the file in hardfiles directory to file_c
 
 ### Answer:

@@ -176,9 +176,10 @@ check_Q3() {
 Q4_DESC="Move the file from the /trainer/files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory."
 
 check_Q4() {
-  local SRC_DIR="$HOME/trainer/files"
-  local DOC_DIR="$HOME/trainer/Documents"
-  local BAK_DIR="$HOME/trainer/DocumentBackup"
+  local TRAINER_HOME="$(resolve_home)"
+  local SRC_DIR="$TRAINER_HOME/trainer/files"
+  local DOC_DIR="$TRAINER_HOME/trainer/Documents"
+  local BAK_DIR="$TRAINER_HOME/trainer/DocumentBackup"
   local FILENAME="move_me.txt"
 
   # File should NOT exist in source anymore (it was moved)
@@ -329,7 +330,7 @@ evaluate_all() {
 reset_all() {
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
   rm -f hello.txt
-  rm -rf "$HOME/.ssh/"*
+  rm -rf "$TRAINER_HOME/.ssh/"*
   rm -f "$RHCSA_SHM_DIR"/cmd.log 2>/dev/null || true
   rm -rf /trainer/files
   rm -rf /vaults
