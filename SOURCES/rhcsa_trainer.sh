@@ -337,7 +337,7 @@ check_Q9() {
 }
 
 # ===== Exercise Q10 =====
-Q10_DESC="Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/"
+Q10_DESC="Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/"
 
 check_Q10() {
   # 1. Check if files were copied
@@ -351,7 +351,7 @@ check_Q10() {
 }
 
 # ===== Exercise Q11 =====
-Q11_DESC="Question 11: Find all files owned by user rhel and copy them to /var/tmp/rhel-files."
+Q11_DESC="Find all files owned by user rhel and copy them to /var/tmp/rhel-files."
 
 check_Q11() {
   # 1. Check if files were copied
@@ -365,7 +365,7 @@ check_Q11() {
 }
 
 # ===== Exercise Q12 =====
-Q12_DESC="Question 12: Find a file named 'httpd.conf' and save the absolute paths to /root/httpd-paths.txt."
+Q12_DESC="Find a file named 'httpd.conf' and save the absolute paths to /root/httpd-paths.txt."
 
 
 check_Q12() {
@@ -384,7 +384,7 @@ check_Q12() {
 }
 
 # ===== Exercise Q12 =====
-Q13_DESC="Question 13: Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone"
+Q13_DESC="Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone"
 check_Q13() {
   if sudo -n test -f /var/tmp/fstab 2>/dev/null; then
     if sudo -n stat -c '%U' /var/tmp/fstab 2>/dev/null | grep -q '^root$' && \
@@ -403,7 +403,7 @@ check_Q13() {
 }
 
 # ===== Exercise Q14 =====
-Q14_DESC="Question 14: Set permissions 777 on /var/tmp/chmod_lab/public.log and set owner:group to root:root."
+Q14_DESC="Give full permissions to everyone on /var/tmp/chmod_lab/public.log and set owner:group to root:root"
 check_Q14() {
   if sudo -n test -f /var/tmp/chmod_lab/public.log 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/public.log | grep -q '^777$' && \
@@ -422,7 +422,7 @@ check_Q14() {
 }
 
 # ===== Exercise Q15 =====
-Q15_DESC="Question 15: Set permissions 755 on /var/tmp/chmod_lab/script.sh and owner:group to devops:devs."
+Q15_DESC="Allow the owner to read/write/execute, while others can only read and execute on /var/tmp/chmod_lab/script.sh. Set owner:group to devops:devs."
 check_Q15() {
   if sudo -n test -f /var/tmp/chmod_lab/script.sh 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/script.sh | grep -q '^755$' && \
@@ -441,7 +441,7 @@ check_Q15() {
 }
 
 # ===== Exercise Q16 =====
-Q16_DESC="Question 16: Set permissions 700 on /var/tmp/chmod_lab/secret.txt and owner:group to admin:admins."
+Q16_DESC="Allow only the owner to read, write, and execute on /var/tmp/chmod_lab/secret.txt. Set owner:group to admin:admins."
 check_Q16() {
   if sudo -n test -f /var/tmp/chmod_lab/secret.txt 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/secret.txt | grep -q '^700$' && \
@@ -460,7 +460,7 @@ check_Q16() {
 }
 
 # ===== Exercise Q17 =====
-Q17_DESC="Question 17: Set permissions 644 on /var/tmp/chmod_lab/document.txt and owner:group to student:students."
+Q17_DESC="Allow the owner to read and write, while others can only read /var/tmp/chmod_lab/document.txt. Set owner:group to student:students."
 check_Q17() {
   if sudo -n test -f /var/tmp/chmod_lab/document.txt 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/document.txt | grep -q '^644$' && \
@@ -479,7 +479,7 @@ check_Q17() {
 }
 
 # ===== Exercise Q18 =====
-Q18_DESC="Question 18: Set permissions 600 on /var/tmp/chmod_lab/private.key and owner:group to tester:qa."
+Q18_DESC="Allow only the owner to read and write /var/tmp/chmod_lab/private.key. No one else should have access. Set owner:group to tester:qa."
 check_Q18() {
   if sudo -n test -f /var/tmp/chmod_lab/private.key 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/private.key | grep -q '^600$' && \
@@ -498,7 +498,7 @@ check_Q18() {
 }
 
 # ===== Exercise Q19 =====
-Q19_DESC="Question 19: Set permissions 400 on /var/tmp/chmod_lab/readme.md and owner:group to analyst:finance."
+Q19_DESC="Allow only the owner to read /var/tmp/chmod_lab/readme.md. Everyone else should have no access. Set owner:group to analyst:finance."
 check_Q19() {
   if sudo -n test -f /var/tmp/chmod_lab/readme.md 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/readme.md | grep -q '^400$' && \
@@ -517,7 +517,7 @@ check_Q19() {
 }
 
 # ===== Exercise Q20 =====
-Q20_DESC="Question 20: Set permissions 000 on /var/tmp/chmod_lab/hidden.conf and owner:group to backup:storage."
+Q20_DESC="Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage."
 check_Q20() {
   if sudo -n test -f /var/tmp/chmod_lab/hidden.conf 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/hidden.conf | grep -q '^000$' && \
