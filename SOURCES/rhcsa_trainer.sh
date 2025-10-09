@@ -402,20 +402,6 @@ check_Q13() {
   fi
 }
 
-# ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13)
-declare -A STATUS
-
-evaluate_all() {
-  for id in "${TASKS[@]}"; do
-    if "check_${id}"; then
-      STATUS[$id]="${GREEN}PASSED${RESET}"
-    else
-      STATUS[$id]="${RED}PENDING${RESET}"
-    fi
-  done
-}
-
 # ===== Exercise Q14 =====
 Q14_DESC="Question 14: Set permissions 777 on /var/tmp/chmod_lab/public.log and set owner:group to root:root."
 check_Q14() {
@@ -548,6 +534,22 @@ check_Q20() {
     return 1
   fi
 }
+
+# ===== Infra =====
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20)
+declare -A STATUS
+
+evaluate_all() {
+  for id in "${TASKS[@]}"; do
+    if "check_${id}"; then
+      STATUS[$id]="${GREEN}PASSED${RESET}"
+    else
+      STATUS[$id]="${RED}PENDING${RESET}"
+    fi
+  done
+}
+
+
 
 reset_all() {
   local TRAINER_HOME
