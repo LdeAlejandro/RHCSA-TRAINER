@@ -179,3 +179,104 @@ chown root:root /var/tmp/fstab
 chmod 644 /var/tmp/fstab
 
 ```
+## Question 14: Give full permissions to everyone on `/var/tmp/chmod_lab/public.log` and set owner:group to `root:root`
+
+### Answer:
+```bash
+# Everyone can read, write, and execute this file
+chmod 777 /var/tmp/chmod_lab/public.log
+
+# Set file owner and group to root
+chown root:root /var/tmp/chmod_lab/public.log
+```
+
+---
+
+## Question 15: Allow the owner to read/write/execute, while others can only read and execute on `/var/tmp/chmod_lab/script.sh`. Set owner:group to `devops:devs`.
+
+### Answer:
+```bash
+# Owner can do everything; others can read and execute only
+chmod 755 /var/tmp/chmod_lab/script.sh
+
+# Create the group
+sudo groupadd devs
+
+# Create the user and assign to group
+sudo useradd -g devs devops
+
+# Assign file ownership
+chown devops:devs /var/tmp/chmod_lab/script.sh
+```
+
+---
+
+## Question 16: Allow only the owner to read, write, and execute on `/var/tmp/chmod_lab/secret.txt`. Set owner:group to `admin:admins`.
+
+### Answer:
+```bash
+# Only the owner has full access; no one else can access
+chmod 700 /var/tmp/chmod_lab/secret.txt
+
+# Create the group
+sudo groupadd admins
+
+# Create the user and assign to group
+sudo useradd -g admins admin
+
+# Assign file ownership
+chown admin:admins /var/tmp/chmod_lab/secret.txt
+```
+
+---
+
+## Question 17: Allow the owner to read and write, while others can only read `/var/tmp/chmod_lab/document.txt`. Set owner:group to `student:students`.
+
+### Answer:
+```bash
+# Owner can read and write; others can only read
+chmod 644 /var/tmp/chmod_lab/document.txt
+
+# Assign file ownership
+chown student:students /var/tmp/chmod_lab/document.txt
+```
+
+---
+
+## Question 18: Allow only the owner to read and write `/var/tmp/chmod_lab/private.key`. No one else should have access. Set owner:group to `tester:qa`.
+
+### Answer:
+```bash
+# Owner can read/write; group and others have no access
+chmod 600 /var/tmp/chmod_lab/private.key
+
+# Assign file ownership
+chown tester:qa /var/tmp/chmod_lab/private.key
+```
+
+---
+
+## Question 19: Allow only the owner to read `/var/tmp/chmod_lab/readme.md`. Everyone else should have no access. Set owner:group to `analyst:finance`.
+
+### Answer:
+```bash
+# Owner can read only; no one else has access
+chmod 400 /var/tmp/chmod_lab/readme.md
+
+# Assign file ownership
+chown analyst:finance /var/tmp/chmod_lab/readme.md
+```
+
+---
+
+## Question 20: Remove all permissions from `/var/tmp/chmod_lab/hidden.conf`. No one should be able to read, write, or execute it. Set owner:group to `backup:storage`.
+
+### Answer:
+```bash
+# No permissions for anyone (completely restricted)
+chmod 000 /var/tmp/chmod_lab/hidden.conf
+
+# Assign file ownership
+chown backup:storage /var/tmp/chmod_lab/hidden.conf
+```
+

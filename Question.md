@@ -23,3 +23,17 @@
 ## Question 12: Find a file named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
 
 ## Question 13: Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone
+
+## Question 14: Give full permissions to everyone on /var/tmp/chmod_lab/public.log and set owner:group to root:root
+
+## Question 15: Allow the owner to read/write/execute, while others can only read and execute on /var/tmp/chmod_lab/script.sh. Set owner:group to devops:devs.
+
+## Question 16: Allow only the owner to read, write, and execute on /var/tmp/chmod_lab/secret.txt. Set owner:group to admin:admins.
+
+## Question 17: Allow the owner to read and write, while others can only read /var/tmp/chmod_lab/document.txt. Set owner:group to student:students.
+
+## Question 18: Allow only the owner to read and write /var/tmp/chmod_lab/private.key. No one else should have access. Set owner:group to tester:qa.
+
+## Question 19: Allow only the owner to read /var/tmp/chmod_lab/readme.md. Everyone else should have no access. Set owner:group to analyst:finance.
+
+## Question 20: Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage.

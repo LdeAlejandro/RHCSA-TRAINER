@@ -217,23 +217,23 @@ check_Q5() {
 
   # 0) Ensure the source file actually has 'Listen'
   if ! grep -q "Listen" "$CONF_FILE" 2>/dev/null; then
-    echo "[FAIL] '$CONF_FILE' does not contain 'Listen' (did you create/populate it?)."
+    echo "❌ [FAIL] '$CONF_FILE' does not contain 'Listen' (did you create/populate it?)."
     return 1
   fi
 
   # 1) Does /root/web.txt exist? (need sudo to see inside /root)
   if ! sudo -n test -f "$OUTPUT_FILE" 2>/dev/null; then
-    echo "[FAIL] $OUTPUT_FILE not found. Hint: use:"
+    echo "❌ [FAIL] $OUTPUT_FILE not found. Hint: use:"
     echo "  sudo sh -c 'grep \"Listen\" \"$CONF_FILE\" > \"$OUTPUT_FILE\"'"
     return 1
   fi
 
   # 2) Does /root/web.txt actually contain 'Listen'?
   if sudo -n grep -q "Listen" "$OUTPUT_FILE" 2>/dev/null; then
-    echo "[OK] Correct — 'Listen' lines saved to $OUTPUT_FILE."
+    echo "✅ [OK] Correct — 'Listen' lines saved to $OUTPUT_FILE."
     return 0
   else
-    echo "[FAIL] $OUTPUT_FILE exists but does not contain 'Listen'."
+    echo "❌ [FAIL] $OUTPUT_FILE exists but does not contain 'Listen'."
     echo "Hint: sudo sh -c 'grep \"Listen\" \"$CONF_FILE\" > \"$OUTPUT_FILE\"'"
     return 1
   fi
@@ -249,22 +249,22 @@ check_Q6() {
 
   # 1. Check if the directory exists
   if [[ ! -d "$DEST_DIR" ]]; then
-    echo "[FAIL] Directory $DEST_DIR not found — create it with: mkdir ~/vaults"
+    echo "❌ [FAIL] Directory $DEST_DIR not found — create it with: mkdir ~/vaults"
     return 1
   fi
 
   # 2. Check if the tar.gz archive exists
   if [[ ! -f "$TAR_FILE" ]]; then
-    echo "[FAIL] File $TAR_FILE not found — create it with: tar czvf ~/vaults/etc_vault.tar.gz /etc"
+    echo "❌[FAIL] File $TAR_FILE not found — create it with: tar czvf ~/vaults/etc_vault.tar.gz /etc"
     return 1
   fi
 
   # 3. Validate that it's gzip-compressed
   if file "$TAR_FILE" | grep -q "gzip compressed data"; then
-    echo "[OK] Correct — $TAR_FILE is a valid gzip-compressed tar archive."
+    echo "✅ Q6 Correct — $TAR_FILE is a valid gzip-compressed tar archive."
     return 0
   else
-    echo "[FAIL] $TAR_FILE exists but is not a gzip-compressed archive."
+    echo "❌ [FAIL] $TAR_FILE exists but is not a gzip-compressed archive."
     return 1
   fi
 }
@@ -516,21 +516,24 @@ check_Q19() {
   fi
 }
 
-# ===== Exercise Q20 =====
+# ===== Exercise Q20 (fixed) =====
 Q20_DESC="Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage."
 check_Q20() {
-  if sudo -n test -f /var/tmp/chmod_lab/hidden.conf 2>/dev/null; then
-    if sudo -n stat -c '%a' /var/tmp/chmod_lab/hidden.conf | grep -q '^000$' && \
-       sudo -n stat -c '%U' /var/tmp/chmod_lab/hidden.conf | grep -q '^backup$' && \
-       sudo -n stat -c '%G' /var/tmp/chmod_lab/hidden.conf | grep -q '^storage$'; then
-      echo "✅ Q20 passed: Permissions and ownership correct."
+  local f="/var/tmp/chmod_lab/hidden.conf"
+  if sudo -n test -f "$f" 2>/dev/null; then
+    # Accept 0 or 000; also verify owner/group
+    if sudo -n stat -c '%a' "$f" 2>/dev/null | grep -Eq '^(0|000)$' && \
+       sudo -n stat -c '%U' "$f" 2>/dev/null | grep -q '^backup$' && \
+       sudo -n stat -c '%G' "$f" 2>/dev/null | grep -q '^storage$'; then
+      echo "✅ Q20 passed: Ownership and permissions are correct."
       return 0
     else
-      echo "❌ Q20 failed: Incorrect permissions or ownership."
+      echo "❌ Q20 failed: Ownership or permissions are incorrect."
+      echo "    Debug -> $(sudo -n stat -c 'perm=%a owner=%U group=%G' "$f" 2>/dev/null)"
       return 1
     fi
   else
-    echo "❌ Q20 failed: File not found."
+    echo "❌ Q20 failed: $f not found."
     return 1
   fi
 }
@@ -571,6 +574,32 @@ reset_all() {
   sudo rm -rf /root/httpd-paths.txt 2>/dev/null || true
   sudo rm -f -- /root/web.txt 2>/dev/null || true
   sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
+
+  #delete Q14 to Q20 user and groups and files
+
+  # Users: devops, admin, student, tester, analyst, backup
+for u in devops admin student tester analyst backup; do
+  if getent passwd "$u" >/dev/null; then
+    sudo pkill -u "$u" 2>/dev/null || true
+    sudo userdel -r "$u"
+    echo "Deleted user: $u"
+  else
+    echo "User not found: $u"
+  fi
+done
+
+# Groups: devs, admins, students, qa, finance, storage
+for g in devs admins students qa finance storage; do
+  if getent group "$g" >/dev/null; then
+    sudo groupdel "$g"
+    echo "Deleted group: $g"
+  else
+    echo "Group not found: $g"
+  fi
+done
+
+sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
+
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
 
