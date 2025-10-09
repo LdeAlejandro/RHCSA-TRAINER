@@ -26,8 +26,11 @@ resolve_home() {
 # ===== Start monitored shell (robust) =====
 start_monitor() {
   RHCSA_SHM_DIR="${RHCSA_SHM_DIR:-/dev/shm/rhcsa-trainer}"
+   echo "Creating directories and files for exercises..."
   mkdir -p "$RHCSA_SHM_DIR"
-  echo "Creating directories and files for exercises..."
+
+  sudo mkdir -p /var/tmp/chmod_lab && sudo touch /var/tmp/chmod_lab/{public.log,script.sh,secret.txt,document.txt,private.key,readme.md,hidden.conf}
+
 
   # 1) GARANTA as pastas do trainer primeiro, e no HOME correto:
   TRAINER_HOME="$(resolve_home)"
@@ -413,6 +416,139 @@ evaluate_all() {
   done
 }
 
+# ===== Exercise Q14 =====
+Q14_DESC="Question 14: Set permissions 777 on /var/tmp/chmod_lab/public.log and set owner:group to root:root."
+check_Q14() {
+  if sudo -n test -f /var/tmp/chmod_lab/public.log 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/public.log | grep -q '^777$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/public.log | grep -q '^root$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/public.log | grep -q '^root$'; then
+      echo "✅ Q14 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q14 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q14 failed: File not found."
+    return 1
+  fi
+}
+
+# ===== Exercise Q15 =====
+Q15_DESC="Question 15: Set permissions 755 on /var/tmp/chmod_lab/script.sh and owner:group to devops:devs."
+check_Q15() {
+  if sudo -n test -f /var/tmp/chmod_lab/script.sh 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/script.sh | grep -q '^755$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/script.sh | grep -q '^devops$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/script.sh | grep -q '^devs$'; then
+      echo "✅ Q15 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q15 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q15 failed: File not found."
+    return 1
+  fi
+}
+
+# ===== Exercise Q16 =====
+Q16_DESC="Question 16: Set permissions 700 on /var/tmp/chmod_lab/secret.txt and owner:group to admin:admins."
+check_Q16() {
+  if sudo -n test -f /var/tmp/chmod_lab/secret.txt 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/secret.txt | grep -q '^700$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/secret.txt | grep -q '^admin$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/secret.txt | grep -q '^admins$'; then
+      echo "✅ Q16 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q16 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q16 failed: File not found."
+    return 1
+  fi
+}
+
+# ===== Exercise Q17 =====
+Q17_DESC="Question 17: Set permissions 644 on /var/tmp/chmod_lab/document.txt and owner:group to student:students."
+check_Q17() {
+  if sudo -n test -f /var/tmp/chmod_lab/document.txt 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/document.txt | grep -q '^644$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/document.txt | grep -q '^student$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/document.txt | grep -q '^students$'; then
+      echo "✅ Q17 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q17 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q17 failed: File not found."
+    return 1
+  fi
+}
+
+# ===== Exercise Q18 =====
+Q18_DESC="Question 18: Set permissions 600 on /var/tmp/chmod_lab/private.key and owner:group to tester:qa."
+check_Q18() {
+  if sudo -n test -f /var/tmp/chmod_lab/private.key 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/private.key | grep -q '^600$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/private.key | grep -q '^tester$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/private.key | grep -q '^qa$'; then
+      echo "✅ Q18 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q18 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q18 failed: File not found."
+    return 1
+  fi
+}
+
+# ===== Exercise Q19 =====
+Q19_DESC="Question 19: Set permissions 400 on /var/tmp/chmod_lab/readme.md and owner:group to analyst:finance."
+check_Q19() {
+  if sudo -n test -f /var/tmp/chmod_lab/readme.md 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/readme.md | grep -q '^400$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/readme.md | grep -q '^analyst$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/readme.md | grep -q '^finance$'; then
+      echo "✅ Q19 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q19 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q19 failed: File not found."
+    return 1
+  fi
+}
+
+# ===== Exercise Q20 =====
+Q20_DESC="Question 20: Set permissions 000 on /var/tmp/chmod_lab/hidden.conf and owner:group to backup:storage."
+check_Q20() {
+  if sudo -n test -f /var/tmp/chmod_lab/hidden.conf 2>/dev/null; then
+    if sudo -n stat -c '%a' /var/tmp/chmod_lab/hidden.conf | grep -q '^000$' && \
+       sudo -n stat -c '%U' /var/tmp/chmod_lab/hidden.conf | grep -q '^backup$' && \
+       sudo -n stat -c '%G' /var/tmp/chmod_lab/hidden.conf | grep -q '^storage$'; then
+      echo "✅ Q20 passed: Permissions and ownership correct."
+      return 0
+    else
+      echo "❌ Q20 failed: Incorrect permissions or ownership."
+      return 1
+    fi
+  else
+    echo "❌ Q20 failed: File not found."
+    return 1
+  fi
+}
+
 reset_all() {
   local TRAINER_HOME
   TRAINER_HOME="$(resolve_home)"
@@ -429,8 +565,10 @@ reset_all() {
   sudo rm -rf /bigfiles 2>/dev/null || true
   sudo rm -rf /var/tmp/twenty/ 2>/dev/null || true
   sudo rm -rf /var/tmp/rhel-files 2>/dev/null || true
+  sudo rm -rf /var/tmp/fstab 2>/dev/null || true
   sudo rm -rf /root/httpd-paths.txt 2>/dev/null || true
   sudo rm -f -- /root/web.txt 2>/dev/null || true
+  sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
 
