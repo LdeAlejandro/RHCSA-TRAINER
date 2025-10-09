@@ -37,3 +37,5 @@
 ## Question 19: Allow only the owner to read /var/tmp/chmod_lab/readme.md. Everyone else should have no access. Set owner:group to analyst:finance.
 
 ## Question 20: Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage.
+
+## Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt.

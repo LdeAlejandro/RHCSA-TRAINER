@@ -516,7 +516,7 @@ check_Q19() {
   fi
 }
 
-# ===== Exercise Q20 (fixed) =====
+# ===== Exercise Q20  =====
 Q20_DESC="Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage."
 check_Q20() {
   local f="/var/tmp/chmod_lab/hidden.conf"
@@ -538,8 +538,49 @@ check_Q20() {
   fi
 }
 
+# ===== Exercise Q21 =====
+Q21_DESC="Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt."
+check_Q21() {
+  local script="/root/find-files.sh"
+  local output="/root/sized_files.txt"
+
+  # Check if the script exists and is executable
+  if sudo -n test -f "$script" 2>/dev/null; then
+    if ! sudo -n test -x "$script" 2>/dev/null; then
+      echo "❌ Q21 failed: Script exists but is not executable."
+      return 1
+    fi
+
+    # Verify that it contains the expected 'find' command
+    if ! sudo -n grep -Eq 'find[[:space:]]+/usr[[:space:]]+-type[[:space:]]+f[[:space:]]+-size[[:space:]]+\+30k[[:space:]]+-size[[:space:]]+-50k' "$script"; then
+      echo "❌ Q21 failed: Script content is incorrect or missing find command."
+      return 1
+    fi
+  else
+    echo "❌ Q21 failed: Script $script not found."
+    return 1
+  fi
+
+  # Run the script to ensure it generates output correctly
+  sudo -n bash "$script" 2>/dev/null
+
+  if sudo -n test -f "$output" 2>/dev/null; then
+    # Ensure the file isn't empty
+    if [[ $(sudo -n wc -l < "$output") -gt 0 ]]; then
+      echo "✅ Q21 passed: Script created and executed correctly, output generated."
+      return 0
+    else
+      echo "❌ Q21 failed: Output file exists but is empty."
+      return 1
+    fi
+  else
+    echo "❌ Q21 failed: Output file not created."
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21)
 declare -A STATUS
 
 evaluate_all() {
@@ -599,6 +640,10 @@ for g in devs admins students qa finance storage; do
 done
 
 sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
+#
+  sudo rm -f /root/find-files.sh 2>/dev/null || true
+  sudo rm -f /root/sized_files.txt 2>/dev/null || true
+
 
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
@@ -628,7 +673,7 @@ case "${1-}" in
   start) start_monitor ;;
   eval)  evaluate_all; board ;;
   board|"") evaluate_all; board ;;
-  reset) reset_all; board ;;
+  reset) reset_all;  ;;
   help|-h|--help) usage ;;
   *) echo "Unknown command: $1"; usage; exit 1 ;;
 esac
