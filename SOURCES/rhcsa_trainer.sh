@@ -380,8 +380,27 @@ check_Q12() {
   fi
 }
 
+# ===== Exercise Q12 =====
+Q13_DESC="Question 13: Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone"
+check_Q13() {
+  if sudo -n test -f /var/tmp/fstab 2>/dev/null; then
+    if sudo -n stat -c '%U' /var/tmp/fstab 2>/dev/null | grep -q '^root$' && \
+       sudo -n stat -c '%G' /var/tmp/fstab 2>/dev/null | grep -q '^root$' && \
+       ! sudo -n test -x /var/tmp/fstab 2>/dev/null; then
+      echo "✅ Q13 passed: Ownership and permissions are correct."
+      return 0
+    else
+      echo "❌ Q13 failed: Ownership or permissions are incorrect."
+      return 1
+    fi
+  else
+    echo "❌ Q13 failed: /var/tmp/fstab not found."
+    return 1
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13)
 declare -A STATUS
 
 evaluate_all() {

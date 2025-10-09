@@ -164,3 +164,18 @@ find / -type f -name httpd.conf >> /root/httpd-paths.txt
 sudo sh -c 'find / -type f -name httpd.conf >> /root/httpd-paths.txt'
 ```
 --- 
+
+## Question 13: Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone
+
+### Answer:
+```bash
+# Copy /etc/fstab to /var/tmp
+cp /etc/fstab /var/tmp/
+
+# Set file owner and group to root
+chown root:root /var/tmp/fstab
+
+# Set permissions to read/write for owner, read-only for others (no execute)
+chmod 644 /var/tmp/fstab
+
+```

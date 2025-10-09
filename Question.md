@@ -20,4 +20,6 @@
 
 ## Question 11:Find all files owned by user rhel and copy them to /var/tmp/rhel-files.
 
-## Question 12 named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
+## Question 12: Find a file named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
+
+## Question 13: Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone
