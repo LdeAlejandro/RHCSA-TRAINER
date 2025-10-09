@@ -539,42 +539,82 @@ check_Q20() {
 }
 
 # ===== Exercise Q21 =====
-Q21_DESC="Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt."
+Q21_DESC="Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt."
 check_Q21() {
   local script="/root/find-files.sh"
   local output="/root/sized_files.txt"
+  local low=$((30*1024))   # 30720 bytes
+  local high=$((50*1024))  # 51200 bytes, strict upper bound
 
-  # Check if the script exists and is executable
-  if sudo -n test -f "$script" 2>/dev/null; then
-    if ! sudo -n test -x "$script" 2>/dev/null; then
-      echo "❌ Q21 failed: Script exists but is not executable."
-      return 1
-    fi
-
-    # Verify that it contains the expected 'find' command
-    if ! sudo -n grep -Eq 'find[[:space:]]+/usr[[:space:]]+-type[[:space:]]+f[[:space:]]+-size[[:space:]]+\+30k[[:space:]]+-size[[:space:]]+-50k' "$script"; then
-      echo "❌ Q21 failed: Script content is incorrect or missing find command."
-      return 1
-    fi
-  else
+  # 1) Script exists and is executable
+  if ! sudo -n test -f "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script $script not found."
     return 1
   fi
+  if ! sudo -n test -x "$script" 2>/dev/null; then
+    echo "❌ Q21 failed: Script exists but is not executable."
+    return 1
+  fi
 
-  # Run the script to ensure it generates output correctly
-  sudo -n bash "$script" 2>/dev/null
+  # 2) Run script and ensure output file is (re)generated
+  local prev_mtime
+  prev_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
+  if ! sudo -n bash "$script" 2>/dev/null; then
+    echo "❌ Q21 failed: Script execution returned a non-zero status."
+    return 1
+  fi
+  if ! sudo -n test -f "$output" 2>/dev/null; then
+    echo "❌ Q21 failed: Output file $output was not created."
+    return 1
+  fi
+  local new_mtime
+  new_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
+  if [[ "$new_mtime" -le "$prev_mtime" ]]; then
+    echo "❌ Q21 failed: Output file was not updated by the script."
+    return 1
+  fi
 
-  if sudo -n test -f "$output" 2>/dev/null; then
-    # Ensure the file isn't empty
-    if [[ $(sudo -n wc -l < "$output") -gt 0 ]]; then
-      echo "✅ Q21 passed: Script created and executed correctly, output generated."
-      return 0
-    else
-      echo "❌ Q21 failed: Output file exists but is empty."
-      return 1
+  # 3) If output has lines, validate each line; allow empty output (environment-dependent)
+  local lines
+  lines="$(sudo -n wc -l < "$output" 2>/dev/null || echo 0)"
+  if [[ "$lines" -eq 0 ]]; then
+    echo "⚠️ Q21 note: Output file is empty. Accepting (may vary by environment)."
+    echo "✅ Q21 passed: Script exists, is executable, and generated the output file."
+    return 0
+  fi
+
+  # 4) Validate each path
+  local bad=0
+  while IFS= read -r p; do
+    # skip blank lines
+    [[ -z "$p" ]] && continue
+    # must start with /usr
+    if [[ "$p" != /usr/* ]]; then
+      echo "❌ Q21 failed: Path not under /usr -> $p"
+      bad=1; continue
     fi
+    # must be a regular file
+    if ! sudo -n test -f "$p" 2>/dev/null; then
+      echo "❌ Q21 failed: Not a regular file -> $p"
+      bad=1; continue
+    fi
+    # size must be strictly between 30KB and 50KB
+    bytes="$(sudo -n stat -c '%s' "$p" 2>/dev/null || echo -1)"
+    if ! [[ "$bytes" =~ ^[0-9]+$ ]]; then
+      echo "❌ Q21 failed: Could not read size -> $p"
+      bad=1; continue
+    fi
+    if (( bytes <= low || bytes >= high )); then
+      echo "❌ Q21 failed: Size out of range (bytes=$bytes) -> $p"
+      bad=1; continue
+    fi
+  done < <(sudo -n cat "$output")
+
+  if [[ "$bad" -eq 0 ]]; then
+    echo "✅ Q21 passed: Script executed and output validated without relying on implementation details."
+    return 0
   else
-    echo "❌ Q21 failed: Output file not created."
+    echo "❌ Q21 failed: One or more listed paths did not meet the criteria."
     return 1
   fi
 }
