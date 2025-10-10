@@ -701,66 +701,39 @@ check_Q23() {
 }
 
 # ===== Exercise Q24 =====
-Q24_DESC="Create /root/career.sh that prints:
-1) \"Yes, I'm a Systems Engineer.\" for 'me'
-2) \"Okay, they do cloud engineering.\" for 'they'
-3) Usage/invalid message for empty/invalid args"
+Q24_DESC="Create /root/career.sh that prints specific lines for 'me' and 'they' and a usage for empty/invalid args."
 
 check_Q24() {
-  # locate script
-  local script="/root/career.sh"
+  script="/root/career.sh"
   [ -f "$script" ] || script="$HOME/career.sh"
   if [ ! -f "$script" ]; then
-    echo "❌ Q24 | FAIL | career.sh not found at /root/career.sh or ~/career.sh"; return 1
+    echo "Q24 | FAIL | career.sh not found at /root/career.sh or ~/career.sh"; return 1
   fi
 
-  # must be shell with a sensible shebang
-  if ! head -n1 "$script" | grep -Eq '^#! */bin/(ba)?sh *$'; then
-    echo "❌ Q24 | FAIL | missing/invalid shebang (expected #!/bin/bash or #!/bin/sh)"; return 1
+  if ! head -n1 "$script" | grep -Eq '^#! */bin/(ba)?sh( |$)'; then
+    echo "Q24 | FAIL | missing/invalid shebang"; return 1
   fi
 
-  # helper: normalize quotes/spaces
-  _norm() {
-    sed -e "s/[’‘`]/'/g" -e 's/  \+/ /g' -e 's/^ *//; s/ *$//'
+  norm() { sed -e "s/[[:space:]]\+/ /g" -e 's/^ //; s/ $//'; }
+
+  out_me=$(bash "$script" me     2>/dev/null | norm)
+  out_they=$(bash "$script" they 2>/dev/null | norm)
+  out_empty=$(bash "$script"     2>/dev/null | norm)
+  out_bad=$(bash "$script" xxx   2>/dev/null | norm)
+
+  exp_me="Yes, I'm a Systems Engineer."
+  exp_they="Okay, they do cloud engineering."
+
+  is_usage() {
+    printf '%s' "$1" | norm | grep -Eq '^Usage: \./career\.sh me\|they$|^Please provide an argument: me \| they$'
   }
 
-  # run cases (use bash to avoid exec-bit dependency)
-  local out_me out_they out_empty out_bad
-  out_me=$(bash "$script" me 2>/dev/null | _norm)
-  out_they=$(bash "$script" they 2>/dev/null | _norm)
-  out_empty=$(bash "$script" 2>/dev/null | _norm)
-  out_bad=$(bash "$script" sdfsdf 2>/dev/null | _norm)
+  [ "$out_me" = "$exp_me" ]   || { echo "Q24 | FAIL | me -> $out_me"; return 1; }
+  [ "$out_they" = "$exp_they" ] || { echo "Q24 | FAIL | they -> $out_they"; return 1; }
+  is_usage "$out_empty"       || { echo "Q24 | FAIL | empty -> $out_empty"; return 1; }
+  is_usage "$out_bad"         || { echo "Q24 | FAIL | invalid -> $out_bad"; return 1; }
 
-  # expected (normalized)
-  local exp_me="Yes, I'm a Systems Engineer."
-  local exp_they="Okay, they do cloud engineering."
-
-  # usage accepted variants (both the strict spec and your message)
-  _is_usage() {
-    printf '%s' "$1" \
-    | sed -e 's/|/|/g' -e 's/  \+/ /g' -e 's/^ *//; s/ *$//' \
-    | grep -Eq '^Usage: *(\./)?career\.sh *me\|they$|^Please provide an argument: *me *\| *they$'
-  }
-
-  # compare
-  if [ "$out_me" != "$exp_me" ]; then
-    echo "❌ Q24 | FAIL | ./career.sh me → '$out_me' (expected: '$exp_me')"; return 1
-  fi
-
-  if [ "$out_they" != "$exp_they" ]; then
-    echo "❌ Q24 | FAIL | ./career.sh they → '$out_they' (expected: '$exp_they')"; return 1
-  fi
-
-  if ! _is_usage "$out_empty"; then
-    echo "❌ Q24 | FAIL | ./career.sh (no args) → '$out_empty' (expected usage message)"; return 1
-  fi
-
-  if ! _is_usage "$out_bad"; then
-    echo "❌ Q24 | FAIL | ./career.sh sdfsdf → '$out_bad' (expected usage message)"; return 1
-  fi
-
-  echo "✅ Q24 | PASS | career.sh behavior matches requirements"
-  return 0
+  echo "Q24 | PASS | OK"; return 0
 }
 
 # ===== Infra =====
