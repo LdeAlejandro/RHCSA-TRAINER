@@ -359,21 +359,26 @@ sudo passwd def4ult
 ---
 
 
-## Question 24: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
+## Question 24: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must be executable 755 permission
 
 ### Answer:
 
 ```bash
 cat >/root/career.sh <<'EOF'
 #!/bin/bash
-case "$1" in
-  me)   echo "Yes, I'm a Systems Engineer." ;;
-  they) echo "Okay, they do cloud engineering." ;;
-  *)    echo "Usage: ./career.sh me|they" ;;
-esac
+
+if [ "$1" = "me" ]; then
+  echo "Yes, I'm a Systems Engineer."
+elif [ "$1" = "they" ]; then
+  echo "Okay, they do cloud engineering."
+elif [ -z "$1" ]; then
+  echo "Please provide an argument: me | they"
+else
+  echo "Usage: ./career.sh me|they"
+fi
 EOF
 
-chmod +x /root/career.sh
+chmod 755 /root/career.sh
 ```
 
 ## Question 25: Write shell scripts on node1 that create users and groups according to the following parameters:

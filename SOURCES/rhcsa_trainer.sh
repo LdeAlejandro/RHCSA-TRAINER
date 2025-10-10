@@ -701,7 +701,7 @@ check_Q23() {
 }
 
 # ===== Exercise Q24 =====
-Q24_DESC="Create /root/career.sh that prints specific lines for 'me' and 'they' and a usage for empty/invalid args."
+Q24_DESC="Create a shell script that outputs the exact lines and has mode 755."
 
 check_Q24() {
   script="/root/career.sh"
@@ -710,8 +710,15 @@ check_Q24() {
     echo "Q24 | FAIL | career.sh not found at /root/career.sh or ~/career.sh"; return 1
   fi
 
+  # must be shell with a sensible shebang
   if ! head -n1 "$script" | grep -Eq '^#! */bin/(ba)?sh( |$)'; then
     echo "Q24 | FAIL | missing/invalid shebang"; return 1
+  fi
+
+  # must be 755
+  perm=$(stat -c '%a' "$script" 2>/dev/null || stat -f '%Lp' "$script" 2>/dev/null)
+  if [ "$perm" != "755" ]; then
+    echo "Q24 | FAIL | permission is $perm (expected 755)"; return 1
   fi
 
   norm() { sed -e "s/[[:space:]]\+/ /g" -e 's/^ //; s/ $//'; }
@@ -723,15 +730,12 @@ check_Q24() {
 
   exp_me="Yes, I'm a Systems Engineer."
   exp_they="Okay, they do cloud engineering."
+  exp_usage="Usage: ./career.sh me|they"
 
-  is_usage() {
-    printf '%s' "$1" | norm | grep -Eq '^Usage: \./career\.sh me\|they$|^Please provide an argument: me \| they$'
-  }
-
-  [ "$out_me" = "$exp_me" ]   || { echo "Q24 | FAIL | me -> $out_me"; return 1; }
-  [ "$out_they" = "$exp_they" ] || { echo "Q24 | FAIL | they -> $out_they"; return 1; }
-  is_usage "$out_empty"       || { echo "Q24 | FAIL | empty -> $out_empty"; return 1; }
-  is_usage "$out_bad"         || { echo "Q24 | FAIL | invalid -> $out_bad"; return 1; }
+  [ "$out_me" = "$exp_me" ]      || { echo "Q24 | FAIL | me -> $out_me"; return 1; }
+  [ "$out_they" = "$exp_they" ]  || { echo "Q24 | FAIL | they -> $out_they"; return 1; }
+  [ "$out_empty" = "$exp_usage" ]|| { echo "Q24 | FAIL | empty -> $out_empty"; return 1; }
+  [ "$out_bad" = "$exp_usage" ]  || { echo "Q24 | FAIL | invalid -> $out_bad"; return 1; }
 
   echo "Q24 | PASS | OK"; return 0
 }
@@ -749,9 +753,6 @@ evaluate_all() {
     fi
   done
 }
-
-
-
 reset_all() {
   local TRAINER_HOME
   TRAINER_HOME="$(resolve_home)"
