@@ -660,13 +660,13 @@ PY
 }
 
 # ===== Exercise Q22 =====
-Q22_DESC="Create an user named 'noob' with password 'A7338' and configure it to change the password on next login."
+Q22_DESC="Create an user named 'noob' with password 'Aa7338!!' and configure it to change the password on next login."
 check_Q22() {
   if ! getent passwd noob >/dev/null; then
     echo "❌ Q22 | FAIL | user 'noob' not found"; return 1
   fi
 
-  if ! _has_exact_password "noob" "A7338"; then
+  if ! _has_exact_password "noob" "Aa7338!!"; then
     rc=$?
     [ $rc -eq 2 ] && echo "⚠️ Q22 | WARN | cannot verify exact password (install 'whois' or 'python3')" || \
                      echo "❌ Q22 | FAIL | wrong password for 'noob'"
@@ -684,18 +684,18 @@ check_Q22() {
 }
 
 # ===== Exercise Q23 =====
-Q23_DESC="Create an user named 'def4ult' with password 'A578' and change it to 'C546#'."
+Q23_DESC="Create an user named 'def4ult' with password 'A578' and change it to 'C546#Ab!'."
 check_Q23() {
   if ! getent passwd def4ult >/dev/null; then
     echo "❌ Q23 | FAIL | user 'def4ult' not found"; return 1
   fi
 
-  if _has_exact_password "def4ult" "C546#"; then
-    echo "✅ Q23 | PASS | exact final password 'C546#' is set"; return 0
+  if _has_exact_password "def4ult" "C546#Ab!"; then
+    echo "✅ Q23 | PASS | exact final password 'C546#Ab!' is set"; return 0
   else
     rc=$?
     [ $rc -eq 2 ] && echo "⚠️ Q23 | WARN | cannot verify exact password (install 'whois' or 'python3')" || \
-                     echo "❌ Q23 | FAIL | final password is not 'C546#'"
+                     echo "❌ Q23 | FAIL | final password is not 'C546#Ab!'"
     return 1
   fi
 }
