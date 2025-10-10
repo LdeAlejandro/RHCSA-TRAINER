@@ -684,7 +684,7 @@ check_Q22() {
 }
 
 # ===== Exercise Q23 =====
-Q23_DESC="Create an user named 'def4ult' with password 'A578' and change it to 'C546#Ab!'."
+Q23_DESC="Create an user named 'def4ult' with password 'Aa578!!??' and change it to 'C546#Ab!'."
 check_Q23() {
   if ! getent passwd def4ult >/dev/null; then
     echo "❌ Q23 | FAIL | user 'def4ult' not found"; return 1
@@ -700,8 +700,71 @@ check_Q23() {
   fi
 }
 
+# ===== Exercise Q24 =====
+Q24_DESC="Create /root/career.sh that prints:
+1) \"Yes, I'm a Systems Engineer.\" for 'me'
+2) \"Okay, they do cloud engineering.\" for 'they'
+3) Usage/invalid message for empty/invalid args"
+
+check_Q24() {
+  # locate script
+  local script="/root/career.sh"
+  [ -f "$script" ] || script="$HOME/career.sh"
+  if [ ! -f "$script" ]; then
+    echo "❌ Q24 | FAIL | career.sh not found at /root/career.sh or ~/career.sh"; return 1
+  fi
+
+  # must be shell with a sensible shebang
+  if ! head -n1 "$script" | grep -Eq '^#! */bin/(ba)?sh *$'; then
+    echo "❌ Q24 | FAIL | missing/invalid shebang (expected #!/bin/bash or #!/bin/sh)"; return 1
+  fi
+
+  # helper: normalize quotes/spaces
+  _norm() {
+    sed -e "s/[’‘`]/'/g" -e 's/  \+/ /g' -e 's/^ *//; s/ *$//'
+  }
+
+  # run cases (use bash to avoid exec-bit dependency)
+  local out_me out_they out_empty out_bad
+  out_me=$(bash "$script" me 2>/dev/null | _norm)
+  out_they=$(bash "$script" they 2>/dev/null | _norm)
+  out_empty=$(bash "$script" 2>/dev/null | _norm)
+  out_bad=$(bash "$script" sdfsdf 2>/dev/null | _norm)
+
+  # expected (normalized)
+  local exp_me="Yes, I'm a Systems Engineer."
+  local exp_they="Okay, they do cloud engineering."
+
+  # usage accepted variants (both the strict spec and your message)
+  _is_usage() {
+    printf '%s' "$1" \
+    | sed -e 's/|/|/g' -e 's/  \+/ /g' -e 's/^ *//; s/ *$//' \
+    | grep -Eq '^Usage: *(\./)?career\.sh *me\|they$|^Please provide an argument: *me *\| *they$'
+  }
+
+  # compare
+  if [ "$out_me" != "$exp_me" ]; then
+    echo "❌ Q24 | FAIL | ./career.sh me → '$out_me' (expected: '$exp_me')"; return 1
+  fi
+
+  if [ "$out_they" != "$exp_they" ]; then
+    echo "❌ Q24 | FAIL | ./career.sh they → '$out_they' (expected: '$exp_they')"; return 1
+  fi
+
+  if ! _is_usage "$out_empty"; then
+    echo "❌ Q24 | FAIL | ./career.sh (no args) → '$out_empty' (expected usage message)"; return 1
+  fi
+
+  if ! _is_usage "$out_bad"; then
+    echo "❌ Q24 | FAIL | ./career.sh sdfsdf → '$out_bad' (expected usage message)"; return 1
+  fi
+
+  echo "✅ Q24 | PASS | career.sh behavior matches requirements"
+  return 0
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24)
 declare -A STATUS
 
 evaluate_all() {
@@ -735,6 +798,7 @@ reset_all() {
   sudo rm -rf /var/tmp/fstab 2>/dev/null || true
   sudo rm -rf /root/httpd-paths.txt 2>/dev/null || true
   sudo rm -f -- /root/web.txt 2>/dev/null || true
+  sudo rm -f -- /root/career.sh 2>/dev/null || true
   sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 
   #delete Q14 to Q20 user and groups and files

@@ -328,20 +328,6 @@ cat /root/sized_files.txt
 ```
 ---
 
-## Question 22: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
-
-## Question 23: Write shell scripts on node1 that create users and groups according to the following parameters:
-
-### Answer:
-```bash
-maryam:2030:hpc_admin,hpc_managers
-adam:2040:sysadmin,
-jacob:2050:hpc_admin
-```
-Write a shell script that sets the passwords of the users maryam, adam and jacob to Password@1.
-
----
-
 ## Question 22: Create an user with the name of "noob" password: Aa7338!! and configure so the user has to change the password on the next login.
 
 ### Answer:
@@ -371,3 +357,45 @@ sudo passwd def4ult
 # repita:  C546#Ab!
 ```
 ---
+
+
+## Question 24: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
+
+### Answer:
+
+```bash
+cat >/root/career.sh <<'EOF'
+#!/bin/bash
+case "$1" in
+  me)   echo "Yes, I'm a Systems Engineer." ;;
+  they) echo "Okay, they do cloud engineering." ;;
+  *)    echo "Usage: ./career.sh me|they" ;;
+esac
+EOF
+
+chmod +x /root/career.sh
+```
+
+## Question 25: Write shell scripts on node1 that create users and groups according to the following parameters:
+
+### Answer:
+```bash
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin,
+jacob:2050:hpc_admin
+```
+Write a shell script that sets the passwords of the users maryam, adam and jacob to Password@1.
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
