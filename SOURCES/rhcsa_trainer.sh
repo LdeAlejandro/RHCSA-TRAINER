@@ -622,12 +622,16 @@ check_Q21() {
 # ===== Exercise Q22 =====
 Q22_DESC="Create an user named 'noob' with password 'A7338' and configure it to change the password on next login."
 check_Q22() {
-  if ! id noob &>/dev/null; then
+  if ! getent passwd noob >/dev/null; then
     echo "❌ Q22 | FAIL | user 'noob' not found"; return 1
   fi
 
-  # lastchg (campo 3 do /etc/shadow) == 0 => força troca no próximo login
-  lastchg=$(awk -F: '$1=="noob"{print $3}' /etc/shadow)
+  # lastchg (campo 3) == 0 => força troca no próximo login
+  lastchg=$(sudo awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
+  if [ -z "$lastchg" ]; then
+    lastchg=$(awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
+  fi
+
   if [ "$lastchg" = "0" ]; then
     echo "✅ Q22 | PASS | 'noob' must change password on next login"; return 0
   else
@@ -639,17 +643,22 @@ check_Q22() {
 # ===== Exercise Q23 =====
 Q23_DESC="Create an user named 'def4ult' with password 'A578' and change it to 'C546#'."
 check_Q23() {
-  if ! id def4ult &>/dev/null; then
+  if ! getent passwd def4ult >/dev/null; then
     echo "❌ Q23 | FAIL | user 'def4ult' not found"; return 1
   fi
 
-  # Campo 2 do /etc/shadow deve ter hash (começa com '$'); não validar senha em si.
-  pwfield=$(awk -F: '$1=="def4ult"{print $2}' /etc/shadow)
-  if printf '%s' "$pwfield" | grep -q '^$'; then
+  # Campo 2 do shadow precisa ter hash válido (começa com '$' e não estar travado)
+  pwfield=$(sudo awk -F: '$1=="def4ult"{print $2}' /etc/shadow 2>/dev/null)
+  if [ -z "$pwfield" ]; then
+    pwfield=$(awk -F: '$1=="def4ult"{print $2}' /etc/shadow 2>/dev/null)
+  fi
+
+  if [ -z "$pwfield" ]; then
     echo "❌ Q23 | FAIL | 'def4ult' has empty password field"; return 1
   fi
-  if printf '%s' "$pwfield" | grep -Eq '^[!*]$'; then
-    echo "❌ Q23 | FAIL | 'def4ult' has locked/no password"; return 1
+  # travada: começa com '!' ou é '*'
+  if printf '%s' "$pwfield" | grep -Eq '^!|^\*$'; then
+    echo "❌ Q23 | FAIL | 'def4ult' password is locked ('$pwfield')"; return 1
   fi
   if printf '%s' "$pwfield" | grep -q '^\$'; then
     echo "✅ Q23 | PASS | 'def4ult' has a valid password hash set"; return 0

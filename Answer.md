@@ -342,30 +342,32 @@ Write a shell script that sets the passwords of the users maryam, adam and jacob
 
 ---
 
-## Question 22: Create an user with the name of "noob" password: A7338 and configure so the user has to change the password on the next login.
+## Question 22: Create an user with the name of "noob" password: Aa7338!! and configure so the user has to change the password on the next login.
 
 ### Answer:
 
 ```bash
 sudo useradd noob
 sudo passwd noob
-# digite: A7338
-# repita: A7338
+# sugira/defina: Aa7338!!
+# repita:        Aa7338!!
 sudo passwd -e noob
 ```
 
 ---
 
-## Question 23: Create an user with the name "def4ult" with the password: A578 and change the password to C546#
+## Question 23: Create an user with the name "def4ult" with the password: Aa578!!?? and change the password to C546#Ab!
 
 ### Answer:
 
 ```bash
 sudo useradd def4ult
 sudo passwd def4ult
-# digite: A578
-# repita: A578
+# defina:  Aa578!!??
+# repita:  Aa578!!??
+
 sudo passwd def4ult
-# digite nova senha: C546#
-# repita: C546#
+# nova:    C546#Ab!
+# repita:  C546#Ab!
 ```
+---
