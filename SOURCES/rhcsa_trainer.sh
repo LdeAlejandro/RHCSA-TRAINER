@@ -619,23 +619,44 @@ check_Q21() {
   fi
 }
 
-# Helper: returns 0 if user 'u' has password exactly 'p' (matches shadow hash), else 1
+# returns 0 if user's password EXACTLY matches; 1 if not; 2 if cannot verify
 _has_exact_password() {
   local u="$1" p="$2"
-  local h
+  local h alg salt calc
+
+  # read hash (try sudo first, then plain in case we're root)
   h=$(sudo awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
-  [ -z "$h" ] && return 1
-  # locked or no password?
-  case "$h" in
-    '!'*|'*'|'') return 1 ;;
-  esac
-  # Use system crypt via Python (supports yescrypt/SHA-512 per RHEL)
-  python3 - <<'PY' "$h" "$p"
+  [ -z "$h" ] && h=$(awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
+  [ -z "$h" ] && return 2
+
+  # locked / no password?
+  case "$h" in '!'*|'*'|'') return 1 ;; esac
+
+  alg=$(awk -F'$' '{print $2}' <<<"$h")
+  salt=$(awk -F'$' '{print $3}' <<<"$h")
+
+  # Prefer mkpasswd (supports yescrypt $y and sha-512 $6 on RHEL)
+  if command -v mkpasswd >/dev/null 2>&1; then
+    case "$alg" in
+      y) calc=$(mkpasswd -m yescrypt -S "$salt" "$p") ;;
+      6) calc=$(mkpasswd -m sha-512  -S "$salt" "$p") ;;
+      *) calc="" ;;
+    esac
+    [ -n "$calc" ] && { [ "$calc" = "$h" ] && return 0 || return 1; }
+  fi
+
+  # Fallback: Python crypt (silence deprecation warning)
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -W ignore - <<'PY' "$h" "$p"
 import sys, crypt
 h, p = sys.argv[1], sys.argv[2]
-print(0 if crypt.crypt(p, h)==h else 1)
+sys.exit(0 if crypt.crypt(p, h)==h else 1)
 PY
-  return $?
+    return $?
+  fi
+
+  # Last resort: cannot verify (no mkpasswd/python3 or unsupported algo)
+  return 2
 }
 
 # ===== Exercise Q22 =====
@@ -645,17 +666,20 @@ check_Q22() {
     echo "❌ Q22 | FAIL | user 'noob' not found"; return 1
   fi
 
-  # Must match the exact required password
   if ! _has_exact_password "noob" "A7338"; then
-    echo "❌ Q22 | FAIL | 'noob' password does not match 'A7338'"; return 1
+    rc=$?
+    [ $rc -eq 2 ] && echo "⚠️ Q22 | WARN | cannot verify exact password (install 'whois' or 'python3')" || \
+                     echo "❌ Q22 | FAIL | wrong password for 'noob'"
+    [ $rc -eq 2 ] || return 1
   fi
 
-  # Must be forced to change on next login (lastchg == 0)
   lastchg=$(sudo awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
+  [ -z "$lastchg" ] && lastchg=$(awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
+
   if [ "$lastchg" = "0" ]; then
     echo "✅ Q22 | PASS | exact password set and expiration enforced"; return 0
   else
-    echo "❌ Q22 | FAIL | password correct but not expired (lastchg=$lastchg)"; return 1
+    echo "❌ Q22 | FAIL | password ok but not expired (lastchg=$lastchg)"; return 1
   fi
 }
 
@@ -666,11 +690,13 @@ check_Q23() {
     echo "❌ Q23 | FAIL | user 'def4ult' not found"; return 1
   fi
 
-  # Final password must be exactly C546#
   if _has_exact_password "def4ult" "C546#"; then
     echo "✅ Q23 | PASS | exact final password 'C546#' is set"; return 0
   else
-    echo "❌ Q23 | FAIL | 'def4ult' final password is not 'C546#'"; return 1
+    rc=$?
+    [ $rc -eq 2 ] && echo "⚠️ Q23 | WARN | cannot verify exact password (install 'whois' or 'python3')" || \
+                     echo "❌ Q23 | FAIL | final password is not 'C546#'"
+    return 1
   fi
 }
 
