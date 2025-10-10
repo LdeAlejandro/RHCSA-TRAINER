@@ -3,7 +3,10 @@
 ### Answer: 
 
 ```bash
-vim hello.txt 
+vim hello.txt
+# type: hello world
+# save & quit:
+:wq
 ```
 save the file
 
@@ -142,7 +145,7 @@ sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
 ```
 --- 
 
-## Question 11:Find all temp files owned by user rhel and copy them to /var/tmp/rhel-files.
+## Question 11:Find all /tmp files owned by user rhel and copy them to /var/tmp/rhel-files.
 
 ### Answer:
 ```bash
@@ -237,6 +240,12 @@ chown admin:admins /var/tmp/chmod_lab/secret.txt
 # Owner can read and write; others can only read
 chmod 644 /var/tmp/chmod_lab/document.txt
 
+# Create the group
+sudo groupadd students
+
+# Create the user and assign to group
+sudo useradd -g students student
+
 # Assign file ownership
 chown student:students /var/tmp/chmod_lab/document.txt
 ```
@@ -250,6 +259,12 @@ chown student:students /var/tmp/chmod_lab/document.txt
 # Owner can read/write; group and others have no access
 chmod 600 /var/tmp/chmod_lab/private.key
 
+# Create the group
+sudo groupadd qa
+
+# Create the user and assign to group
+sudo useradd -g qa tester
+
 # Assign file ownership
 chown tester:qa /var/tmp/chmod_lab/private.key
 ```
@@ -262,6 +277,13 @@ chown tester:qa /var/tmp/chmod_lab/private.key
 ```bash
 # Owner can read only; no one else has access
 chmod 400 /var/tmp/chmod_lab/readme.md
+
+
+# Create the group
+sudo groupadd finance
+
+# Create the user and assign to group
+sudo useradd -g finance analyst
 
 # Assign file ownership
 chown analyst:finance /var/tmp/chmod_lab/readme.md
@@ -279,4 +301,71 @@ chmod 000 /var/tmp/chmod_lab/hidden.conf
 # Assign file ownership
 chown backup:storage /var/tmp/chmod_lab/hidden.conf
 ```
+---
+## Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt.
 
+### Answer:
+```bash
+# Create and open the script
+vim /root/find-files.sh
+#Inside the file:
+
+#!/bin/bash
+# This script finds files in /usr between 30KB and 50KB
+# and writes the results to /root/sized_files.txt
+
+find /usr -type f -size +30k -size -50k > /root/sized_files.txt
+
+#Save and exit (:wq), then make it executable:
+
+# add execution permissions to fiel
+chmod +x /root/find-files.sh
+
+#Test it:
+
+/root/find-files.sh
+cat /root/sized_files.txt
+```
+---
+
+## Question 22: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
+
+## Question 23: Write shell scripts on node1 that create users and groups according to the following parameters:
+
+### Answer:
+```bash
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin,
+jacob:2050:hpc_admin
+```
+Write a shell script that sets the passwords of the users maryam, adam and jacob to Password@1.
+
+---
+
+## Question 22: Create an user with the name of "noob" password: A7338 and configure so the user has to change the password on the next login.
+
+### Answer:
+
+```bash
+sudo useradd noob
+sudo passwd noob
+# digite: A7338
+# repita: A7338
+sudo passwd -e noob
+```
+
+---
+
+## Question 23: Create an user with the name "def4ult" with the password: A578 and change the password to C546#
+
+### Answer:
+
+```bash
+sudo useradd def4ult
+sudo passwd def4ult
+# digite: A578
+# repita: A578
+sudo passwd def4ult
+# digite nova senha: C546#
+# repita: C546#
+```

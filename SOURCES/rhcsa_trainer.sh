@@ -619,8 +619,39 @@ check_Q21() {
   fi
 }
 
+# ===== Exercise Q22 =====
+Q22_DESC="Create an user named 'noob' with password 'A7338' and configure it to change the password on next login."
+check_Q22() {
+  if id noob &>/dev/null; then
+    # check if password expired
+    if sudo chage -l noob | grep -q "Password expires.*must be changed"; then
+      echo "✅ Q22 | SUCCESS | User 'noob' exists and must change password on next login"
+    else
+      echo "❌ Q22 | FAIL | User 'noob' exists but password is not expired"
+    fi
+  else
+    echo "❌ Q22 | FAIL | User 'noob' does not exist"
+  fi
+}
+
+# ===== Exercise Q23 =====
+Q23_DESC="Create an user named 'def4ult' with password 'A578' and change it to 'C546#'."
+check_Q23() {
+  if id def4ult &>/dev/null; then
+    # verify that the user exists and password was changed at least once
+    last_change=$(sudo chage -l def4ult | grep "Last password change" | awk -F: '{print $2}' | xargs)
+    if [ "$last_change" != "never" ] && [ -n "$last_change" ]; then
+      echo " ✅ Q23 | SUCCESS | User 'def4ult' exists and password was changed"
+    else
+      echo "❌ Q23 | FAIL | User 'def4ult' exists but password not changed"
+    fi
+  else
+    echo "❌ Q23 | FAIL | User 'def4ult' does not exist"
+  fi
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23)
 declare -A STATUS
 
 evaluate_all() {
@@ -663,9 +694,6 @@ for u in devops admin student tester analyst backup; do
   if getent passwd "$u" >/dev/null; then
     sudo pkill -u "$u" 2>/dev/null || true
     sudo userdel -r "$u"
-    echo "Deleted user: $u"
-  else
-    echo "User not found: $u"
   fi
 done
 
@@ -673,11 +701,11 @@ done
 for g in devs admins students qa finance storage; do
   if getent group "$g" >/dev/null; then
     sudo groupdel "$g"
-    echo "Deleted group: $g"
-  else
-    echo "Group not found: $g"
   fi
 done
+
+  sudo userdel -r noob 2>/dev/null || true
+  sudo userdel -r def4ult 2>/dev/null || true
 
 sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 #
