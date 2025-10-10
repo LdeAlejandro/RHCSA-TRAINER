@@ -39,3 +39,7 @@
 ## Question 20: Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage.
 
 ## Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt.
+
+## Question 22: Create an user with the name of "noob" password: Aa7338!! and configure so the user has to change the password on the next login.
+
+## Question 23: Create an user with the name "def4ult" with the password: Aa578!!?? and change the password to C546#Ab!

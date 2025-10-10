@@ -619,6 +619,25 @@ check_Q21() {
   fi
 }
 
+# Helper: returns 0 if user 'u' has password exactly 'p' (matches shadow hash), else 1
+_has_exact_password() {
+  local u="$1" p="$2"
+  local h
+  h=$(sudo awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
+  [ -z "$h" ] && return 1
+  # locked or no password?
+  case "$h" in
+    '!'*|'*'|'') return 1 ;;
+  esac
+  # Use system crypt via Python (supports yescrypt/SHA-512 per RHEL)
+  python3 - <<'PY' "$h" "$p"
+import sys, crypt
+h, p = sys.argv[1], sys.argv[2]
+print(0 if crypt.crypt(p, h)==h else 1)
+PY
+  return $?
+}
+
 # ===== Exercise Q22 =====
 Q22_DESC="Create an user named 'noob' with password 'A7338' and configure it to change the password on next login."
 check_Q22() {
@@ -626,19 +645,19 @@ check_Q22() {
     echo "❌ Q22 | FAIL | user 'noob' not found"; return 1
   fi
 
-  # lastchg (campo 3) == 0 => força troca no próximo login
-  lastchg=$(sudo awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
-  if [ -z "$lastchg" ]; then
-    lastchg=$(awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
+  # Must match the exact required password
+  if ! _has_exact_password "noob" "A7338"; then
+    echo "❌ Q22 | FAIL | 'noob' password does not match 'A7338'"; return 1
   fi
 
+  # Must be forced to change on next login (lastchg == 0)
+  lastchg=$(sudo awk -F: '$1=="noob"{print $3}' /etc/shadow 2>/dev/null)
   if [ "$lastchg" = "0" ]; then
-    echo "✅ Q22 | PASS | 'noob' must change password on next login"; return 0
+    echo "✅ Q22 | PASS | exact password set and expiration enforced"; return 0
   else
-    echo "❌ Q22 | FAIL | 'noob' password not set to expire (lastchg=$lastchg)"; return 1
+    echo "❌ Q22 | FAIL | password correct but not expired (lastchg=$lastchg)"; return 1
   fi
 }
-
 
 # ===== Exercise Q23 =====
 Q23_DESC="Create an user named 'def4ult' with password 'A578' and change it to 'C546#'."
@@ -647,24 +666,12 @@ check_Q23() {
     echo "❌ Q23 | FAIL | user 'def4ult' not found"; return 1
   fi
 
-  # Campo 2 do shadow precisa ter hash válido (começa com '$' e não estar travado)
-  pwfield=$(sudo awk -F: '$1=="def4ult"{print $2}' /etc/shadow 2>/dev/null)
-  if [ -z "$pwfield" ]; then
-    pwfield=$(awk -F: '$1=="def4ult"{print $2}' /etc/shadow 2>/dev/null)
+  # Final password must be exactly C546#
+  if _has_exact_password "def4ult" "C546#"; then
+    echo "✅ Q23 | PASS | exact final password 'C546#' is set"; return 0
+  else
+    echo "❌ Q23 | FAIL | 'def4ult' final password is not 'C546#'"; return 1
   fi
-
-  if [ -z "$pwfield" ]; then
-    echo "❌ Q23 | FAIL | 'def4ult' has empty password field"; return 1
-  fi
-  # travada: começa com '!' ou é '*'
-  if printf '%s' "$pwfield" | grep -Eq '^!|^\*$'; then
-    echo "❌ Q23 | FAIL | 'def4ult' password is locked ('$pwfield')"; return 1
-  fi
-  if printf '%s' "$pwfield" | grep -q '^\$'; then
-    echo "✅ Q23 | PASS | 'def4ult' has a valid password hash set"; return 0
-  fi
-
-  echo "❌ Q23 | FAIL | 'def4ult' password field not a valid hash ('$pwfield')"; return 1
 }
 
 # ===== Infra =====
