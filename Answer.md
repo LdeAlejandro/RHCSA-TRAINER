@@ -359,38 +359,115 @@ sudo passwd def4ult
 ---
 
 
-## Question 24: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must be executable 755 permission
+## Question 24: Create a shell script that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission
 
 ### Answer:
 
 ```bash
-cat >/root/career.sh <<'EOF'
+cat > ~/career.sh <<'EOF'
 #!/bin/bash
-
 if [ "$1" = "me" ]; then
   echo "Yes, I'm a Systems Engineer."
 elif [ "$1" = "they" ]; then
   echo "Okay, they do cloud engineering."
 elif [ -z "$1" ]; then
-  echo "Please provide an argument: me | they"
+  echo "Usage: ./career.sh me|they"
 else
   echo "Usage: ./career.sh me|they"
 fi
 EOF
 
-chmod 755 /root/career.sh
+chmod 755 ~/career.sh
 ```
 
 ## Question 25: Write shell scripts on node1 that create users and groups according to the following parameters:
+(Write a shell script that sets the passwords of the users maryam, adam and jacob to "Strong!2025")
+### Params:
+
+```bash
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin
+jacob:2050:hpc_admin
+```
+
 
 ### Answer:
 ```bash
-maryam:2030:hpc_admin,hpc_managers
-adam:2040:sysadmin,
-jacob:2050:hpc_admin
-```
-Write a shell script that sets the passwords of the users maryam, adam and jacob to Password@1.
 
+# create groups txt file
+vim groups.txt
+
+hpc_admin:9090
+hpc_managers:8080
+sysadmin:7070
+
+#save
+```
+
+```bash
+
+# create shell script
+vim create_groups.sh 
+
+while IFS=":" read group gid;
+do
+        echo "Creating group $group with GID $gid"
+        groupadd -g "$gid" "$group";
+done < groups.txt                              
+#save
+
+# add exec permisison
+chmod +x create_groups.sh 
+```
+
+```bash
+
+# create users.txt
+vim users.txt
+
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin
+jacob:2050:hpc_admin                            
+#save
+```
+
+```bash
+
+# create users shell script
+vim create_users.sh
+
+#!/bin/bash
+
+while IFS=":" read user uid groups;
+do
+        echo "Creating user '$user' with UID '$uid' belonging to groups '$groups'";
+        useradd -G "$groups" -u "$uid" "$user";
+done < users.txt                          
+#save
+
+# add exec permisison
+chmod +x create_users.sh
+``` 
+
+```bash
+
+# create pass shell script
+vim setpass.sh
+
+#!/bin/bash
+
+for user in maryam adam jacob;
+do
+        echo "Strong!2025" | passwd --stdin $user;
+done                        
+#save
+```
+Executar
+```bash
+./create_groups.sh 
+./create_users.sh 
+./setpass.sh 
+```
 ---
 
 

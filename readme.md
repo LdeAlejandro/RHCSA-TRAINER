@@ -21,6 +21,4 @@ sudo dnf clean all
 sudo rm -rf /var/cache/dnf
 sudo dnf -y update rhcsa-trainer
 
-
-
 ```

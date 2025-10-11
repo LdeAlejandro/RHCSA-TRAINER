@@ -740,8 +740,60 @@ check_Q24() {
   echo "Q24 | PASS | OK"; return 0
 }
 
+# ===== Exercise Q25 =====
+Q25_DESC="Verify that scripts were used to create users/groups and set passwords as per the parameters."
+
+check_Q25() {
+  # check script files exist
+  for f in create_groups.sh create_users.sh setpass.sh; do
+    if [ ! -f "/root/$f" ] && [ ! -f "$HOME/$f" ]; then
+      echo "❌ Q25 | FAIL | script '$f' not found"
+      return 1
+    fi
+    if [ ! -x "/root/$f" ] && [ ! -x "$HOME/$f" ]; then
+      echo "❌ Q25 | FAIL | script '$f' exists but is not executable"
+      return 1
+    fi
+  done
+
+  # expected users and groups
+  users=("maryam" "adam" "jacob")
+  groups=("hpc_admin" "hpc_managers" "sysadmin")
+
+  # check groups
+  for g in "${groups[@]}"; do
+    if ! getent group "$g" >/dev/null; then
+      echo "❌ Q25 | FAIL | group '$g' not found"
+      return 1
+    fi
+  done
+
+  # check users
+  for u in "${users[@]}"; do
+    if ! getent passwd "$u" >/dev/null; then
+      echo "❌ Q25 | FAIL | user '$u' not found"
+      return 1
+    fi
+  done
+
+  # verify password
+  for u in "${users[@]}"; do
+    if _has_exact_password "$u" "Strong!2025"; then
+      echo "✅ Q25 | PASS | user '$u' has correct password 'Strong!2025'"
+    else
+      rc=$?
+      [ $rc -eq 2 ] && echo "⚠️ Q25 | WARN | cannot verify password for '$u' (install 'whois' or 'python3')" || \
+                           echo "❌ Q25 | FAIL | user '$u' does not have password 'Strong!2025'"
+      return 1
+    fi
+  done
+
+  echo "✅ Q25 | PASS | all users, groups and required scripts verified successfully"
+  return 0
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25)
 declare -A STATUS
 
 evaluate_all() {
@@ -800,6 +852,16 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rm -f /root/find-files.sh 2>/dev/null || true
   sudo rm -f /root/sized_files.txt 2>/dev/null || true
 
+  #clean Q25 users and groups
+  sudo userdel -r maryam
+  sudo userdel -r adam
+  sudo userdel -r jacob
+  sudo groupdel hpc_admin
+  sudo groupdel hpc_managers
+  sudo groupdel sysadmin
+  sudo rm -f "${TRAINER_HOME}/create_groups.sh" 2>/dev/null || true
+  sudo rm -f "${TRAINER_HOME}/create_users.sh" 2>/dev/null || true
+  sudo rm -f "${TRAINER_HOME}/setpass.sh" 2>/dev/null || true
 
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
