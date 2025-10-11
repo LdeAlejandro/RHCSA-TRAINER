@@ -853,12 +853,12 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/sized_files.txt" 2>/dev/null || true
 
   #clean Q25 users and groups
-  sudo userdel -r maryam
-  sudo userdel -r adam
-  sudo userdel -r jacob
-  sudo groupdel hpc_admin
-  sudo groupdel hpc_managers
-  sudo groupdel sysadmin
+  sudo userdel -r maryam 2>/dev/null || true
+  sudo userdel -r adam 2>/dev/null || true
+  sudo userdel -r jacob 2>/dev/null || true
+  sudo groupdel hpc_admin 2>/dev/null || true
+  sudo groupdel hpc_managers 2>/dev/null || true
+  sudo groupdel sysadmin 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/create_groups.sh" 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/create_users.sh" 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/setpass.sh" 2>/dev/null || true
