@@ -822,9 +822,9 @@ reset_all() {
   sudo rm -rf /var/tmp/twenty/ 2>/dev/null || true
   sudo rm -rf /var/tmp/rhel-files 2>/dev/null || true
   sudo rm -rf /var/tmp/fstab 2>/dev/null || true
-  sudo rm -rf /root/httpd-paths.txt 2>/dev/null || true
-  sudo rm -f -- /root/web.txt 2>/dev/null || true
-  sudo rm -f -- /root/career.sh 2>/dev/null || true
+  sudo rm -rf "${TRAINER_HOME}/httpd-paths.txt" 2>/dev/null || true
+  sudo rm -f -- "${TRAINER_HOME}/web.txt" 2>/dev/null || true
+  sudo rm -f -- "${TRAINER_HOME}/career.sh" 2>/dev/null || true
   sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 
   #delete Q14 to Q20 user and groups and files
@@ -849,8 +849,8 @@ done
 
 sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 #
-  sudo rm -f /root/find-files.sh 2>/dev/null || true
-  sudo rm -f /root/sized_files.txt 2>/dev/null || true
+  sudo rm -f "${TRAINER_HOME}/find-files.sh" 2>/dev/null || true
+  sudo rm -f "${TRAINER_HOME}/sized_files.txt" 2>/dev/null || true
 
   #clean Q25 users and groups
   sudo userdel -r maryam
