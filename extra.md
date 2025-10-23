@@ -31,3 +31,19 @@ Você soma os valores de cada permissão para o grupo correspondente.
 | **Owner** | 4 | 2 | 0 | **6** | read + write |
 | **Group** | 4 | 0 | 0 | **4** | read only |
 | **Others** | 4 | 0 | 0 | **4** | read only |
+
+### Calculo umask
+
+⚙️ 2️⃣ Como isso vira binário
+
+Cada permissão é um número de 3 bits, que pode ir de 000 (sem nada) até 111 (tudo).
+
+Binário	Octal	rwx	Significado
+000	0	---	nenhuma permissão
+001	1	--x	só execução
+010	2	-w-	só escrita
+011	3	-wx	escrita + execução
+100	4	r--	só leitura
+101	5	r-x	leitura + execução
+110	6	rw-	leitura + escrita
+111	7	rwx	leitura + escrita + execução
