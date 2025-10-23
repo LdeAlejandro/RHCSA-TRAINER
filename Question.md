@@ -46,14 +46,30 @@
 
 ## Question 24: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
 
-## Question 25: Write shell scripts on node1 that create users and groups according to the following parameters:
+## Question 25: Write shell scripts (create_groups.sh, create_users.sh, setpass.sh) on node1 that perform the following tasks:
 
-### Answer:
-```bash
+1. Create groups with specific GIDs as defined below.
+2. Create users with specific UIDs and group memberships.
+3. Set the passwords for maryam, adam, and jacob to "Strong!2025".
+
+Groups and GIDs:
+hpc_admin:9090
+hpc_managers:8080
+sysadmin:7070
+
+Users, UIDs, and Groups:
 maryam:2030:hpc_admin,hpc_managers
-adam:2040:sysadmin,
+adam:2040:sysadmin
 jacob:2050:hpc_admin
-```
 Write a shell script that sets the passwords of the users maryam, adam and jacob to Password@1.
 
 ---
+
+## 26 : Extraia as duas primeiras linhas de cada arquivo de log para o arquivo ~/headers.txt. Extraia as últimas cinco linhas de cada arquivo de log para o arquivo ~/footers.txt. Use o redirecionamento para salvar o nome de qualquer arquivo de log que contenha erros no arquivo ~/findings.txt.
+
+Extraia as duas primeiras linhas de todos os arquivos de log para o arquivo ~/headers.txt.
+
+student@workstation:~$ head -n 2 /var/opt/my_web/* > headers.txt
+Extraia as últimas cinco linhas de todos os arquivos de log para o arquivo ~/footers.txt.
+
+student@workstation:~$ tail -n 5 /var/opt/my_web/* > footers.txt

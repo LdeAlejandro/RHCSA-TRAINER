@@ -741,7 +741,21 @@ check_Q24() {
 }
 
 # ===== Exercise Q25 =====
-Q25_DESC="Verify that scripts were used to create users/groups and set passwords as per the parameters."
+Q25_DESC="Question 25: Write shell scripts (create_groups.sh, create_users.sh, setpass.sh) on node1 that perform the following tasks:
+
+1. Create groups with specific GIDs as defined below.
+2. Create users with specific UIDs and group memberships.
+3. Set the passwords for maryam, adam, and jacob to "Strong!2025".
+
+Groups and GIDs:
+hpc_admin:9090
+hpc_managers:8080
+sysadmin:7070
+
+Users, UIDs, and Groups:
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin
+jacob:2050:hpc_admin"
 
 check_Q25() {
   # check script files exist

@@ -378,10 +378,27 @@ fi
 EOF
 
 chmod 755 ~/career.sh
+
+./career.sh
+
 ```
 
-## Question 25: Write shell scripts on node1 that create users and groups according to the following parameters:
-(Write a shell script that sets the passwords of the users maryam, adam and jacob to "Strong!2025")
+## Question 25: Write shell scripts (create_groups.sh, create_users.sh, setpass.sh) on node1 that perform the following tasks:
+
+1. Create groups with specific GIDs as defined below.
+2. Create users with specific UIDs and group memberships.
+3. Set the passwords for maryam, adam, and jacob to "Strong!2025".
+
+Groups and GIDs:
+hpc_admin:9090
+hpc_managers:8080
+sysadmin:7070
+
+Users, UIDs, and Groups:
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin
+jacob:2050:hpc_admin
+
 ### Params:
 
 ```bash
@@ -461,6 +478,9 @@ do
         echo "Strong!2025" | passwd --stdin $user;
 done                        
 #save
+
+# add exec permisison
+chmod +x setpass.sh
 ```
 Executar
 ```bash
@@ -470,8 +490,24 @@ Executar
 ```
 ---
 
+## Question 26: In a new VM Reset Root Password via GRUB
 
+**Task:**  
+Break into `node2` and set a new root password to **hoppy**.
 
+---
+
+### Answer
+
+#### Access GRUB
+1. Reboot the VM.  
+2. At the GRUB menu, highlight the default kernel and press **`e`** to edit.  
+3. Find the line starting with `linux` or `linux16`.  
+4. At the end of that line, add:
+   ```bash
+   rd.break 
+
+---
 
 
 
