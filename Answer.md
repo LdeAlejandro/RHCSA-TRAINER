@@ -504,9 +504,45 @@ Break into `node2` and set a new root password to **hoppy**.
 2. At the GRUB menu, highlight the default kernel and press **`e`** to edit.  
 3. Find the line starting with `linux` or `linux16`.  
 4. At the end of that line, add:
-   ```bash
-   rd.break 
 
+```bash
+   rd.break 
+   # Then press Ctrl + X (or F10) to boot.
+ ```
+
+If it drops you into switch_root:/#, run:
+```bash
+    mount -o remount,rw /sysroot
+    chroot /sysroot
+    passwd 
+    # hoppy
+    touch /.autorelabel
+    exit
+```
+
+Option 2 – For RHEL 9+ (recommended if rd.break fails)
+Replace everything after ro crashkernel=... with: rw init=/bin/bash
+
+
+  #Example full line
+  ```bash
+  linux ($root)/vmlinuz-6.12.0-55.38.1.el10.0.x86_64 root=/dev/mapper/rhel_vbox-root rw init=/bin/bash
+  ```
+  
+Then press Ctrl + X (or F10) to boot.
+
+When you see the shell prompt:
+
+bash-5.2#
+
+```bash
+mount -o remount,rw /
+passwd
+# set password to hoppy
+touch /.autorelabel
+exec /sbin/init
+
+```
 ---
 
 

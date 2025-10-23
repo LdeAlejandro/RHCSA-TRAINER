@@ -65,11 +65,6 @@ Write a shell script that sets the passwords of the users maryam, adam and jacob
 
 ---
 
-## 26 : Extraia as duas primeiras linhas de cada arquivo de log para o arquivo ~/headers.txt. Extraia as últimas cinco linhas de cada arquivo de log para o arquivo ~/footers.txt. Use o redirecionamento para salvar o nome de qualquer arquivo de log que contenha erros no arquivo ~/findings.txt.
+## Question 26: In a new VM Reset Root Password via GRUB
 
-Extraia as duas primeiras linhas de todos os arquivos de log para o arquivo ~/headers.txt.
-
-student@workstation:~$ head -n 2 /var/opt/my_web/* > headers.txt
-Extraia as últimas cinco linhas de todos os arquivos de log para o arquivo ~/footers.txt.
-
-student@workstation:~$ tail -n 5 /var/opt/my_web/* > footers.txt
+---

@@ -701,8 +701,7 @@ check_Q23() {
 }
 
 # ===== Exercise Q24 =====
-Q24_DESC="Create a shell script that outputs the exact lines and has mode 755."
-
+Q24_DESC='Create a shell script that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission'
 check_Q24() {
   script="/root/career.sh"
   [ -f "$script" ] || script="$HOME/career.sh"
@@ -806,14 +805,51 @@ check_Q25() {
   return 0
 }
 
+# ===== Exercise Q26 =====
+Q26_DESC="Reset the root password via GRUB so that it becomes 'hoppy'."
+
+check_Q26() {
+  local passwd_test="hoppy"
+  local shadow_time boot_time rc
+
+  # 1. Verify if the password 'hoppy' works for root
+  echo "$passwd_test" | su -c "exit" root &>/dev/null
+  rc=$?
+  if [ $rc -ne 0 ]; then
+    echo "❌ Q26 | FAIL | root password is not 'hoppy' or login test failed"
+    return 1
+  fi
+
+  # 2. Check if /.autorelabel exists (SELinux relabel step)
+  if [ -f /.autorelabel ]; then
+    echo "✅ Q26 | PASS | SELinux relabel marker found"
+  else
+    echo "⚠️ Q26 | WARN | /.autorelabel not found (SELinux relabel step missing)"
+  fi
+
+  # 3. Verify if /etc/shadow was modified before last boot (indicating GRUB change)
+  shadow_time=$(stat -c %Y /etc/shadow 2>/dev/null)
+  boot_time=$(awk '{print int($1)}' /proc/uptime)
+  current_time=$(date +%s)
+
+  if (( shadow_time < current_time - boot_time )); then
+    echo "✅ Q26 | PASS | password changed before last boot (likely via GRUB)"
+  else
+    echo "⚠️ Q26 | WARN | password changed after boot (possibly not via GRUB)"
+  fi
+
+  echo "✅ Q26 | PASS | root password reset to 'hoppy'"
+  return 0
+}
+
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26)
 declare -A STATUS
 
 evaluate_all() {
   for id in "${TASKS[@]}"; do
-    if "check_${id}"; then
-      STATUS[$id]="${GREEN}PASSED${RESET}"
+    if "check_${id}"; then 
+      STATUS[$id]="${GREEN}PASSED  ${RESET}"
     else
       STATUS[$id]="${RED}PENDING${RESET}"
     fi
