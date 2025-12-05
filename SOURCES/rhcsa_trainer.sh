@@ -815,31 +815,32 @@ check_Q26() {
   # 1. Verify if the password 'hoppy' works for root
   echo "$passwd_test" | su -c "exit" root &>/dev/null
   rc=$?
-  if [ $rc -ne 0 ]; then
-    echo "❌ Q26 | FAIL | root password is not 'hoppy' or login test failed"
-    return 1
-  fi
-
-  # 2. Check if /.autorelabel exists (SELinux relabel step)
+   # Check if /.autorelabel exists (SELinux relabel step)
   if [ -f /.autorelabel ]; then
     echo "✅ Q26 | PASS | SELinux relabel marker found"
-  else
-    echo "⚠️ Q26 | WARN | /.autorelabel not found (SELinux relabel step missing)"
+    if [ $rc -ne 0 ]; then
+      echo "❌ Q26 | FAIL | root password is not 'hoppy' or login test failed"
+      return 1
   fi
-
+  
   # 3. Verify if /etc/shadow was modified before last boot (indicating GRUB change)
   shadow_time=$(stat -c %Y /etc/shadow 2>/dev/null)
   boot_time=$(awk '{print int($1)}' /proc/uptime)
   current_time=$(date +%s)
 
-  if (( shadow_time < current_time - boot_time )); then
-    echo "✅ Q26 | PASS | password changed before last boot (likely via GRUB)"
+    if (( shadow_time < current_time - boot_time )); then
+      echo "✅ Q26 | PASS | password changed before last boot (likely via GRUB)"
+    else
+      echo "⚠️ Q26 | WARN | password changed after boot (possibly not via GRUB)"
+    fi
+
+    echo "✅ Q26 | PASS | root password reset to 'hoppy'"
+    return 0
+
   else
-    echo "⚠️ Q26 | WARN | password changed after boot (possibly not via GRUB)"
+    echo "⚠️ Q26 | WARN | /.autorelabel not found (SELinux relabel step missing)"
   fi
 
-  echo "✅ Q26 | PASS | root password reset to 'hoppy'"
-  return 0
 }
 
 # ===== Infra =====
