@@ -1,6 +1,6 @@
 Name:           rhcsa-trainer
 Version:        %{version}
-Release:        %{release}%{?dist}
+Release:        %{release}
 Summary:        RHCSA mini-trainer script
 License:        MIT
 URL:            https://github.com/LdeAlejandro/RHCSA-TRAINER
