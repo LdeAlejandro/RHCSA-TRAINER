@@ -810,37 +810,39 @@ Q26_DESC="Reset the root password via GRUB so that it becomes 'hoppy'."
 
 check_Q26() {
   local passwd_test="hoppy"
-  local shadow_time boot_time rc
+  local shadow_time boot_time current_time rc
 
-  # 1. Verify if the password 'hoppy' works for root
+  # 1. Test if root password is correct
   echo "$passwd_test" | su -c "exit" root &>/dev/null
   rc=$?
-   # Check if /.autorelabel exists (SELinux relabel step)
+
+  if [ $rc -ne 0 ]; then
+    echo "❌ Q26 | FAIL | root password is not 'hoppy'"
+    return 1
+  fi
+
+  # 2. Check SELinux relabel marker
   if [ -f /.autorelabel ]; then
     echo "✅ Q26 | PASS | SELinux relabel marker found"
-    if [ $rc -ne 0 ]; then
-      echo "❌ Q26 | FAIL | root password is not 'hoppy' or login test failed"
-      return 1
+  else
+    echo "⚠️ Q26 | WARN | /.autorelabel missing – GRUB method may not have been used"
+    return 1
   fi
-  
-  # 3. Verify if /etc/shadow was modified before last boot (indicating GRUB change)
+
+  # 3. Check whether /etc/shadow was modified before last boot
   shadow_time=$(stat -c %Y /etc/shadow 2>/dev/null)
   boot_time=$(awk '{print int($1)}' /proc/uptime)
   current_time=$(date +%s)
 
-    if (( shadow_time < current_time - boot_time )); then
-      echo "✅ Q26 | PASS | password changed before last boot (likely via GRUB)"
-    else
-      echo "⚠️ Q26 | WARN | password changed after boot (possibly not via GRUB)"
-    fi
-
-    echo "✅ Q26 | PASS | root password reset to 'hoppy'"
-    return 0
-
+  if (( shadow_time < current_time - boot_time )); then
+    echo "✅ Q26 | PASS | password changed before last boot (consistent with GRUB method)"
   else
-    echo "⚠️ Q26 | WARN | /.autorelabel not found (SELinux relabel step missing)"
+    echo "⚠️ Q26 | WARN | password changed after boot (maybe not GRUB method)"
+    return 1
   fi
 
+  echo "✅ Q26 | PASS | root password reset to 'hoppy'"
+  return 0
 }
 
 # ===== Infra =====
