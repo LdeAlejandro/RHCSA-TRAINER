@@ -507,7 +507,9 @@ Break into `node2` and set a new root password to **hoppy**.
 
 ```bash
    rd.break 
-   # Then press Ctrl + X (or F10) to boot.
+   #or
+   init=/bin/bash
+   # Then press Ctrl + X 
  ```
 
 If it drops you into switch_root:/#, run:
@@ -545,11 +547,460 @@ exec /sbin/init
 ```
 ---
 
+## Question 27: Tuning Profile Configuration and SELINUX
+
+- Check the current recommended tuning profile.
+- Put SELinux in permissive mode on master-server.
+- On rhel-server ensure network service is enabled and starts on boot.
+
+
+### check on both server is tuned is intall and running change the tune to the recommended one
+
+```bash
+systemctl status tuned
+#if necessary install
+#dnf install tuned -y
+
+sudo systemctl enable --now tuned
+
+#check current tune 
+tuned-adm active
+
+#check tune recommendation
+tuned-adm recommend
+
+#check tune list
+tuned-adm list
+
+# change tune
+sudo tuned-adm profile virtual-guest
+
+#check current tune 
+tuned-adm active
+
+```
+
+---
+
+## Question 28: Put SELinux in permissive mode on master-server.
+
+
+```bash
+#check SELinux enforce mode
+getenforce
+
+#for persistant changes
+sudo vim /etc/selinux/config
+
+#look for the SELINUX line and change it
+SELINUX=permissive
+
+#restart to check if persistant
+sudo reboot 
+
+
+```
+---
+
+## Question 29: On node1 ensure network service is enabled and starts on boot.
+
+
+```bash
+#check NetworkManager status
+systemctl status NetworkManager
+
+#enable it to be persistant
+systemctl enable --now NetworkManager
+
+
+```
+---
+
+## Question 30: Configure persistant journalist in both server
+
+```bash
+#create directory
+mkdir /var/log/journal
+
+# Logs are now in the directory and not in ram
+journalctl --flush
+
+# check if file exist
+ls /var/log/journal
+
+
+```
+---
+
+## Question 31: 
+- Start a stress-ng process on node1 with a niceness value of 19
+- Adjust the niceness value of the running stress-ng process to 10.
+
+Terminate the stress-ng process.
+
+```bash
+#check if the app is installed
+dnf list installed | grep stress-ng
+
+#intall if needed
+#start stress
+nice -n 19 stress-ng -c1 &
+
+#check resource with top
+top
+
+#renice the value to 10 with "r" in top view
+
+#extra you can kill process pressing "k" while in top view, you can use sigkill or 9
+```
+---
+
+## Question 31: 
+
+- Copy /etc/fstab to /var/tmp.
+- Set the file owner to root.
+- Ensure /var/tmp/fstab is not executable by anyone.
+- Configure file ACLs on the copied file to:
+- User adam: read & write.
+- User maryam: no access.
+- All other users: read-only.
 
 
 
+Terminate the stress-ng process.
+
+```bash
+#copy files
+cp /etc/fstab /var/tmp
+
+#set root as the owner
+chown root: /var/tmp/fstab
+
+#remove executable access from the files
+chmod -x /var/tmp/fstab
+ 
+#check permissions
+ls -al /var/tmp/fstab
+getfacl /var/tmp/fstab
+
+#configure acess
+ setfacl -m u:adam:rw- /var/tmp/fstab
+ setfacl -m u:maryan:--- /var/tmp/fstab
+ #others config
+ setfacl -m o::r-- /var/tmp/fstab
+
+ #check with
+ getfacl /var/tmp/fstab
+ ```
+---
+
+## Question 31: On "rhel", create a file rhel-file.ext and securely copy (scp) it to the home dir of user master-server on main-server.
+
+```bash
+#on rhel server
+touch rhel-file.txt
+
+#copy file to main server
+scp -v rhel-file.txt master-server@192.168.15.14:/home/master-server
+ ```
+---
+
+## Question 32: Create a logical volume named devops_lv with 32 extents
+- using the /dev/sdc disk.
+- This should be created from a volume group
+- named devops_vg with 20MB physical extents.
+- Format the logical volume as an ext4 filesystem and mount it
+- persistently at /mnt/devops_lv.
+
+Check your work.
+
+```bash
+fdisk /dev/sdc
+
+# add a new partition
+n
+#size
++650M
+
+#save
+w
+
+#create physical volume
+pvcreate /dev/sdc
+
+#create volumen group
+vgcreate -s 20M devops_vg /dev/sdc1
+
+#create logical volume
+lvcreate -n devops_lv -l 32 devops_vg
+
+#filesystem
+mkfs.ext4 /dev/devops_vg/devops_lv
+
+#create directory for mount
+mkdir /mnt/devops_lv
+
+# add it to be persistant in fstab
+vim /etc/fstab
+
+/dev/devops_vg/devops_lv                /mnt/devops_lv          ext4    defaults        0 0
+
+#mount
+mount -a
+ ```
+---
+## Question 33: Create and Mount Swap volume persistently
+- From /dev/vdb, create a 800MB swap partition and configure it
+to mount persistently.
+- All your changes must persist after a reboot.
+
+```bash
+  #validar swap atual
+  free -h
+
+  #criar partiação swap
+  fdisk /dev/sdd
+  #criar partição
+  n
+  +800M
+  w
+
+  #ver partições
+  lsblk
+
+  #converter partiação criada para swap
+  mkswap /dev/sdd2
+
+  #fstab para montagem persistente
+  vim /etc/fstab
+  /dev/sdd2       swap    swap    defaults        0 0
+
+  #apply changes
+  mount -a
+  swapon -a
+
+  #check
+   free -h
+  
+```
+---
+## Question 34: Create and Mount Swap volume persistently
+- On rhel-server, recreate the following LVM setup:
+- Create a volume group named cloud_vg.
+- From this volume group, create a logical volume named cloud_lv.
+- The logical volume must have a size of 200 MB.
+- Create an appropriate filesystem on the logical volume.
+- Mount the filesystem and ensure it is available after reboot.
+
+```bash
+#create partition
+fdisk /dev/sdc
+n
++270M
+W
+
+#create volume group
+vgcreate cloud_vg /dev/sdc
+
+# create logical volume
+lvcreate -L 200M -n cloud_lv cloud_vg
+
+#assign filesystem
+mkfs.ext4 /dev/cloud_vg/cloud_lv
+
+#create directory for mounting
+mkdir /mnt/cloud_lv
+
+#make it persistant
+vim /etc/fstab
+/dev/devops_vg/devops_lv                /mnt/devops_lv          ext4    defaults        0 0
+
+#mount it
+mount -a 
+  
+```
+---
 
 
+## Question 35: Resize devops_lv and Configure Swap volume
+
+- On rhel server, resize the existing cloud_lv logical volume to 250MB
+(a size between 225–270MB is acceptable), while resizing its filesystem
+accordingly.
 
 
+```bash
+  #check logical volumes
+  lvs
+  #extend
+  lvextend -L +50 /dev/cloud_vg/cloud_lv -r
 
+  #lvs to check if it worked
+  lvs
+```
+---
+
+## Question 36: Cron Job Configuration
+- Create a cron job for user rhel that runs logger "RHCSA Playlist Now Available" every 2 minutes.
+
+```bash
+  #Check if crond is working
+  systemctl status crond
+
+  #if not
+  systemctl --now enable crond
+
+  #Check current user crontabs
+  crontab -l
+
+  #Check specific user crontabs
+  crontab -l -u rhel-user
+
+  #create crontab to run as an specific user
+  crontab -e -u rhel-user
+
+  #runs logger "RHCSA Playlist Now Available" every 2 minutes.
+  */2 * * * * logger "RHCSA Playlist Now Available"
+```
+---
+
+
+## Question 37: Use at to write "This task was easy!" to /at-files/at.txt in 2 minutes.
+
+```bash
+  #Check if at is installed
+  systemctl status atd
+  #install and enable if need it
+
+  #create directory
+  mkdir /at-files
+
+  #write te message in the file
+  echo 'echo "This task was easy!" >> /at-files/at.txt | at now +2 minutes' 
+
+```
+---
+
+## Question 38: GRUB Bootloader Modification
+- Set GRUB_TIMEOUT=10,
+- GRUB_TIMEOUT_STYLE=hidden, and
+- add quiet to GRUB_CMDLINE_LINUX.
+- Apply your changes to the grub config file.
+
+```bash
+  #Open the grub file
+  vim /etc/default/grub
+  # ADD LINES IN THE FILE IF NEED IT
+    GRUB_TIMEOUT=10
+    GRUB_TIMEOUT_STYLE=hidden
+    GRUB_CMDLINE_LINUX=quiet
+
+  #now we have to apply this new configs
+  grub2-mkconfig -o /boot/grub2/grub.cfg
+  #done
+  
+```
+---
+## Question 39: Enable Network Services
+- Ensure network services starts at boot.
+
+```bash
+  #Enable the service
+  systemctl enable --now NetworkManager
+
+  #check
+  systemctl status NetworkManager
+  
+```
+---
+## Question 40: Firewall Rules
+- Allow access SSH and HTTP services using firewall-cmd
+
+```bash
+  #check wich service and ports are allow
+  firewall-cmd --list-all
+
+  # add another rules to allow services
+  firewall-cmd --add-service nfs --permanent
+  firewall-cmd --add-service rpc-bind --permanent
+  firewall-cmd --add-service ssh --permanent
+  firewall-cmd --add-service http --permanent
+
+  #reload firewall to apply
+  firewall-cmd --reload
+  
+```
+---
+## Question 41: Create a group named sharegroup and the following users
+- haruna (with no login shell, not a member of sharegroup),
+- umar (member of sharegroup),
+- adoga (with UID 4444 member of sharegroup).
+- All users should have a password: persward.
+- Change the password of user adoga to perfect.
+
+```bash
+  #check if user group exist
+  getent group sharegroup
+  
+  #Create group
+  groupadd sharegroup
+
+  # create a user with no login shell
+  useradd -s /sbin/nologin haruna
+
+  #you can check user id with
+  id haruna
+
+  # Create a user and add it to sharegroup
+  useradd -G sharegroup umar
+  id umar
+
+  # Create user with specific id
+  useradd -u 4444 -G sharegroup adoga
+  id adoga
+
+  #Create the passwords with a loop
+  for user in haruna umar adoga; do echo "persward" | passwd --stdin $user; done
+
+  #change the password for user adoga
+  passwd adoga perfect
+
+
+```
+---
+## Question 42: User Password Policies
+- Enforce password policy to have a minimum length of 8 chars.
+- Set the max password age to 30 days.
+
+```bash
+  #Edit the file for minumum length
+  vim /etc/security/pwquality.conf
+  minlen = 8
+
+  #Edit the file for password expiration
+  vim/etc/login.defs
+  PASS_MAX_DAYS 30
+
+  #done
+
+```
+---
+## Question 43: Delete Users and Groups
+- Remove the user umar from sharegroup.
+- Delete the sharegroup.
+- Delete user haruna with their home directory.
+
+```bash
+  #Check command for deletion
+  man gpasswd
+
+  #remove the user from the sharegroup
+  gpasswd -d umar sharegroup
+
+  #delete sharegroup
+  groupdel sharegroup
+
+  #delete user haruna with their home directory
+  userdel -r haruna
+```
+---

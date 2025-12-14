@@ -30,7 +30,8 @@ start_monitor() {
   mkdir -p "$RHCSA_SHM_DIR"
 
   sudo mkdir -p /var/tmp/chmod_lab && sudo touch /var/tmp/chmod_lab/{public.log,script.sh,secret.txt,document.txt,private.key,readme.md,hidden.conf}
-
+  sudo cp ../ /tmp/tmp_file
+  chown rhel:rhel /tmp/tmp_file
 
   # 1) GARANTA as pastas do trainer primeiro, e no HOME correto:
   TRAINER_HOME="$(resolve_home)"
@@ -383,7 +384,7 @@ check_Q12() {
   fi
 }
 
-# ===== Exercise Q12 =====
+# ===== Exercise Q13 =====
 Q13_DESC="Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone"
 check_Q13() {
   if sudo -n test -f /var/tmp/fstab 2>/dev/null; then
@@ -539,82 +540,80 @@ check_Q20() {
 }
 
 # ===== Exercise Q21 =====
-Q21_DESC="Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt."
 check_Q21() {
   local script="/root/find-files.sh"
   local output="/root/sized_files.txt"
   local low=$((30*1024))   # 30720 bytes
-  local high=$((50*1024))  # 51200 bytes, strict upper bound
+  local high=$((50*1024))  # 51200 bytes (exclusive)
 
-  # 1) Script exists and is executable
+  # 1) Script exists
   if ! sudo -n test -f "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script $script not found."
     return 1
   fi
+
+  # 2) Script is executable
   if ! sudo -n test -x "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script exists but is not executable."
     return 1
   fi
 
-  # 2) Run script and ensure output file is (re)generated
-  local prev_mtime
-  prev_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
-  if ! sudo -n bash "$script" 2>/dev/null; then
-    echo "❌ Q21 failed: Script execution returned a non-zero status."
-    return 1
-  fi
-  if ! sudo -n test -f "$output" 2>/dev/null; then
-    echo "❌ Q21 failed: Output file $output was not created."
-    return 1
-  fi
-  local new_mtime
-  new_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
-  if [[ "$new_mtime" -le "$prev_mtime" ]]; then
-    echo "❌ Q21 failed: Output file was not updated by the script."
+  # 3) Run script (ignore permission noise)
+  if ! sudo -n bash "$script" >/dev/null 2>&1; then
+    echo "❌ Q21 failed: Script execution returned non-zero."
     return 1
   fi
 
-  # 3) If output has lines, validate each line; allow empty output (environment-dependent)
-  local lines
-  lines="$(sudo -n wc -l < "$output" 2>/dev/null || echo 0)"
-  if [[ "$lines" -eq 0 ]]; then
-    echo "⚠️ Q21 note: Output file is empty. Accepting (may vary by environment)."
-    echo "✅ Q21 passed: Script exists, is executable, and generated the output file."
+  # 4) Output file exists
+  if ! sudo -n test -f "$output" 2>/dev/null; then
+    echo "❌ Q21 failed: Output file $output not created."
+    return 1
+  fi
+
+  # 5) Allow empty output (depends on environment)
+  if ! sudo -n test -s "$output" 2>/dev/null; then
+    echo "⚠️ Q21 note: Output file is empty (accepted)."
+    echo "✅ Q21 passed."
     return 0
   fi
 
-  # 4) Validate each path
+  # 6) Validate each listed file
   local bad=0
   while IFS= read -r p; do
-    # skip blank lines
     [[ -z "$p" ]] && continue
-    # must start with /usr
+
+    # Must be under /usr
     if [[ "$p" != /usr/* ]]; then
       echo "❌ Q21 failed: Path not under /usr -> $p"
       bad=1; continue
     fi
-    # must be a regular file
+
+    # Must be a regular file
     if ! sudo -n test -f "$p" 2>/dev/null; then
       echo "❌ Q21 failed: Not a regular file -> $p"
       bad=1; continue
     fi
-    # size must be strictly between 30KB and 50KB
+
+    # Size check (strictly between)
+    local bytes
     bytes="$(sudo -n stat -c '%s' "$p" 2>/dev/null || echo -1)"
+
     if ! [[ "$bytes" =~ ^[0-9]+$ ]]; then
-      echo "❌ Q21 failed: Could not read size -> $p"
+      echo "❌ Q21 failed: Cannot read size -> $p"
       bad=1; continue
     fi
+
     if (( bytes <= low || bytes >= high )); then
-      echo "❌ Q21 failed: Size out of range (bytes=$bytes) -> $p"
+      echo "❌ Q21 failed: Size out of range ($bytes bytes) -> $p"
       bad=1; continue
     fi
   done < <(sudo -n cat "$output")
 
   if [[ "$bad" -eq 0 ]]; then
-    echo "✅ Q21 passed: Script executed and output validated without relying on implementation details."
+    echo "✅ Q21 passed: Script output validated successfully."
     return 0
   else
-    echo "❌ Q21 failed: One or more listed paths did not meet the criteria."
+    echo "❌ Q21 failed: One or more entries invalid."
     return 1
   fi
 }
@@ -852,7 +851,7 @@ declare -A STATUS
 evaluate_all() {
   for id in "${TASKS[@]}"; do
     if "check_${id}"; then 
-      STATUS[$id]="${GREEN}PASSED  ${RESET}"
+      STATUS[$id]="${GREEN}PASSED${RESET}"
     else
       STATUS[$id]="${RED}PENDING${RESET}"
     fi

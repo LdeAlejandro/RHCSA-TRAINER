@@ -44,7 +44,9 @@
 
 ## Question 23: Create an user with the name "def4ult" with the password: Aa578!!?? and change the password to C546#Ab!
 
-## Question 24: Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
+## Question 24: Outputs "Yes, I’m a Systems Engineer." 
+
+when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments
 
 ## Question 25: Write shell scripts (create_groups.sh, create_users.sh, setpass.sh) on node1 that perform the following tasks:
 
@@ -56,7 +58,7 @@ Groups and GIDs:
 hpc_admin:9090
 hpc_managers:8080
 sysadmin:7070
-
+    
 Users, UIDs, and Groups:
 maryam:2030:hpc_admin,hpc_managers
 adam:2040:sysadmin
@@ -66,5 +68,13 @@ Write a shell script that sets the passwords of the users maryam, adam and jacob
 ---
 
 ## Question 26: In a new VM Reset Root Password via GRUB
+
+## Question 27: Tuning Profile Configuration and SELINUX
+
+Check the current recommended tuning profile.
+
+Put SELinux in permissive mode on master-server.
+
+On rhel-server ensure network service is enabled and starts on boot.
 
 ---
