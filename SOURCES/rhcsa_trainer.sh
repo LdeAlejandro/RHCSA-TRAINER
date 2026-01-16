@@ -722,7 +722,8 @@ check_Q23() {
 }
 
 # ===== Exercise Q24 =====
-Q24_DESC='Create a shell script that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission'
+Q24_DESC='Create a shell script that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." 
+when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission'
 check_Q24() {
   script="/root/career.sh"
   [ -f "$script" ] || script="$HOME/career.sh"
@@ -940,6 +941,9 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   ##clean Q21
   sudo rm -f /root/find-files.sh
   sudo rm -f /root/sized_files.txt
+
+  ##clean Q24
+  SUDO rm -f /root/career.sh
 
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
