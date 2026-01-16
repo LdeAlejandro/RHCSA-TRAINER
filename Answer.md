@@ -90,10 +90,10 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
 mkdir ~/vaults
 
 #compresse files
-tar ~cvfz /vaults/etc_vault.tar.gz /etc
+tar -cvzf ~/vaults/etc_vault.tar.gz /etc
 ```
 ---
-## Question 7: File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
+## Question 7: (root directory / ) File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
 
 ### Answer:
 ```bash
@@ -104,30 +104,30 @@ mkdir /shorts
 touch /shorts/file_a
 
 #create softlink
-ln -s /shorts/file_a /file_b
+ln -s /shorts/file_a file_b
 
 ## if the link was created and is having error sudo 
-ln -snf /shorts/file_a /file_b
+ln -snf /shorts/file_a file_b
 
 ```
 ---
-## Question 8: File Links - Create a hard link of the file in hardfiles directory to file_c
+## Question 8: File Links - (root directory / ) Create a hard link of the file in hardfiles directory to file_c
 
 ### Answer:
 ```bash
 #create hardlink
-ln /hardfiles/file_data /file_c
+ln /hardfiles/file_data file_c
 ```
 ---
-## Question 9: Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory.
+## Question 9:(root directory / ) Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory.
 
 ### Answer:
 ```bash
 #create directory
-sudo mkdir /bigfiles
+mkdir /bigfiles
 
 #find and copy files to directory
-sudo find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
+find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
 
 
 ```
@@ -138,10 +138,10 @@ sudo find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
 ### Answer:
 ```bash
 #create directory
-sudo mkdir /var/tmp/twenty
+mkdir /var/tmp/twenty
 
 #find files
-sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
+find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
 ```
 --- 
 
@@ -150,9 +150,9 @@ sudo find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
 ### Answer:
 ```bash
 #create directory
-sudo mkdir -p /var/tmp/rhel-files
+mkdir -p /var/tmp/rhel-files
 #find files
-sudo find /home /var /etc -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
+find /tmp -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
 ```
 --- 
 
@@ -214,7 +214,7 @@ chown devops:devs /var/tmp/chmod_lab/script.sh
 
 ---
 
-## Question 16: Allow only the owner to read, write, and execute on `/var/tmp/chmod_lab/secret.txt`. Set owner:group to `admin:admins`.
+## Question 16: Allow only the owner to read, write, and execute on `/var/tmp/chmod_lab/secret.txt`. Set ownership for the file owner:group to `admin:admins`.
 
 ### Answer:
 ```bash
@@ -425,7 +425,7 @@ sysadmin:7070
 
 # create shell script
 vim create_groups.sh 
-
+#!/bin/bash
 while IFS=":" read group gid;
 do
         echo "Creating group $group with GID $gid"
@@ -508,7 +508,7 @@ Break into `node2` and set a new root password to **hoppy**.
 ```bash
    rd.break 
    #or
-   init=/bin/bash
+   rw init=/bin/bash
    # Then press Ctrl + X 
  ```
 
@@ -1004,3 +1004,13 @@ accordingly.
   userdel -r haruna
 ```
 ---
+
+## Question 44: Check if firewalld and selinux are active and enable
+
+systemctl status firewalld
+systemctl is-active firewalld
+systemctl is-enabled firewalld
+systemctl enable --now firewalld
+sudo vi /etc/selinux/config
+SELINUX=enforcing
+getenforce

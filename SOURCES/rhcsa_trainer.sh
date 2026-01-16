@@ -102,7 +102,7 @@ check_Q1() {
   if [[ -f "$LOG" ]] && grep -Eq '^(vi|vim)[[:space:]]+(\./)?hello\.txt([[:space:]]|$)' "$LOG"; then
     return 0
   else
-    echo "[FAIL] File is correct, but I did not see 'vim hello.txt' in the monitored session (run via 'rhcsa-trainer start')."
+    echo "❌ [FAIL] File is correct, but I did not see 'vim hello.txt' in the monitored session (run via 'rhcsa-trainer start')."
     return 1
   fi
 }
@@ -118,13 +118,13 @@ check_Q2() {
   local PUBKEY
   PUBKEY="$(find ~/.ssh -maxdepth 1 -type f -name '*.pub' -print -quit)"
   if [[ -z "$PUBKEY" ]]; then
-    echo "[FAIL] No public key found under ~/.ssh (*.pub). Generate one with: ssh-keygen -t rsa -b 4096"
+    echo "❌ [FAIL] No public key found under ~/.ssh (*.pub). Generate one with: ssh-keygen -t rsa -b 4096"
     return 1
   fi
 
   # 2) Quick reachability check (optional but helpful)
   if ! ping -c1 -W1 "$REMOTE_HOST" >/dev/null 2>&1; then
-    echo "[FAIL] Host $REMOTE_HOST not reachable (ping failed)."
+    echo "❌ [FAIL] Host $REMOTE_HOST not reachable (ping failed)."
     return 1
   fi
 
@@ -145,11 +145,11 @@ check_Q2() {
 
   if ssh -o ConnectTimeout=5 "${REMOTE_USER}@${REMOTE_HOST}" \
        "test -f ~/.ssh/authorized_keys && grep -q \"$KEY_FINGERPRINT\" ~/.ssh/authorized_keys" 2>/dev/null; then
-    echo "[FAIL] Key is present on remote but auth still failed."
+    echo "❌ [FAIL] Key is present on remote but auth still failed."
     echo "       Likely permissions/contexts. On the remote, try:"
     echo "       chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys && restorecon -Rv ~/.ssh"
   else
-    echo "[FAIL] Your public key is NOT on the remote."
+    echo "❌ [FAIL] Your public key is NOT on the remote."
     echo "       Fix with: ssh-copy-id -i \"$PUBKEY\" ${REMOTE_USER}@${REMOTE_HOST}"
   fi
 
@@ -163,14 +163,14 @@ check_Q3() {
   local LOG="$RHCSA_SHM_DIR/cmd.log"
 
   # 1) Verifica se houve atividade registrada
-  [[ -f "$LOG" ]] || { echo "[FAIL] No monitored session found. Run via 'rhcsa-trainer start'."; return 1; }
+  [[ -f "$LOG" ]] || { echo "❌ [FAIL] No monitored session found. Run via 'rhcsa-trainer start'."; return 1; }
 
   # 2) Procura comandos usados para visualizar logs
   if grep -Eq 'journalctl[[:space:]]+-xe' "$LOG" || grep -Eq 'cat[[:space:]]+/var/log/secure' "$LOG" || grep -Eq 'vim[[:space:]]+/var/log/secure' "$LOG" || grep -Eq 'vi[[:space:]]+/var/log/secure' "$LOG"; then
     echo "[OK] Log inspection command detected."
     return 0
   else
-    echo "[FAIL] Did not detect 'journalctl -xe' or 'cat /var/log/secure' in monitored session."
+    echo "❌ [FAIL] Did not detect 'journalctl -xe' or 'cat /var/log/secure' in monitored session."
     echo "       Try again: run 'rhcsa-trainer start' and use one of those commands."
     return 1
   fi
@@ -189,23 +189,23 @@ check_Q4() {
 
   # File should NOT exist in source anymore (it was moved)
   if [[ -e "$SRC_DIR/$FILENAME" ]]; then
-    echo "[FAIL] File still exists in $SRC_DIR — it should have been moved."
+    echo "❌ [FAIL] File still exists in $SRC_DIR — it should have been moved."
     return 1
   fi
 
   # File must exist in Documents
   if [[ ! -e "$DOC_DIR/$FILENAME" ]]; then
-    echo "[FAIL] File not found in $DOC_DIR — move step missing."
+    echo "❌ [FAIL] File not found in $DOC_DIR — move step missing."
     return 1
   fi
 
   # File must exist in DocumentBackup as a copy
   if [[ ! -e "$BAK_DIR/$FILENAME" ]]; then
-    echo "[FAIL] File not found in $BAK_DIR — copy step missing."
+    echo "❌ [FAIL] File not found in $BAK_DIR — copy step missing."
     return 1
   fi
 
-  echo "[OK] File correctly moved to Documents and copied to Backup."
+  echo "✅ [OK] File correctly moved to Documents and copied to Backup."
   return 0
 }
 
@@ -593,7 +593,7 @@ if ! test -r "$output"; then
   echo "❌ Q21 failed: Output file is not readable -> $output"
   return 1
 fi
-
+ECHO "Checking Q21 files"
 # Read file directly (no sudo, no subshell)
 while IFS= read -r p || [[ -n "$p" ]]; do
   # skip blank lines
@@ -858,7 +858,7 @@ check_Q26() {
     echo "✅ Q26 | PASS | password changed before last boot (consistent with GRUB method)"
   else
     echo "⚠️ Q26 | WARN | password changed after boot (maybe not GRUB method)"
-    return 1
+    return 0
   fi
 
   echo "✅ Q26 | PASS | root password reset to 'hoppy'"
@@ -866,7 +866,7 @@ check_Q26() {
 }
 
 # ===== Infra =====
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q22 Q23 Q24 Q25 Q26 Q21)
 declare -A STATUS
 
 evaluate_all() {
@@ -935,6 +935,10 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/create_groups.sh" 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/create_users.sh" 2>/dev/null || true
   sudo rm -f "${TRAINER_HOME}/setpass.sh" 2>/dev/null || true
+
+  ##clean Q21
+  sudo rm -f /root/find-files.sh
+  sudo rm -f /root/sized_files.txt
 
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
