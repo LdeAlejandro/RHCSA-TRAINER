@@ -943,7 +943,7 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rm -f /root/sized_files.txt
 
   ##clean Q24
-  SUDO rm -f /root/career.sh
+  sudo rm -f /root/career.sh
 
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
 }
