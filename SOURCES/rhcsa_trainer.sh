@@ -30,8 +30,9 @@ start_monitor() {
   mkdir -p "$RHCSA_SHM_DIR"
 
   sudo mkdir -p /var/tmp/chmod_lab && sudo touch /var/tmp/chmod_lab/{public.log,script.sh,secret.txt,document.txt,private.key,readme.md,hidden.conf}
-  sudo cp ../ /tmp/tmp_file
-  chown rhel:rhel /tmp/tmp_file
+  
+  #Q11 files
+  sudo install -o rhel -g rhel -m 0644 /dev/null /tmp/tmp_file
 
   # 1) GARANTA as pastas do trainer primeiro, e no HOME correto:
   TRAINER_HOME="$(resolve_home)"
