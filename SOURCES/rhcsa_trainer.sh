@@ -1757,6 +1757,10 @@ reset_all() {
   sudo rm -f -- "${TRAINER_HOME}/career.sh" 2>/dev/null || true
   sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 
+  #Clean Q5
+  sudo rm -f "/root/web.txt" 2>/dev/null || true 
+  sudo rm -f "/root/httpd-paths.txt.tmp" 2>/dev/null || true
+
   #delete Q14 to Q20 user and groups and files
 
   # Users: devops, admin, student, tester, analyst, backup
