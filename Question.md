@@ -4,7 +4,7 @@
 
 ## Question 3: Check recent system logs
 
-## Question 4: Move the file from the files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory.
+## Question 4: Move the file from / the files from the directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory.
 
 ## Question 5: Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
 

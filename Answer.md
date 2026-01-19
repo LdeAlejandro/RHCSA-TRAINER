@@ -75,10 +75,10 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
 
 ```bash
 # 1. Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
- sudo grep Listen /etc/httpd/conf/httpd.conf >> /root/web.txt
+ sudo grep Listen /etc/httpd/conf/httpd.conf > /root/web.txt
 
  #OR (if not from root user)
- sudo bash -c 'grep Listen /etc/httpd/conf/httpd.conf >> /root/web.txt'
+ sudo bash -c 'grep Listen /etc/httpd/conf/httpd.conf > /root/web.txt'
  ```
 ---
 
@@ -104,10 +104,10 @@ mkdir /shorts
 touch /shorts/file_a
 
 #create softlink
-ln -s /shorts/file_a file_b
+ln -s /shorts/file_a /file_b
 
 ## if the link was created and is having error sudo 
-ln -snf /shorts/file_a file_b
+ln -snf /shorts/file_a /file_b
 
 ```
 ---
@@ -116,7 +116,7 @@ ln -snf /shorts/file_a file_b
 ### Answer:
 ```bash
 #create hardlink
-ln /hardfiles/file_data file_c
+ln /hardfiles/file_data /file_c
 ```
 ---
 ## Question 9:(root directory / ) Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory.
@@ -359,7 +359,7 @@ sudo passwd def4ult
 ---
 
 
-## Question 24: Create a shell script that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission
+## Question 24: Create a shell script on the directory /root that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission
 
 ### Answer:
 
@@ -500,15 +500,18 @@ Break into `node2` and set a new root password to **hoppy**.
 ### Answer
 
 #### Access GRUB
-1. Reboot the VM.  
-2. At the GRUB menu, highlight the default kernel and press **`e`** to edit.  
-3. Find the line starting with `linux` or `linux16`.  
-4. At the end of that line, add:
+1. Reboot the VM.
+2. esc to access grub  
+3. At the GRUB menu, highlight the default kernel and press **`e`** to edit.  
+4. Find the line starting with `linux` or `linux16`.  
+5. At the end of that line, add:
 
 ```bash
    rd.break 
    #or
    rw init=/bin/bash
+   #or
+   init=/bin/bash
    # Then press Ctrl + X 
  ```
 
@@ -550,11 +553,11 @@ exec /sbin/init
 ## Question 27: Tuning Profile Configuration and SELINUX
 
 - Check the current recommended tuning profile.
-- Put SELinux in permissive mode on master-server.
+- Put SELinux in permissive mode on the server.
 - On rhel-server ensure network service is enabled and starts on boot.
 
 
-### check on both server is tuned is intall and running change the tune to the recommended one
+### check if tuned is intall and running change the tune to the recommended one
 
 ```bash
 systemctl status tuned
@@ -578,11 +581,22 @@ sudo tuned-adm profile virtual-guest
 #check current tune 
 tuned-adm active
 
+# Set SELinux to permissive at runtime
+sudo setenforce 0
+
+# Verify
+getenforce
+
+# Ensure network service is enabled and starts on boot If network.service exists
+sudo systemctl enable --now network
+
+# Otherwise (common on RHEL 8/9)
+sudo systemctl enable --now NetworkManager
 ```
 
 ---
 
-## Question 28: Put SELinux in permissive mode on master-server.
+## Question 28: Put SELinux in permissive mode has to be persistant.
 
 
 ```bash
@@ -598,11 +612,10 @@ SELINUX=permissive
 #restart to check if persistant
 sudo reboot 
 
-
 ```
 ---
 
-## Question 29: On node1 ensure network service is enabled and starts on boot.
+## Question 29: Ensure network service is enabled and starts on boot.
 
 
 ```bash
@@ -612,11 +625,10 @@ systemctl status NetworkManager
 #enable it to be persistant
 systemctl enable --now NetworkManager
 
-
 ```
 ---
 
-## Question 30: Configure persistant journalist in both server
+## Question 30: Configure persistant journalist
 
 ```bash
 #create directory
@@ -633,10 +645,9 @@ ls /var/log/journal
 ---
 
 ## Question 31: 
-- Start a stress-ng process on node1 with a niceness value of 19
+- Start a stress-ng process on server with a niceness value of 19
 - Adjust the niceness value of the running stress-ng process to 10.
-
-Terminate the stress-ng process.
+- Terminate the stress-ng process.
 
 ```bash
 #check if the app is installed
@@ -655,7 +666,7 @@ top
 ```
 ---
 
-## Question 31: 
+## Question 32: 
 
 - Copy /etc/fstab to /var/tmp.
 - Set the file owner to root.
@@ -664,10 +675,6 @@ top
 - User adam: read & write.
 - User maryam: no access.
 - All other users: read-only.
-
-
-
-Terminate the stress-ng process.
 
 ```bash
 #copy files
@@ -694,7 +701,7 @@ getfacl /var/tmp/fstab
  ```
 ---
 
-## Question 31: On "rhel", create a file rhel-file.ext and securely copy (scp) it to the home dir of user master-server on main-server.
+## Question 33: On "rhel", create a file rhel-file.ext and securely copy (scp) it to the home dir of user master-server on main-server.
 
 ```bash
 #on rhel server
@@ -705,7 +712,7 @@ scp -v rhel-file.txt master-server@192.168.15.14:/home/master-server
  ```
 ---
 
-## Question 32: Create a logical volume named devops_lv with 32 extents
+## Question 34: Create a logical volume named devops_lv with 32 extents
 - using the /dev/sdc disk.
 - This should be created from a volume group
 - named devops_vg with 20MB physical extents.
@@ -749,7 +756,7 @@ vim /etc/fstab
 mount -a
  ```
 ---
-## Question 33: Create and Mount Swap volume persistently
+## Question 35: Create and Mount Swap volume persistently
 - From /dev/vdb, create a 800MB swap partition and configure it
 to mount persistently.
 - All your changes must persist after a reboot.
@@ -784,7 +791,7 @@ to mount persistently.
   
 ```
 ---
-## Question 34: Create and Mount Swap volume persistently
+## Question 36: Create and Mount Swap volume persistently
 - On rhel-server, recreate the following LVM setup:
 - Create a volume group named cloud_vg.
 - From this volume group, create a logical volume named cloud_lv.
@@ -822,7 +829,7 @@ mount -a
 ---
 
 
-## Question 35: Resize devops_lv and Configure Swap volume
+## Question 37: Resize devops_lv and Configure Swap volume
 
 - On rhel server, resize the existing cloud_lv logical volume to 250MB
 (a size between 225–270MB is acceptable), while resizing its filesystem
@@ -840,7 +847,7 @@ accordingly.
 ```
 ---
 
-## Question 36: Cron Job Configuration
+## Question 38: Cron Job Configuration
 - Create a cron job for user rhel that runs logger "RHCSA Playlist Now Available" every 2 minutes.
 
 ```bash
@@ -865,7 +872,7 @@ accordingly.
 ---
 
 
-## Question 37: Use at to write "This task was easy!" to /at-files/at.txt in 2 minutes.
+## Question 39: Use at to write "This task was easy!" to /at-files/at.txt in 2 minutes.
 
 ```bash
   #Check if at is installed
@@ -881,7 +888,7 @@ accordingly.
 ```
 ---
 
-## Question 38: GRUB Bootloader Modification
+## Question 40: GRUB Bootloader Modification
 - Set GRUB_TIMEOUT=10,
 - GRUB_TIMEOUT_STYLE=hidden, and
 - add quiet to GRUB_CMDLINE_LINUX.
@@ -901,7 +908,7 @@ accordingly.
   
 ```
 ---
-## Question 39: Enable Network Services
+## Question 41: Enable Network Services
 - Ensure network services starts at boot.
 
 ```bash
@@ -913,7 +920,7 @@ accordingly.
   
 ```
 ---
-## Question 40: Firewall Rules
+## Question 42: Firewall Rules
 - Allow access SSH and HTTP services using firewall-cmd
 
 ```bash
@@ -931,7 +938,7 @@ accordingly.
   
 ```
 ---
-## Question 41: Create a group named sharegroup and the following users
+## Question 43: Create a group named sharegroup and the following users
 - haruna (with no login shell, not a member of sharegroup),
 - umar (member of sharegroup),
 - adoga (with UID 4444 member of sharegroup).
@@ -968,7 +975,7 @@ accordingly.
 
 ```
 ---
-## Question 42: User Password Policies
+## Question 44: User Password Policies
 - Enforce password policy to have a minimum length of 8 chars.
 - Set the max password age to 30 days.
 
@@ -985,7 +992,7 @@ accordingly.
 
 ```
 ---
-## Question 43: Delete Users and Groups
+## Question 45: Delete Users and Groups
 - Remove the user umar from sharegroup.
 - Delete the sharegroup.
 - Delete user haruna with their home directory.
@@ -1005,7 +1012,7 @@ accordingly.
 ```
 ---
 
-## Question 44: Check if firewalld and selinux are active and enable
+## Question 46: Check if firewalld and selinux are active and enable
 
 systemctl status firewalld
 systemctl is-active firewalld
