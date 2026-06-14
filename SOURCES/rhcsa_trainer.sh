@@ -178,8 +178,7 @@ check_Q3() {
 }
 
 # ===== Exercise Q4 =====
-Q4_DESC="A file named "move me to document and copy me to backup" exists in /trainer/files. Move the file to /trainer/Documents and then create a copy of it in /trainer/DocumentBackup."
-
+Q4_DESC='A file named "move me to document and copy me to backup" exists in /trainer/files. Move the file to /trainer/Documents and then create a copy of it in /trainer/DocumentBackup.'
 check_Q4() {
   
   local TRAINER_HOME="$(resolve_home)"
@@ -211,8 +210,7 @@ check_Q4() {
 }
 
 # ===== Exercise Q5 =====
-Q5_DESC="On the system, identify all entries containing the string "Listen" in the Apache HTTP Server configuration file. Save the results to /root/web.txt."
-
+Q5_DESC='On the system, identify all entries containing the string "Listen" in the Apache HTTP Server configuration file. Save the results to /root/web.txt.'
 check_Q5() {
   local CONF_FILE="/etc/httpd/conf/httpd.conf"
   local OUTPUT_FILE="/root/web.txt"
@@ -619,7 +617,7 @@ if ! test -r "$output"; then
   echo "❌ Q21 failed: Output file is not readable -> $output"
   return 1
 fi
-ECHO "Checking Q21 files"
+echo "Checking Q21 files"
 # Read file directly (no sudo, no subshell)
 while IFS= read -r p || [[ -n "$p" ]]; do
   # skip blank lines
