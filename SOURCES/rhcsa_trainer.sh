@@ -91,7 +91,7 @@ EOFRC
 }
 
 # ===== Exercise Q1 =====
-Q1_DESC="Use vim to create and save a file hello.txt containing 'hello world'"
+Q1_DESC="On the local system, create a file named hello.txt in the current working directory. The file must contain the text 'hello world'. Save the file and ensure the content is written successfully."
 
 check_Q1() {
   local LOG="$RHCSA_SHM_DIR/cmd.log"
@@ -109,7 +109,7 @@ check_Q1() {
 }
 
 # ===== Exercise Q2 =====
-Q2_DESC="Generate an SSH key and configure key-based login to remote server master-server@192.168.15.14"
+Q2_DESC="Configure SSH key-based authentication between the local system and a remote host. Ensure the user can log in to the remote system without being prompted for a password."
 
 check_Q2() {
   local REMOTE_USER="${Q2_USER:-master-server}"
@@ -158,7 +158,7 @@ check_Q2() {
 }
 
 # ===== Exercise Q3 =====
-Q3_DESC="Check recent system logs"
+Q3_DESC="As an administrator, review recent system activity. Examine system logs, including authentication-related events, and verify the status of the SSH service using available log sources."
 
 check_Q3() {
   local LOG="$RHCSA_SHM_DIR/cmd.log"
@@ -178,7 +178,7 @@ check_Q3() {
 }
 
 # ===== Exercise Q4 =====
-Q4_DESC="Move the file from the /trainer/files directory to the Documents directory, then copy it to the DocumentBackup directory — all located inside the user’s home directory."
+Q4_DESC="A file named "move me to document and copy me to backup" exists in /trainer/files. Move the file to /trainer/Documents and then create a copy of it in /trainer/DocumentBackup."
 
 check_Q4() {
   
@@ -211,7 +211,7 @@ check_Q4() {
 }
 
 # ===== Exercise Q5 =====
-Q5_DESC="Find the string 'Listen' in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt"
+Q5_DESC="On the system, identify all entries containing the string "Listen" in the Apache HTTP Server configuration file. Save the results to /root/web.txt."
 
 check_Q5() {
   local CONF_FILE="/etc/httpd/conf/httpd.conf"
@@ -242,7 +242,7 @@ check_Q5() {
 }
 
 # ===== Exercise Q6 =====
-Q6_DESC="Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in the ~/vaults directory"
+Q6_DESC="Create a directory named ~/vaults. Archive the entire /etc directory into a gzip-compressed tar file named etc_vault.tar.gz and store it in ~/vaults."
 
 check_Q6() {
   local TRAINER_HOME="$(resolve_home)"
@@ -272,7 +272,7 @@ check_Q6() {
 }
 
 # ===== Exercise Q7 =====
-Q7_DESC="File Links - Create a file file_a in (root directory) shorts directory and a soft link file_b pointing to file_a"
+Q7_DESC="Create a directory named /shorts. Inside this directory create a file named file_a. Create a symbolic link named /file_b that points to /shorts/file_a."
 
 check_Q7() {
   # 1. Check if directory exists
@@ -304,8 +304,7 @@ check_Q7() {
 }
 
 # ===== Exercise Q8 =====
-Q8_DESC="File Links - (root directory) Create a hard link of the file_data in hardfiles directory, to file_c"
-
+Q8_DESC="A file named /hardfiles/file_data already exists on the system. Create a hard link named /file_c that references this file."
 check_Q8() {
   # 3. Check hardlink
   if [ -f /file_c ] && [ "$(stat -c %h /hardfiles/file_data)" -eq "$(stat -c %h /file_c)" ]; then
@@ -319,7 +318,7 @@ check_Q8() {
 }
 
 # ===== Exercise Q9 =====
-Q9_DESC="Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory."
+Q9_DESC="Create the directory /bigfiles. Locate all regular files under /usr that are larger than 3 MB and smaller than 10 MB, then copy them to /bigfiles."
 
 check_Q9() {
   # 1. Check if /bigfiles directory exists
@@ -339,7 +338,7 @@ check_Q9() {
 }
 
 # ===== Exercise Q10 =====
-Q10_DESC="Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/"
+Q10_DESC="Create the directory /var/tmp/twenty. Locate all regular files under /etc that were modified more than 120 days ago and copy them to /var/tmp/twenty."
 
 check_Q10() {
   # 1. Check if files were copied
@@ -353,7 +352,7 @@ check_Q10() {
 }
 
 # ===== Exercise Q11 =====
-Q11_DESC="Find all /tmp files owned by user rhel and copy them to /var/tmp/rhel-files"
+Q11_DESC="Create the directory /var/tmp/rhel-files. Locate all regular files under /tmp owned by the user rhel and copy them to /var/tmp/rhel-files."
 
 check_Q11() {
   # 1. Check if files were copied
@@ -367,7 +366,7 @@ check_Q11() {
 }
 
 # ===== Exercise Q12 =====
-Q12_DESC="Find a file named 'httpd.conf' and save the absolute paths to /root/httpd-paths.txt."
+Q12_DESC="Locate all files named httpd.conf on the system and save their absolute paths to /root/httpd-paths.txt."
 
 
 check_Q12() {
@@ -386,7 +385,7 @@ check_Q12() {
 }
 
 # ===== Exercise Q13 =====
-Q13_DESC="Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone"
+Q13_DESC="Copy /etc/fstab to /var/tmp. Configure the copied file so that it is owned by root:root and cannot be executed by any user."
 check_Q13() {
   if sudo -n test -f /var/tmp/fstab 2>/dev/null; then
     if sudo -n stat -c '%U' /var/tmp/fstab 2>/dev/null | grep -q '^root$' && \
@@ -405,7 +404,7 @@ check_Q13() {
 }
 
 # ===== Exercise Q14 =====
-Q14_DESC="Give full permissions to everyone on /var/tmp/chmod_lab/public.log and set owner:group to root:root"
+Q14_DESC="Configure /var/tmp/chmod_lab/public.log so that it is owned by root:root and all users have full access to the file."
 check_Q14() {
   if sudo -n test -f /var/tmp/chmod_lab/public.log 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/public.log | grep -q '^777$' && \
@@ -424,7 +423,14 @@ check_Q14() {
 }
 
 # ===== Exercise Q15 =====
-Q15_DESC="Allow the owner to read/write/execute, while others can only read and execute on /var/tmp/chmod_lab/script.sh. Set owner:group to devops:devs."
+Q15_DESC="Configure /var/tmp/chmod_lab/script.sh with the following requirements:
+- Owner: devops
+- Group: devs
+- Owner must have read, write, and execute permissions
+- Group members must have read and execute permissions
+- Other users must have read and execute permissions
+
+Ensure the required user and group exist on the system."
 check_Q15() {
   if sudo -n test -f /var/tmp/chmod_lab/script.sh 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/script.sh | grep -q '^755$' && \
@@ -443,7 +449,11 @@ check_Q15() {
 }
 
 # ===== Exercise Q16 =====
-Q16_DESC="Allow only the owner to read, write, and execute on /var/tmp/chmod_lab/secret.txt. Set owner:group to admin:admins."
+Q16_DESC="Configure /var/tmp/chmod_lab/secret.txt with the following requirements:
+- Owner: admin
+- Group: admins
+- Only the owner must have access to the file.
+- The owner must be able to read, write, and execute the file."
 check_Q16() {
   if sudo -n test -f /var/tmp/chmod_lab/secret.txt 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/secret.txt | grep -q '^700$' && \
@@ -462,7 +472,11 @@ check_Q16() {
 }
 
 # ===== Exercise Q17 =====
-Q17_DESC="Allow the owner to read and write, while others can only read /var/tmp/chmod_lab/document.txt. Set owner:group to student:students."
+Q17_DESC="Configure /var/tmp/chmod_lab/document.txt with the following requirements:
+- Owner: student
+- Group: students
+- The owner must have read and write permissions.
+- All other users must have read-only access."
 check_Q17() {
   if sudo -n test -f /var/tmp/chmod_lab/document.txt 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/document.txt | grep -q '^644$' && \
@@ -481,7 +495,11 @@ check_Q17() {
 }
 
 # ===== Exercise Q18 =====
-Q18_DESC="Allow only the owner to read and write /var/tmp/chmod_lab/private.key. No one else should have access. Set owner:group to tester:qa."
+Q18_DESC="Configure /var/tmp/chmod_lab/private.key with the following requirements:
+- Owner: tester
+- Group: qa
+- The owner must have read and write permissions.
+- No other user should have access to the file."
 check_Q18() {
   if sudo -n test -f /var/tmp/chmod_lab/private.key 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/private.key | grep -q '^600$' && \
@@ -500,7 +518,11 @@ check_Q18() {
 }
 
 # ===== Exercise Q19 =====
-Q19_DESC="Allow only the owner to read /var/tmp/chmod_lab/readme.md. Everyone else should have no access. Set owner:group to analyst:finance."
+Q19_DESC="Configure /var/tmp/chmod_lab/readme.md with the following requirements:
+- Owner: analyst
+- Group: finance
+- The owner must have read-only access.
+- No other user should have access to the file."
 check_Q19() {
   if sudo -n test -f /var/tmp/chmod_lab/readme.md 2>/dev/null; then
     if sudo -n stat -c '%a' /var/tmp/chmod_lab/readme.md | grep -q '^400$' && \
@@ -519,7 +541,10 @@ check_Q19() {
 }
 
 # ===== Exercise Q20  =====
-Q20_DESC="Remove all permissions from /var/tmp/chmod_lab/hidden.conf. No one should be able to read, write, or execute it. Set owner:group to backup:storage."
+Q20_DESC="Configure /var/tmp/chmod_lab/hidden.conf with the following requirements:
+- Owner: backup
+- Group: storage
+- No user should have any permissions on the file."
 check_Q20() {
   local f="/var/tmp/chmod_lab/hidden.conf"
   if sudo -n test -f "$f" 2>/dev/null; then
@@ -541,7 +566,7 @@ check_Q20() {
 }
 
 # ===== Exercise Q21 =====
-Q21_DESC="Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt."
+Q21_DESC="Create a shell script named /root/find-files.sh that locates all regular files under /usr with a size between 30 KB and 50 KB. The script must save the results to /root/sized_files.txt."
 check_Q21() {
   echo "check "
   local script="/root/find-files.sh"
@@ -681,7 +706,7 @@ PY
 }
 
 # ===== Exercise Q22 =====
-Q22_DESC="Create an user named 'noob' with password 'Aa7338!!' and configure it to change the password on next login."
+Q22_DESC="Create a local user account named noob with the password Aa7338!!. Configure the account so that the user is required to change the password at the next login."
 check_Q22() {
   if ! getent passwd noob >/dev/null; then
     echo "❌ Q22 | FAIL | user 'noob' not found"; return 1
@@ -705,7 +730,7 @@ check_Q22() {
 }
 
 # ===== Exercise Q23 =====
-Q23_DESC="Create an user named 'def4ult' with password 'Aa578!!??' and change it to 'C546#Ab!'."
+Q23_DESC="Create a local user account named def4ult and assign the password Aa578!!??. After the account is created, change the password to C546#Ab!."
 check_Q23() {
   if ! getent passwd def4ult >/dev/null; then
     echo "❌ Q23 | FAIL | user 'def4ult' not found"; return 1
@@ -722,8 +747,15 @@ check_Q23() {
 }
 
 # ===== Exercise Q24 =====
-Q24_DESC='Create a shell script that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." 
-when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission'
+Q24_DESC="Create a shell script named career.sh in the root user's home directory with the following behavior:
+
+- When executed with the argument me, it must display:
+  \"Yes, I'm a Systems Engineer.\"
+- When executed with the argument they, it must display:
+  \"Okay, they do cloud engineering.\"
+- For invalid or missing arguments, it must display:
+  \"Usage: ./career.sh me|they\"
+- The script must have permissions set to 755"
 check_Q24() {
   script="/root/career.sh"
   [ -f "$script" ] || script="$HOME/career.sh"
@@ -762,21 +794,45 @@ check_Q24() {
 }
 
 # ===== Exercise Q25 =====
-Q25_DESC="Question 25: Write shell scripts (create_groups.sh, create_users.sh, setpass.sh) on node1 that perform the following tasks:
+Q25_DESC="On node1, create shell scripts that automate user and group administration according to the requirements below.
 
-1. Create groups with specific GIDs as defined below.
-2. Create users with specific UIDs and group memberships.
-3. Set the passwords for maryam, adam, and jacob to "Strong!2025".
+Requirements:
+
+- Create groups using the specified group names and GIDs.
+- Create users using the specified usernames, UIDs, and supplementary group memberships.
+- Configure the password Strong!2025 for users maryam, adam, and jacob.
 
 Groups and GIDs:
+
+```bash
 hpc_admin:9090
 hpc_managers:8080
 sysadmin:7070
+```
 
 Users, UIDs, and Groups:
+
+```bash
 maryam:2030:hpc_admin,hpc_managers
 adam:2040:sysadmin
-jacob:2050:hpc_admin"
+jacob:2050:hpc_admin
+```
+
+The solution must be implemented using the following scripts:
+
+```bash
+create_groups.sh
+create_users.sh
+setpass.sh
+```
+
+### Params:
+
+```bash
+maryam:2030:hpc_admin,hpc_managers
+adam:2040:sysadmin
+jacob:2050:hpc_admin
+```"
 
 check_Q25() {
   # check script files exist
@@ -828,7 +884,7 @@ check_Q25() {
 }
 
 # ===== Exercise Q26 =====
-Q26_DESC="Reset the root password via GRUB so that it becomes 'hoppy'."
+Q26_DESC="Reset the root password on node2 by interrupting the boot process and gaining administrative access through GRUB. Set the new root password to hoppy and ensure the system boots normally afterward."
 
 check_Q26() {
   local passwd_test="hoppy"
@@ -868,7 +924,9 @@ check_Q26() {
 }
 
 # ===== Exercise Q27 =====
-Q27_DESC="Tuning + SELinux + Network: tuned running with recommended profile, SELinux permissive, network enabled on boot."
+Q27_DESC="On rhel-server, review the system tuning configuration and apply the recommended tuning profile. Configure SELinux to operate in permissive mode and ensure the appropriate network service is enabled and configured to start automatically at boot.
+
+### check if tuned is intall and running change the tune to the recommended one"
 
 check_Q27() {
 
@@ -940,7 +998,7 @@ check_Q27() {
 }
 
 # ===== Exercise Q28 =====
-Q28_DESC="SELinux persistent configuration: set SELINUX=permissive in /etc/selinux/config and verify after reboot."
+Q28_DESC="Configure SELinux so that the system operates in permissive mode after a reboot. Verify that the configuration persists across system restarts."
 
 check_Q28() {
 
@@ -971,7 +1029,7 @@ check_Q28() {
 }
 
 # ===== Exercise Q29 =====
-Q29_DESC="Ensure NetworkManager is enabled and starts on boot."
+Q29_DESC="Ensure that the system networking service is enabled and configured to start automatically during system boot."
 
 check_Q29() {
 
@@ -998,7 +1056,7 @@ check_Q29() {
 }
 
 # ===== Exercise Q30 =====
-Q30_DESC="Configure persistent journald logging (/var/log/journal)."
+Q30_DESC="Configure persistent systemd journal logging so that log data is retained across reboots."
 
 check_Q30() {
 
@@ -1020,7 +1078,11 @@ check_Q30() {
 }
 
 # ===== Exercise Q31 =====
-Q31_DESC="Start stress-ng with nice 19, renice to 10, then terminate it."
+Q31_DESC="A workload testing utility is installed on the system. Perform the following tasks:
+
+- Start a stress-ng process with a niceness value of 19.
+- Modify the running process so that its niceness value becomes 10.
+- Terminate the process when finished."
 
 check_Q31() {
 
@@ -1055,7 +1117,13 @@ check_Q31() {
 }
 
 # ===== Exercise Q32 =====
-Q32_DESC="ACLs on /var/tmp/fstab: root owner, not executable, adam rw, maryam none, others r."
+Q32_DESC="Copy the file /etc/fstab to /var/tmp and configure access according to the following requirements:
+
+- The file owner must be root.
+- The file must not be executable by any user.
+- User adam must have read and write access.
+- User maryam must have no access.
+- All other users must have read-only access."
 
 check_Q32() {
   local f="/var/tmp/fstab"
@@ -1108,7 +1176,7 @@ check_Q32() {
 }
 
 # ===== Exercise Q33 =====
-Q33_DESC="Create rhel-file.ext and copy it via scp to master-server home directory."
+Q33_DESC="On rhel, create a file named rhel-file.txt in the current user's environment and securely transfer it to the home directory of user master-server on main-server."
 
 check_Q33() {
 
@@ -1141,7 +1209,7 @@ check_Q33() {
 }
 
 # ===== Exercise Q34 =====
-Q34_DESC="LVM: devops_vg (PE 20M) on /dev/sdc1, devops_lv (32 extents), ext4, mounted persistently at /mnt/devops_lv."
+Q34_DESC="Create a logical volume named devops_lv using storage provided by /dev/sdc. The logical volume must be created from a volume group named devops_vg with physical extents of 20 MB. Configure the logical volume with 32 extents, create an ext4 filesystem on it, and mount it persistently at /mnt/devops_lv."
 
 check_Q34() {
   local vg="devops_vg"
@@ -1217,7 +1285,7 @@ check_Q34() {
 }
 
 # ===== Exercise Q35 =====
-Q35_DESC="Create 800MB swap on /dev/vdb1 and configure persistent swap mount."
+Q35_DESC="Using the disk /dev/vdb, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available."
 
 check_Q35() {
 
@@ -1252,7 +1320,13 @@ check_Q35() {
 }
 
 # ===== Exercise Q36 =====
-Q36_DESC="LVM: cloud_vg + cloud_lv (200M), ext4, persistently mounted at /mnt/cloud_lv."
+Q36_DESC="n rhel-server, configure local storage according to the following requirements:
+
+- Create a volume group named cloud_vg.
+- Create a logical volume named cloud_lv from cloud_vg.
+- The logical volume must have a size of 200 MB.
+- Create an appropriate filesystem on the logical volume.
+- Mount the filesystem and ensure it is available after a system reboot."
 
 check_Q36() {
   local vg="cloud_vg"
@@ -1322,7 +1396,9 @@ check_Q36() {
 }
 
 # ===== Exercise Q37 =====
-Q37_DESC="Resize cloud_lv to ~250MB (225–270MB acceptable) and resize filesystem."
+Q37_DESC="An existing logical volume named cloud_lv requires additional storage.
+
+Resize cloud_lv so that its final size is 250 MB. A final size between 225 MB and 270 MB is acceptable. Ensure the filesystem is resized accordingly."
 
 check_Q37() {
 
@@ -1364,7 +1440,10 @@ check_Q37() {
 }
 
 # ===== Exercise Q38 =====
-Q38_DESC="Cron job: user rhel runs logger every 2 minutes."
+Q38_DESC="Cron Job Configuration
+
+Configure a scheduled task for user rhel-user that records the following message in the system logs every 2 minutes:
+"
 
 check_Q38() {
 
@@ -1394,7 +1473,11 @@ check_Q38() {
 }
 
 # ===== Exercise Q39 =====
-Q39_DESC='Use at to write "This task was easy!" to /at-files/at.txt in 2 minutes.'
+Q39_DESC='Schedule a one-time job that writes the following text to /at-files/at.txt exactly 2 minutes from now:
+
+```text
+This task was easy!
+```'
 
 check_Q39() {
 
@@ -1431,7 +1514,14 @@ check_Q39() {
 }
 
 # ===== Exercise Q40 =====
-Q40_DESC="Modify GRUB: timeout=10, hidden style, quiet kernel line, and rebuild config."
+Q40_DESC="GRUB Bootloader Modification
+
+Modify the GRUB bootloader configuration with the following requirements:
+
+- Set GRUB_TIMEOUT to 10.
+- Set GRUB_TIMEOUT_STYLE to hidden.
+- Add the quiet kernel parameter to GRUB_CMDLINE_LINUX.
+- Regenerate the GRUB configuration so the changes take effect."
 
 check_Q40() {
 
@@ -1472,7 +1562,7 @@ check_Q40() {
 }
 
 # ===== Exercise Q41 =====
-Q41_DESC="Ensure NetworkManager service is enabled and starts at boot."
+Q41_DESC="Ensure that the system network management service is enabled and automatically starts at boot."
 
 check_Q41() {
 
@@ -1499,7 +1589,12 @@ check_Q41() {
 }
 
 # ===== Exercise Q42 =====
-Q42_DESC="Firewall: allow SSH and HTTP services permanently."
+Q42_DESC="Configure the firewall to allow access to the following services permanently:
+
+- SSH
+- HTTP
+
+Apply the configuration so that the changes take effect immediately."
 
 check_Q42() {
 
@@ -1526,7 +1621,13 @@ check_Q42() {
 }
 
 # ===== Exercise Q43 =====
-Q43_DESC="Create sharegroup; users haruna(nologin), umar(group), adoga(UID 4444); set passwords."
+Q43_DESC="Create a group named sharegroup and configure the following user accounts:
+
+- haruna must not be able to log in interactively and must not be a member of sharegroup.
+- umar must be a member of sharegroup.
+- adoga must have UID 4444 and be a member of sharegroup.
+
+Configure the password persward for all users. Afterward, change the password of user adoga to perfect."
 
 check_Q43() {
 
@@ -1599,7 +1700,12 @@ check_Q43() {
 }
 
 # ===== Exercise Q44 =====
-Q44_DESC="Password policy: min length 8, max password age 30 days."
+Q44_DESC="User Password Policies
+
+Configure the system password policy to meet the following requirements:
+
+- Passwords must have a minimum length of 8 characters.
+- User passwords must expire after 30 days."
 
 check_Q44() {
 
@@ -1641,7 +1747,11 @@ check_Q44() {
 }
 
 # ===== Exercise Q45 =====
-Q45_DESC="Remove umar from sharegroup, delete sharegroup, delete haruna with home."
+Q45_DESC="Perform the following administrative tasks:
+
+- Remove user umar from the sharegroup group.
+- Delete the sharegroup group.
+- Remove the user haruna and delete the user's home directory."
 
 check_Q45() {
 
@@ -1680,7 +1790,7 @@ check_Q45() {
 
 
 # ===== Exercise Q46 =====
-Q46_DESC="Ensure firewalld is enabled+running and SELinux is enforcing."
+Q46_DESC="Verify that firewalld and SELinux are enabled and active on the system. If firewalld is not running, configure it to start immediately and automatically at boot. Ensure SELinux is configured in enforcing mode."
 
 check_Q46() {
 

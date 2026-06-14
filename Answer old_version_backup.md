@@ -1,4 +1,4 @@
-## Question 1: On the local system, create a file named hello.txt in the current working directory. The file must contain the text "hello world". Save the file and ensure the content is written successfully.
+## Question 1: Use vim to create and save a file hello.txt containing 'hello world'
 
 ### Answer: 
 
@@ -8,14 +8,13 @@ vim hello.txt
 # save & quit:
 :wq
 ```
-
 save the file
 
 check with rhcsa-trainer eval
 
 ---
 
-## Question 2: Configure SSH key-based authentication between the local system and a remote host. Ensure the user can log in to the remote system without being prompted for a password.
+## Question 2: Create SSH key-based authentication
 
 ### Answer: 
 
@@ -41,7 +40,7 @@ ssh ssh_username@server_ip_or_hostname
 check with rhcsa-trainer eval
 ```
 
-## Question 3: As an administrator, review recent system activity. Examine system logs, including authentication-related events, and verify the status of the SSH service using available log sources.
+## Question 3: Check System Logs
 
 ### Answer:
 
@@ -57,7 +56,7 @@ sudo journalctl -u sshd
 ```
 ---
 
-## Question 4: A file named "move me to document and copy me to backup" exists in /trainer/files. Move the file to /trainer/Documents and then create a copy of it in /trainer/DocumentBackup.
+## Question 4: Move and Copy Files
 
 ### Answer:
 
@@ -70,7 +69,7 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
 ```
 ---
 
-## Question 5: On the system, identify all entries containing the string "Listen" in the Apache HTTP Server configuration file. Save the results to /root/web.txt.
+## Question 5: Find the string "Listen" in /etc/httpd/conf/httpd.conf and save the output to /root/web.txt
 
 ### Answer:
 
@@ -83,7 +82,7 @@ cp "/trainer/Documents/move me to document and copy me to backup" /trainer/Docum
  ```
 ---
 
-## Question 6: Create a directory named ~/vaults. Archive the entire /etc directory into a gzip-compressed tar file named etc_vault.tar.gz and store it in ~/vaults.
+## Question 6: Create a gzip-compressed tar archive of /etc named etc_vault.tar.gz in your home directory under vaults (~/vaults).
 
 ### Answer:
 ```bash
@@ -94,8 +93,7 @@ mkdir ~/vaults
 tar -cvzf ~/vaults/etc_vault.tar.gz /etc
 ```
 ---
-
-## Question 7: Create a directory named /shorts. Inside this directory create a file named file_a. Create a symbolic link named /file_b that points to /shorts/file_a.
+## Question 7: (root directory / ) File Links - Create a file file_a in shorts directory create soft link file_b pointing to file_a
 
 ### Answer:
 ```bash
@@ -113,8 +111,7 @@ ln -snf /shorts/file_a /file_b
 
 ```
 ---
-
-## Question 8: A file named /hardfiles/file_data already exists on the system. Create a hard link named /file_c that references this file.
+## Question 8: File Links - (root directory / ) Create a hard link of the file in hardfiles directory to file_c
 
 ### Answer:
 ```bash
@@ -122,9 +119,8 @@ ln -snf /shorts/file_a /file_b
 ln /hardfiles/file_data /file_c
 ```
 ---
-
-## Question 9: Create the directory /bigfiles. Locate all regular files under /usr that are larger than 3 MB and smaller than 10 MB, then copy them to /bigfiles.
-
+## Question 9:(root directory / ) Find files in /usr that are greater than 3MB but < 10MB and copy them to /bigfiles directory.
+-
 ### Answer:
 ```bash
 #create directory
@@ -137,7 +133,7 @@ find /usr -type f -size +3M -size -10M -exec cp {} /bigfiles \;
 ```
 --- 
 
-## Question 10: Create the directory /var/tmp/twenty. Locate all regular files under /etc that were modified more than 120 days ago and copy them to /var/tmp/twenty.
+## Question 10: Find files in /etc modified more than 120 days ago and copy them to /var/tmp/twenty/
 
 ### Answer:
 ```bash
@@ -149,7 +145,7 @@ find /etc -type f -mtime +120 -exec cp {} /var/tmp/twenty \;
 ```
 --- 
 
-## Question 11: Create the directory /var/tmp/rhel-files. Locate all regular files under /tmp owned by the user rhel and copy them to /var/tmp/rhel-files.
+## Question 11:Find all /tmp files owned by user rhel and copy them to /var/tmp/rhel-files.
 
 ### Answer:
 ```bash
@@ -160,7 +156,7 @@ find /tmp -type f -user rhel -exec cp {} /var/tmp/rhel-files \;
 ```
 --- 
 
-## Question 12: Locate all files named httpd.conf on the system and save their absolute paths to /root/httpd-paths.txt.
+## Question 12: Find a file named "httpd.conf" and save the absolute paths to /root/httpd-paths.txt.
 
 ### Answer:
 ```bash
@@ -172,7 +168,7 @@ sudo sh -c 'find / -type f -name httpd.conf >> /root/httpd-paths.txt'
 ```
 --- 
 
-## Question 13: Copy /etc/fstab to /var/tmp. Configure the copied file so that it is owned by root:root and cannot be executed by any user.
+## Question 13: Copy the contents of /etc/fstab to /var/tmp, Set the file ownership to root, Ensure no execute permissions for anyone
 
 ### Answer:
 ```bash
@@ -186,8 +182,7 @@ chown root:root /var/tmp/fstab
 chmod 644 /var/tmp/fstab
 
 ```
-
-## Question 14: Configure /var/tmp/chmod_lab/public.log so that it is owned by root:root and all users have full access to the file.
+## Question 14: Give full permissions to everyone on `/var/tmp/chmod_lab/public.log` and set owner:group to `root:root`
 
 ### Answer:
 ```bash
@@ -200,14 +195,7 @@ chown root:root /var/tmp/chmod_lab/public.log
 
 ---
 
-## Question 15: Configure /var/tmp/chmod_lab/script.sh with the following requirements:
-- Owner: devops
-- Group: devs
-- Owner must have read, write, and execute permissions
-- Group members must have read and execute permissions
-- Other users must have read and execute permissions
-
-Ensure the required user and group exist on the system.
+## Question 15: Allow the owner to read/write/execute, while others can only read and execute on `/var/tmp/chmod_lab/script.sh`. Set owner:group to `devops:devs`.
 
 ### Answer:
 ```bash
@@ -223,13 +211,10 @@ sudo useradd -g devs devops
 # Assign file ownership
 chown devops:devs /var/tmp/chmod_lab/script.sh
 ```
---- 
 
-## Question 16: Configure /var/tmp/chmod_lab/secret.txt with the following requirements:
-- Owner: admin
-- Group: admins
-- Only the owner must have access to the file.
-- The owner must be able to read, write, and execute the file.
+---
+
+## Question 16: Allow only the owner to read, write, and execute on `/var/tmp/chmod_lab/secret.txt`. Set ownership for the file owner:group to `admin:admins`.
 
 ### Answer:
 ```bash
@@ -248,11 +233,7 @@ chown admin:admins /var/tmp/chmod_lab/secret.txt
 
 ---
 
-## Question 17: Configure /var/tmp/chmod_lab/document.txt with the following requirements:
-- Owner: student
-- Group: students
-- The owner must have read and write permissions.
-- All other users must have read-only access.
+## Question 17: Allow the owner to read and write, while others can only read `/var/tmp/chmod_lab/document.txt`. Set owner:group to `student:students`.
 
 ### Answer:
 ```bash
@@ -271,11 +252,7 @@ chown student:students /var/tmp/chmod_lab/document.txt
 
 ---
 
-## Question 18: Configure /var/tmp/chmod_lab/private.key with the following requirements:
-- Owner: tester
-- Group: qa
-- The owner must have read and write permissions.
-- No other user should have access to the file.
+## Question 18: Allow only the owner to read and write `/var/tmp/chmod_lab/private.key`. No one else should have access. Set owner:group to `tester:qa`.
 
 ### Answer:
 ```bash
@@ -294,11 +271,7 @@ chown tester:qa /var/tmp/chmod_lab/private.key
 
 ---
 
-## Question 19: Configure /var/tmp/chmod_lab/readme.md with the following requirements:
-- Owner: analyst
-- Group: finance
-- The owner must have read-only access.
-- No other user should have access to the file.
+## Question 19: Allow only the owner to read `/var/tmp/chmod_lab/readme.md`. Everyone else should have no access. Set owner:group to `analyst:finance`.
 
 ### Answer:
 ```bash
@@ -318,10 +291,7 @@ chown analyst:finance /var/tmp/chmod_lab/readme.md
 
 ---
 
-## Question 20: Configure /var/tmp/chmod_lab/hidden.conf with the following requirements:
-- Owner: backup
-- Group: storage
-- No user should have any permissions on the file.
+## Question 20: Remove all permissions from `/var/tmp/chmod_lab/hidden.conf`. No one should be able to read, write, or execute it. Set owner:group to `backup:storage`.
 
 ### Answer:
 ```bash
@@ -331,10 +301,8 @@ chmod 000 /var/tmp/chmod_lab/hidden.conf
 # Assign file ownership
 chown backup:storage /var/tmp/chmod_lab/hidden.conf
 ```
-
 ---
-
-## Question 21: Create a shell script named /root/find-files.sh that locates all regular files under /usr with a size between 30 KB and 50 KB. The script must save the results to /root/sized_files.txt.
+## Question 21: Create a shell script /root/find-files.sh that finds files in /usr between 30KB and 50KB and saves results to /root/sized_files.txt.
 
 ### Answer:
 ```bash
@@ -360,7 +328,7 @@ cat /root/sized_files.txt
 ```
 ---
 
-## Question 22: Create a local user account named noob with the password Aa7338!!. Configure the account so that the user is required to change the password at the next login.
+## Question 22: Create an user with the name of "noob" password: Aa7338!! and configure so the user has to change the password on the next login.
 
 ### Answer:
 
@@ -374,7 +342,7 @@ sudo passwd -e noob
 
 ---
 
-## Question 23: Create a local user account named def4ult and assign the password Aa578!!??. After the account is created, change the password to C546#Ab!.
+## Question 23: Create an user with the name "def4ult" with the password: Aa578!!?? and change the password to C546#Ab!
 
 ### Answer:
 
@@ -390,15 +358,8 @@ sudo passwd def4ult
 ```
 ---
 
-## Question 24: Create a shell script named career.sh in the root user's home directory with the following behavior:
 
-- When executed with the argument me, it must display:
-  "Yes, I'm a Systems Engineer."
-- When executed with the argument they, it must display:
-  "Okay, they do cloud engineering."
-- For invalid or missing arguments, it must display:
-  "Usage: ./career.sh me|they"
-- The script must have permissions set to 755.
+## Question 24: Create a shell script on the directory /root that Outputs "Yes, I’m a Systems Engineer." when run with ./career.sh me , Outputs "Okay, they do cloud engineering." when run with ./career.sh they ,Outputs "Usage: ./career.sh me|they" for invalid/empty arguments, the file must has 755 permission
 
 ### Answer:
 
@@ -422,39 +383,21 @@ chmod 755 ~/career.sh
 
 ```
 
----
+## Question 25: Write shell scripts (create_groups.sh, create_users.sh, setpass.sh) on node1 that perform the following tasks:
 
-## Question 25: On node1, create shell scripts that automate user and group administration according to the requirements below.
-
-Requirements:
-
-- Create groups using the specified group names and GIDs.
-- Create users using the specified usernames, UIDs, and supplementary group memberships.
-- Configure the password Strong!2025 for users maryam, adam, and jacob.
+1. Create groups with specific GIDs as defined below.
+2. Create users with specific UIDs and group memberships.
+3. Set the passwords for maryam, adam, and jacob to "Strong!2025".
 
 Groups and GIDs:
-
-```bash
 hpc_admin:9090
 hpc_managers:8080
 sysadmin:7070
-```
 
 Users, UIDs, and Groups:
-
-```bash
 maryam:2030:hpc_admin,hpc_managers
 adam:2040:sysadmin
 jacob:2050:hpc_admin
-```
-
-The solution must be implemented using the following scripts:
-
-```bash
-create_groups.sh
-create_users.sh
-setpass.sh
-```
 
 ### Params:
 
@@ -463,6 +406,7 @@ maryam:2030:hpc_admin,hpc_managers
 adam:2040:sysadmin
 jacob:2050:hpc_admin
 ```
+
 
 ### Answer:
 ```bash
@@ -546,7 +490,12 @@ Executar
 ```
 ---
 
-## Question 26: Reset the root password on node2 by interrupting the boot process and gaining administrative access through GRUB. Set the new root password to hoppy and ensure the system boots normally afterward.
+## Question 26: In a new VM Reset Root Password via GRUB
+
+**Task:**  
+Break into `node2` and set a new root password to **hoppy**.
+
+---
 
 ### Answer
 
@@ -597,9 +546,16 @@ passwd
 # set password to hoppy
 touch /.autorelabel
 exec /sbin/init
+
 ```
 ---
-## Question 27: On rhel-server, review the system tuning configuration and apply the recommended tuning profile. Configure SELinux to operate in permissive mode and ensure the appropriate network service is enabled and configured to start automatically at boot.
+
+## Question 27: Tuning Profile Configuration and SELINUX
+
+- Check the current recommended tuning profile.
+- Put SELinux in permissive mode on the server.
+- On rhel-server ensure network service is enabled and starts on boot.
+
 
 ### check if tuned is intall and running change the tune to the recommended one
 
@@ -640,7 +596,8 @@ sudo systemctl enable --now NetworkManager
 
 ---
 
-## Question 28: Configure SELinux so that the system operates in permissive mode after a reboot. Verify that the configuration persists across system restarts.
+## Question 28: Put SELinux in permissive mode has to be persistant.
+
 
 ```bash
 #check SELinux enforce mode
@@ -658,7 +615,8 @@ sudo reboot
 ```
 ---
 
-## Question 29: Ensure that the system networking service is enabled and configured to start automatically during system boot.
+## Question 29: Ensure network service is enabled and starts on boot.
+
 
 ```bash
 #check NetworkManager status
@@ -670,7 +628,7 @@ systemctl enable --now NetworkManager
 ```
 ---
 
-## Question 30: Configure persistent systemd journal logging so that log data is retained across reboots.
+## Question 30: Configure persistant journalist
 
 ```bash
 #create directory
@@ -686,13 +644,10 @@ ls /var/log/journal
 ```
 ---
 
-## Question 31:
-
-A workload testing utility is installed on the system. Perform the following tasks:
-
-- Start a stress-ng process with a niceness value of 19.
-- Modify the running process so that its niceness value becomes 10.
-- Terminate the process when finished.
+## Question 31: 
+- Start a stress-ng process on server with a niceness value of 19
+- Adjust the niceness value of the running stress-ng process to 10.
+- Terminate the stress-ng process.
 
 ```bash
 #check if the app is installed
@@ -711,15 +666,15 @@ top
 ```
 ---
 
-## Question 32:
+## Question 32: 
 
-Copy the file /etc/fstab to /var/tmp and configure access according to the following requirements:
-
-- The file owner must be root.
-- The file must not be executable by any user.
-- User adam must have read and write access.
-- User maryam must have no access.
-- All other users must have read-only access.
+- Copy /etc/fstab to /var/tmp.
+- Set the file owner to root.
+- Ensure /var/tmp/fstab is not executable by anyone.
+- Configure file ACLs on the copied file to:
+- User adam: read & write.
+- User maryam: no access.
+- All other users: read-only.
 
 ```bash
 #copy files
@@ -746,7 +701,7 @@ getfacl /var/tmp/fstab
  ```
 ---
 
-## Question 33: On rhel, create a file named rhel-file.txt in the current user's environment and securely transfer it to the home directory of user master-server on main-server.
+## Question 33: On "rhel", create a file rhel-file.ext and securely copy (scp) it to the home dir of user master-server on main-server.
 
 ```bash
 #on rhel server
@@ -757,7 +712,12 @@ scp -v rhel-file.txt master-server@192.168.15.14:/home/master-server
  ```
 ---
 
-## Question 34: Create a logical volume named devops_lv using storage provided by /dev/sdc. The logical volume must be created from a volume group named devops_vg with physical extents of 20 MB. Configure the logical volume with 32 extents, create an ext4 filesystem on it, and mount it persistently at /mnt/devops_lv.
+## Question 34: Create a logical volume named devops_lv with 32 extents
+- using the /dev/sdc disk.
+- This should be created from a volume group
+- named devops_vg with 20MB physical extents.
+- Format the logical volume as an ext4 filesystem and mount it
+- persistently at /mnt/devops_lv.
 
 Check your work.
 
@@ -796,8 +756,10 @@ vim /etc/fstab
 mount -a
  ```
 ---
-
-## Question 35: Using the disk /dev/vdb, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available.
+## Question 35: Create and Mount Swap volume persistently
+- From /dev/vdb, create a 800MB swap partition and configure it
+to mount persistently.
+- All your changes must persist after a reboot.
 
 ```bash
   #validar swap atual
@@ -826,17 +788,16 @@ mount -a
 
   #check
    free -h
+  
 ```
 ---
-## Question 36:
-
-On rhel-server, configure local storage according to the following requirements:
-
+## Question 36: 
+- On rhel-server, recreate the following LVM setup:
 - Create a volume group named cloud_vg.
-- Create a logical volume named cloud_lv from cloud_vg.
+- From this volume group, create a logical volume named cloud_lv.
 - The logical volume must have a size of 200 MB.
 - Create an appropriate filesystem on the logical volume.
-- Mount the filesystem and ensure it is available after a system reboot.
+- Mount the filesystem and ensure it is available after reboot.
 
 ```bash
 #create partition
@@ -867,11 +828,13 @@ mount -a
 ```
 ---
 
-## Question 37:
 
-An existing logical volume named cloud_lv requires additional storage.
+## Question 37: Resize devops_lv and Configure Swap volume
 
-Resize cloud_lv so that its final size is 250 MB. A final size between 225 MB and 270 MB is acceptable. Ensure the filesystem is resized accordingly.
+- On rhel server, resize the existing cloud_lv logical volume to 250MB
+(a size between 225–270MB is acceptable), while resizing its filesystem
+accordingly.
+
 
 ```bash
   #check logical volumes
@@ -885,12 +848,7 @@ Resize cloud_lv so that its final size is 250 MB. A final size between 225 MB an
 ---
 
 ## Question 38: Cron Job Configuration
-
-Configure a scheduled task for user rhel-user that records the following message in the system logs every 2 minutes:
-
-```text
-RHCSA Playlist Now Available
-```
+- Create a cron job for user rhel that runs logger "RHCSA Playlist Now Available" every 2 minutes.
 
 ```bash
   #Check if crond is working
@@ -913,13 +871,8 @@ RHCSA Playlist Now Available
 ```
 ---
 
-## Question 39:
 
-Schedule a one-time job that writes the following text to /at-files/at.txt exactly 2 minutes from now:
-
-```text
-This task was easy!
-```
+## Question 39: Use at to write "This task was easy!" to /at-files/at.txt in 2 minutes.
 
 ```bash
   #Check if at is installed
@@ -936,13 +889,10 @@ This task was easy!
 ---
 
 ## Question 40: GRUB Bootloader Modification
-
-Modify the GRUB bootloader configuration with the following requirements:
-
-- Set GRUB_TIMEOUT to 10.
-- Set GRUB_TIMEOUT_STYLE to hidden.
-- Add the quiet kernel parameter to GRUB_CMDLINE_LINUX.
-- Regenerate the GRUB configuration so the changes take effect.
+- Set GRUB_TIMEOUT=10,
+- GRUB_TIMEOUT_STYLE=hidden, and
+- add quiet to GRUB_CMDLINE_LINUX.
+- Apply your changes to the grub config file.
 
 ```bash
   #Open the grub file
@@ -958,10 +908,8 @@ Modify the GRUB bootloader configuration with the following requirements:
   
 ```
 ---
-
 ## Question 41: Enable Network Services
-
-Ensure that the system network management service is enabled and automatically starts at boot.
+- Ensure network services starts at boot.
 
 ```bash
   #Enable the service
@@ -972,15 +920,8 @@ Ensure that the system network management service is enabled and automatically s
   
 ```
 ---
-
 ## Question 42: Firewall Rules
-
-Configure the firewall to allow access to the following services permanently:
-
-- SSH
-- HTTP
-
-Apply the configuration so that the changes take effect immediately.
+- Allow access SSH and HTTP services using firewall-cmd
 
 ```bash
   #check wich service and ports are allow
@@ -997,16 +938,12 @@ Apply the configuration so that the changes take effect immediately.
   
 ```
 ---
-
-## Question 43: Create Local Users and Groups
-
-Create a group named sharegroup and configure the following user accounts:
-
-- haruna must not be able to log in interactively and must not be a member of sharegroup.
-- umar must be a member of sharegroup.
-- adoga must have UID 4444 and be a member of sharegroup.
-
-Configure the password persward for all users. Afterward, change the password of user adoga to perfect.
+## Question 43: Create a group named sharegroup and the following users
+- haruna (with no login shell, not a member of sharegroup),
+- umar (member of sharegroup),
+- adoga (with UID 4444 member of sharegroup).
+- All users should have a password: persward.
+- Change the password of user adoga to perfect.
 
 ```bash
   #check if user group exist
@@ -1038,13 +975,9 @@ Configure the password persward for all users. Afterward, change the password of
 
 ```
 ---
-
 ## Question 44: User Password Policies
-
-Configure the system password policy to meet the following requirements:
-
-- Passwords must have a minimum length of 8 characters.
-- User passwords must expire after 30 days.
+- Enforce password policy to have a minimum length of 8 chars.
+- Set the max password age to 30 days.
 
 ```bash
   #Edit the file for minumum length
@@ -1059,14 +992,10 @@ Configure the system password policy to meet the following requirements:
 
 ```
 ---
-
-## Question 45: User and Group Administration
-
-Perform the following administrative tasks:
-
-- Remove user umar from the sharegroup group.
-- Delete the sharegroup group.
-- Remove the user haruna and delete the user's home directory.
+## Question 45: Delete Users and Groups
+- Remove the user umar from sharegroup.
+- Delete the sharegroup.
+- Delete user haruna with their home directory.
 
 ```bash
   #Check command for deletion
@@ -1083,11 +1012,8 @@ Perform the following administrative tasks:
 ```
 ---
 
-## Question 46: Security Services Verification
+## Question 46: Check if firewalld and selinux are active and enable
 
-Verify that firewalld and SELinux are enabled and active on the system. If firewalld is not running, configure it to start immediately and automatically at boot. Ensure SELinux is configured in enforcing mode.
-
-```bash
 systemctl status firewalld
 systemctl is-active firewalld
 systemctl is-enabled firewalld
@@ -1095,4 +1021,3 @@ systemctl enable --now firewalld
 sudo vi /etc/selinux/config
 SELINUX=enforcing
 getenforce
-```
