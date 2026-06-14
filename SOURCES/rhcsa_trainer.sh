@@ -792,7 +792,7 @@ check_Q24() {
 }
 
 # ===== Exercise Q25 =====
-Q25_DESC="On node1, create shell scripts that automate user and group administration according to the requirements below.
+Q25_DESC='On node1, create shell scripts that automate user and group administration according to the requirements below.
 
 Requirements:
 
@@ -830,7 +830,7 @@ setpass.sh
 maryam:2030:hpc_admin,hpc_managers
 adam:2040:sysadmin
 jacob:2050:hpc_admin
-```"
+```'
 
 check_Q25() {
   # check script files exist
@@ -1178,8 +1178,8 @@ Q33_DESC="On rhel, create a file named rhel-file.txt in the current user's envir
 
 check_Q33() {
 
-  local FILE="rhel-file.ext"
-  local DEST="/home/master-server/rhel-file.ext"
+  local FILE="rhel-file.txt"
+  local DEST="/home/master-server/rhel-file.txt"
   local LOG="$RHCSA_SHM_DIR/cmd.log"
 
   # ---- 1) Local file must exist ----
@@ -2020,7 +2020,7 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo systemctl disable --now NetworkManager 2>/dev/null || true
 
   #Clean 42
-  udo firewall-cmd --remove-service=ssh --permanent 2>/dev/null || true
+  sudo firewall-cmd --remove-service=ssh --permanent 2>/dev/null || true
   sudo firewall-cmd --remove-service=http --permanent 2>/dev/null || true
   sudo firewall-cmd --reload 2>/dev/null || true
 
