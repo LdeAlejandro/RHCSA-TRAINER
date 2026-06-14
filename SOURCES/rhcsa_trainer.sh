@@ -1189,9 +1189,9 @@ check_Q33() {
   fi
 
   # ---- 2) scp command must be detected in monitored shell ----
-  if [[ ! -f "$LOG" ]] || ! grep -Eq 'scp[[:space:]]+.*rhel-file\.ext[[:space:]]+master-server@' "$LOG"; then
+  if [[ ! -f "$LOG" ]] || ! grep -Eq 'scp[[:space:]]+.*rhel-file\.txt[[:space:]]+master-server@' "$LOG"; then
     echo "❌ Q33 failed: scp command not detected in monitored session."
-    echo "Hint: scp rhel-file.ext master-server@<ip>:/home/master-server/"
+    echo "Hint: scp rhel-file.txt master-server@<ip>:/home/master-server/"
     return 1
   fi
 
@@ -1843,12 +1843,17 @@ evaluate_all() {
     fi
   done
 }
+
 reset_all() {
   local TRAINER_HOME
   TRAINER_HOME="$(resolve_home)"
   [[ -n "$TRAINER_HOME" ]] || TRAINER_HOME="${HOME:-/root}"
 
   for id in "${TASKS[@]}"; do STATUS[$id]="${YELLOW}PENDING${RESET}"; done
+  # Restore SELinux default state for next lab run
+  sudo sed -i 's/^SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config 2>/dev/null || true
+  sudo setenforce 1 2>/dev/null || true
+  sudo rm -f /.autorelabel 2>/dev/null || true
   rm -f hello.txt
   rm -rf "${TRAINER_HOME}/.ssh/"* 2>/dev/null || true
   rm -f  "$RHCSA_SHM_DIR/cmd.log" 2>/dev/null || true
