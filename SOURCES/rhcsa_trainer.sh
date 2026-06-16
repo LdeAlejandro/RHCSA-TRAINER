@@ -1006,21 +1006,14 @@ check_Q28() {
 # ===== Exercise Q29 =====
 Q29_DESC="Ensure that the system networking service is enabled and configured to start automatically during system boot."
 
+
 check_Q29() {
 
-  # ---- 1) Service must exist ----
-  if ! systemctl list-unit-files | awk '{print $1}' | grep -qx 'NetworkManager.service'; then
-    echo "❌ Q29 failed: NetworkManager service not found."
-    return 1
-  fi
-
-  # ---- 2) Must be enabled on boot ----
   if ! systemctl is-enabled --quiet NetworkManager; then
     echo "❌ Q29 failed: NetworkManager is not enabled on boot."
     return 1
   fi
 
-  # ---- 3) Must be running ----
   if ! systemctl is-active --quiet NetworkManager; then
     echo "❌ Q29 failed: NetworkManager is not running."
     return 1
