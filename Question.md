@@ -109,7 +109,7 @@ Requirements:
 - Configure the password Strong!2025 for users maryam, adam, and jacob.
 
 ## Question 26
-Reset the root password on node2 by interrupting the boot process and gaining administrative access through GRUB. Set the new root password to hoppy and ensure the system boots normally afterward.
+Reset the root password on the local system by using GRUB recovery mode. Set the root password to hoppy and ensure the system can boot normally after the password reset.
 
 ## Question 27
 On rhel-server, review the system tuning configuration and apply the recommended tuning profile. Configure SELinux to operate in permissive mode and ensure the appropriate network service is enabled and configured to start automatically at boot.

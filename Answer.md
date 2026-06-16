@@ -546,7 +546,7 @@ Executar
 ```
 ---
 
-## Question 26: Reset the root password on node2 by interrupting the boot process and gaining administrative access through GRUB. Set the new root password to hoppy and ensure the system boots normally afterward.
+## Question 26: Reset the root password on the local system by using GRUB recovery mode. Set the root password to hoppy and ensure the system can boot normally after the password reset.
 
 ### Answer
 

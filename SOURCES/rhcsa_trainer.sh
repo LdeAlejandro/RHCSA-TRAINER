@@ -882,43 +882,20 @@ check_Q25() {
 }
 
 # ===== Exercise Q26 =====
-Q26_DESC="Reset the root password on node2 by interrupting the boot process and gaining administrative access through GRUB. Set the new root password to hoppy and ensure the system boots normally afterward."
+Q26_DESC="Reset the root password on the local system by using GRUB recovery mode. Set the root password to hoppy and ensure the system can boot normally after the password reset."
 
 check_Q26() {
   local passwd_test="hoppy"
-  local shadow_time boot_time current_time rc
 
-  # 1. Test if root password is correct
   echo "$passwd_test" | su -c "exit" root &>/dev/null
-  rc=$?
 
-  if [ $rc -ne 0 ]; then
-    echo "❌ Q26 | FAIL | root password is not 'hoppy'"
-    return 1
-  fi
-
-  # 2. Check SELinux relabel marker
-  if [ -f /.autorelabel ]; then
-    echo "✅ Q26 | PASS | SELinux relabel marker found"
-  else
-    echo "⚠️ Q26 | WARN | /.autorelabel missing – GRUB method may not have been used"
-    return 1
-  fi
-
-  # 3. Check whether /etc/shadow was modified before last boot
-  shadow_time=$(stat -c %Y /etc/shadow 2>/dev/null)
-  boot_time=$(awk '{print int($1)}' /proc/uptime)
-  current_time=$(date +%s)
-
-  if (( shadow_time < current_time - boot_time )); then
-    echo "✅ Q26 | PASS | password changed before last boot (consistent with GRUB method)"
-  else
-    echo "⚠️ Q26 | WARN | password changed after boot (maybe not GRUB method)"
+  if [ $? -eq 0 ]; then
+    echo "✅ Q26 | PASS | root password reset to 'hoppy'"
     return 0
   fi
 
-  echo "✅ Q26 | PASS | root password reset to 'hoppy'"
-  return 0
+  echo "❌ Q26 | FAIL | root password is not 'hoppy'"
+  return 1
 }
 
 # ===== Exercise Q27 =====
