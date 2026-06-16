@@ -402,5 +402,3 @@ The script must display only the filenames that currently exist on the system.
 
 The script must be executable.
 ```
-
-Essas 25 questões (47-71) complementam muito bem o seu banco atual e fecham praticamente todos os tópicos que estavam mais fracos: **NetworkManager, SELinux avançado, Chrony, Systemd, Processos e Scripting**.
