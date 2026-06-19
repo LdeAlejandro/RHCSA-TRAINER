@@ -1273,11 +1273,11 @@ check_Q34() {
 }
 
 # ===== Exercise Q35 =====
-Q35_DESC="Using the disk /dev/vdb, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available."
+Q35_DESC="Using the disk /dev/sdd, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available."
 
 check_Q35() {
 
-  local part="/dev/vdb1"
+  local part="/dev/sdd2"
 
   # 1) Partition must exist
   if ! [ -b "$part" ]; then
@@ -1298,7 +1298,7 @@ check_Q35() {
   fi
 
   # 4) fstab must contain persistent entry
-  if ! sudo -n grep -Eq "^[[:space:]]*$part[[:space:]]+swap[[:space:]]+swap" /etc/fstab 2>/dev/null; then
+  if ! sudo -n grep -Eq "^[[:space:]]*$part[[:space:]]+swap[[:space:]]+swap[[:space:]]" /etc/fstab 2>/dev/null; then
     echo "❌ Q35 failed: /etc/fstab missing swap entry for $part."
     return 1
   fi
@@ -2212,38 +2212,9 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rmdir /mnt/devops_lv 2>/dev/null || true
 
   #Clean Q35
-  # ---- Reset Q35: swap on /dev/vdb1 ----
-  echo ">> Resetting Q35 (swap)..."
-
-  # Disable swap
-  sudo swapoff /dev/vdb1 2>/dev/null || true
-
-  # Remove fstab entry
-  sudo sed -i '\|^/dev/vdb1[[:space:]]\+swap|d' /etc/fstab 2>/dev/null || true
-
-  # Remove swap signature
-  sudo wipefs -a /dev/vdb1 2>/dev/null || true
-
-  #Clean 36
-   # ---- Reset Q36: cloud_vg/cloud_lv ----
-  echo ">> Resetting Q36 (cloud_vg/cloud_lv)..."
-
-  # remove fstab line
-  sudo sed -i '\|^/dev/cloud_vg/cloud_lv[[:space:]]\+/mnt/cloud_lv[[:space:]]\+ext4|d' /etc/fstab 2>/dev/null || true
-
-  # unmount
-  sudo umount /mnt/cloud_lv 2>/dev/null || true
-
-  # remove LV/VG/PV
-  sudo lvremove -fy /dev/cloud_vg/cloud_lv 2>/dev/null || true
-  sudo vgremove -fy cloud_vg 2>/dev/null || true
-
-  # wipe PV signatures if a partition exists
-  sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
-  sudo wipefs -a /dev/sdc1 2>/dev/null || true
-
-  # cleanup mount dir
-  sudo rmdir /mnt/cloud_lv 2>/dev/null || true
+  sudo swapoff /dev/sdd2 2>/dev/null || true
+  sudo sed -i '\|^/dev/sdd2[[:space:]]\+swap[[:space:]]\+swap|d' /etc/fstab 2>/dev/null || true
+  sudo wipefs -a /dev/sdd2 2>/dev/null || true
 
   #Clean 38
   sudo crontab -u rhel -r 2>/dev/null || true

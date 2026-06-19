@@ -781,7 +781,7 @@ n
 w
 
 #create physical volume
-pvcreate /dev/sdc
+pvcreate /dev/sdc1
 
 #create volumen group
 vgcreate -s 20M devops_vg /dev/sdc1
@@ -805,7 +805,7 @@ mount -a
  ```
 ---
 
-## Question 35: Using the disk /dev/vdb, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available.
+## Question 35: Using the disk /dev/sdd, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available.
 
 ```bash
   #validar swap atual

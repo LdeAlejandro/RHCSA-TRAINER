@@ -144,7 +144,7 @@ On rhel, create a file named rhel-file.txt in the current user's environment and
 Create a logical volume named devops_lv using storage provided by /dev/sdc. The logical volume must be created from a volume group named devops_vg with physical extents of 20 MB. Configure the logical volume with 32 extents, create an ext4 filesystem on it, and mount it persistently at /mnt/devops_lv.
 
 ## Question 35
-Using the disk /dev/vdb, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available.
+Using the disk /dev/sdd, create an 800 MB swap partition and configure the system so that the swap space is activated automatically after reboot. Verify that the swap space is available."
 
 ## Question 36
 On rhel-server, configure local storage according to the following requirements:
