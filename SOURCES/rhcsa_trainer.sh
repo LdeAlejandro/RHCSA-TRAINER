@@ -1230,7 +1230,8 @@ check_Q34() {
     return 1
   fi
   local le
-  le="$(sudo -n lvs --noheadings -o lv_le "$lvpath" 2>/dev/null | tr -d ' ')"
+  le="$(sudo -n lvdisplay "$lvpath" 2>/dev/null | awk '/Current LE/ {print $3}')"
+
   if [[ "$le" != "32" ]]; then
     echo "❌ Q34 failed: LV extents = $le (expected 32)."
     return 1
