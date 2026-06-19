@@ -1161,25 +1161,38 @@ check_Q33() {
     return 1
   fi
 
-  # 2) scp command must be detected
+  # 2) scp command must be detected first
   if [[ ! -f "$LOG" ]] || ! grep -Eq 'scp[[:space:]]+.*rhel-file\.txt[[:space:]]+master-server@' "$LOG"; then
     echo "❌ Q33 failed: scp command not detected in monitored session."
-    echo "Hint: scp rhel-file.txt master-server@${REMOTE_HOST}:/home/master-server/"
-    return 1
-  fi
-
-  # 3) Remote file must exist
-  if ! ssh -o ConnectTimeout=5 \
-          -o StrictHostKeyChecking=accept-new \
-          "${REMOTE_USER}@${REMOTE_HOST}" \
-          "test -f '$REMOTE_DEST'" >/dev/null 2>&1; then
-    echo "❌ Q33 failed: File not found on remote host at $REMOTE_DEST."
     echo "Hint: scp rhel-file.txt ${REMOTE_USER}@${REMOTE_HOST}:/home/master-server/"
     return 1
   fi
 
-  echo "✅ Q33 PASSED: File copied successfully to remote host."
-  return 0
+  # 3) Try remote validation using SSH key only.
+  # This avoids hanging or asking for a password during the automated check.
+  if ssh -o BatchMode=yes \
+         -o PasswordAuthentication=no \
+         -o PubkeyAuthentication=yes \
+         -o StrictHostKeyChecking=accept-new \
+         -o ConnectTimeout=5 \
+         "${REMOTE_USER}@${REMOTE_HOST}" \
+         "test -f '$REMOTE_DEST'" >/dev/null 2>&1; then
+    echo "✅ Q33 PASSED: File copied successfully to remote host."
+    return 0
+  fi
+
+  # 4) If key auth is not ready, don't hang asking for password.
+  echo "⚠️ Q33 could not validate remote file using SSH key authentication."
+  echo "   The scp command was detected, but automatic SSH validation needs passwordless access."
+  echo
+  echo "   First configure key-based SSH, for example:"
+  echo "   ssh-copy-id ${REMOTE_USER}@${REMOTE_HOST}"
+  echo
+  echo "   Then verify manually:"
+  echo "   ssh ${REMOTE_USER}@${REMOTE_HOST} 'test -f ${REMOTE_DEST} && echo OK'"
+  echo
+  echo "❌ Q33 failed: Remote validation could not be completed automatically."
+  return 1
 }
 
 # ===== Exercise Q34 =====
@@ -2168,10 +2181,13 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   #Clean Q32
   sudo rm -f /var/tmp/fstab 2>/dev/null || true
 
-  # Reset Q33
+  # Clean Q33
   rm -f rhel-file.txt 2>/dev/null || true
 
-  ssh -o ConnectTimeout=5 \
+  ssh -o BatchMode=yes \
+    -o PasswordAuthentication=no \
+    -o PubkeyAuthentication=yes \
+    -o ConnectTimeout=5 \
     -o StrictHostKeyChecking=accept-new \
     master-server@192.168.15.14 \
     'rm -f /home/master-server/rhel-file.txt' >/dev/null 2>&1 || true
