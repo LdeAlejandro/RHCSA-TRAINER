@@ -1219,7 +1219,7 @@ check_Q34() {
   local pesize
   pesize="$(sudo -n vgs --noheadings --units m -o vg_extent_size "$vg" 2>/dev/null | tr -d ' ' | tr 'A-Z' 'a-z')"
   # expected like "20.00m"
-  if ! echo "$pesize" | grep -Eq '^20(\.0+)?m$'; then
+  if ! echo "$pesize" | grep -Eq '^20([.,]0+)?m$'; then
     echo "❌ Q34 failed: VG extent size is '$pesize' (expected 20m)."
     return 1
   fi
