@@ -682,7 +682,11 @@ journalctl --flush
 # check if file exist
 ls /var/log/journal
 
+#check if journal is using disk
+journalctl --disk-usage
 
+#check if the are .journla files
+ls -R /var/log/journal
 ```
 ---
 
@@ -699,13 +703,17 @@ A workload testing utility is installed on the system. Perform the following tas
 dnf list installed | grep stress-ng
 
 #intall if needed
-#start stress
-nice -n 19 stress-ng -c1 &
+# Start stress-ng with niceness 19
+nice -n 19 stress-ng --cpu 1 &
+
+# Change niceness to 10
+renice -n 10 -p $(pgrep stress-ng | head -1)
+
+# Terminate the process
+pkill stress-ng
 
 #check resource with top
 top
-
-#renice the value to 10 with "r" in top view
 
 #extra you can kill process pressing "k" while in top view, you can use sigkill or 9
 ```

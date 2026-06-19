@@ -1026,6 +1026,7 @@ check_Q29() {
 # ===== Exercise Q30 =====
 Q30_DESC="Configure persistent systemd journal logging so that log data is retained across reboots."
 
+
 check_Q30() {
 
   # ---- 1) Directory must exist ----
@@ -1149,30 +1150,35 @@ Q33_DESC="On rhel, create a file named rhel-file.txt in the current user's envir
 check_Q33() {
 
   local FILE="rhel-file.txt"
-  local DEST="/home/master-server/rhel-file.txt"
+  local REMOTE_USER="${Q33_USER:-master-server}"
+  local REMOTE_HOST="${Q33_HOST:-192.168.15.14}"
+  local REMOTE_DEST="/home/master-server/rhel-file.txt"
   local LOG="$RHCSA_SHM_DIR/cmd.log"
 
-  # ---- 1) Local file must exist ----
+  # 1) Local file must exist
   if [ ! -f "$FILE" ]; then
     echo "❌ Q33 failed: $FILE not found in current directory."
     return 1
   fi
 
-  # ---- 2) scp command must be detected in monitored shell ----
+  # 2) scp command must be detected
   if [[ ! -f "$LOG" ]] || ! grep -Eq 'scp[[:space:]]+.*rhel-file\.txt[[:space:]]+master-server@' "$LOG"; then
     echo "❌ Q33 failed: scp command not detected in monitored session."
-    echo "Hint: scp rhel-file.txt master-server@<ip>:/home/master-server/"
+    echo "Hint: scp rhel-file.txt master-server@${REMOTE_HOST}:/home/master-server/"
     return 1
   fi
 
-  # ---- 3) File must exist in destination ----
-  if ! sudo -n test -f "$DEST" 2>/dev/null; then
-    echo "❌ Q33 failed: File not found at $DEST on this system."
-    echo "Hint: run the scp command successfully."
+  # 3) Remote file must exist
+  if ! ssh -o ConnectTimeout=5 \
+          -o StrictHostKeyChecking=accept-new \
+          "${REMOTE_USER}@${REMOTE_HOST}" \
+          "test -f '$REMOTE_DEST'" >/dev/null 2>&1; then
+    echo "❌ Q33 failed: File not found on remote host at $REMOTE_DEST."
+    echo "Hint: scp rhel-file.txt ${REMOTE_USER}@${REMOTE_HOST}:/home/master-server/"
     return 1
   fi
 
-  echo "✅ Q33 PASSED: File copied successfully via scp."
+  echo "✅ Q33 PASSED: File copied successfully to remote host."
   return 0
 }
 
@@ -2162,9 +2168,13 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   #Clean Q32
   sudo rm -f /var/tmp/fstab 2>/dev/null || true
 
-  #Clean Q33
-  sudo rm -f /home/master-server/rhel-file.ext 2>/dev/null || true
-  rm -f rhel-file.ext 2>/dev/null || true
+  # Reset Q33
+  rm -f rhel-file.txt 2>/dev/null || true
+
+  ssh -o ConnectTimeout=5 \
+    -o StrictHostKeyChecking=accept-new \
+    master-server@192.168.15.14 \
+    'rm -f /home/master-server/rhel-file.txt' >/dev/null 2>&1 || true
 
   #Clean Q34
   # remove fstab line
