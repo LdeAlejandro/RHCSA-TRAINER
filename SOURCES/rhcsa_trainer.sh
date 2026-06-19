@@ -2213,8 +2213,18 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 
   #Clean Q35
   sudo swapoff /dev/sdd2 2>/dev/null || true
-  sudo sed -i '\|^/dev/sdd2[[:space:]]\+swap[[:space:]]\+swap|d' /etc/fstab 2>/dev/null || true
+
+  sudo sed -i '\|^/dev/sdd2[[:space:]]\+swap[[:space:]]\+swap|d' \
+  /etc/fstab 2>/dev/null || true
+
   sudo wipefs -a /dev/sdd2 2>/dev/null || true
+
+  # Delete partition 2 from /dev/sdd
+  sudo parted -s /dev/sdd rm 2 2>/dev/null || true
+
+  # Reload partition table
+  sudo partprobe /dev/sdd 2>/dev/null || true
+  udevadm settle 2>/dev/null || true
 
   #Clean 38
   sudo crontab -u rhel -r 2>/dev/null || true
