@@ -1773,31 +1773,21 @@ Q46_DESC="Verify that firewalld and SELinux are enabled and active on the system
 
 check_Q46() {
 
-  # ---- firewalld must exist ----
-  if ! systemctl list-unit-files | awk '{print $1}' | grep -qx 'firewalld.service'; then
-    echo "❌ Q46 failed: firewalld service not found."
-    return 1
-  fi
-
-  # ---- firewalld enabled ----
   if ! systemctl is-enabled --quiet firewalld; then
     echo "❌ Q46 failed: firewalld is not enabled on boot."
     return 1
   fi
 
-  # ---- firewalld running ----
   if ! systemctl is-active --quiet firewalld; then
     echo "❌ Q46 failed: firewalld is not running."
     return 1
   fi
 
-  # ---- SELinux config file enforcing ----
   if ! grep -Eq '^SELINUX=enforcing' /etc/selinux/config; then
     echo "❌ Q46 failed: /etc/selinux/config not set to enforcing."
     return 1
   fi
 
-  # ---- SELinux runtime enforcing ----
   local se
   se="$(getenforce 2>/dev/null)"
   if [[ "$se" != "Enforcing" ]]; then

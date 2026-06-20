@@ -947,10 +947,10 @@ This task was easy!
   echo 'echo "This task was easy!" >> /at-files/at.txt | at now +2 minutes' 
 
   # Verify scheduled jobs
-atq
+  atq
 
-# After 2 minutes, verify the file
-cat /at-files/at.txt
+  # After 2 minutes, verify the file
+  cat /at-files/at.txt
 
 ```
 ---
@@ -1015,6 +1015,11 @@ Apply the configuration so that the changes take effect immediately.
   #reload firewall to apply
   firewall-cmd --reload
   
+  #check enabled services
+  firewall-cmd --list-services
+
+  #check enabled ports
+  firewall-cmd --list-ports
 ```
 ---
 
