@@ -207,7 +207,7 @@ Verify that firewalld and SELinux are enabled and active on the system. If firew
 
 ```md
 ## Question 47
-Configure a connection named static-ens160 on interface ens160 with the following settings:
+Configure a connection named static-enp0s8 on interface enp0s8 with the following settings:
 
 - IPv4 Address: 192.168.100.50/24
 - Gateway: 192.168.100.1
@@ -218,7 +218,7 @@ Ensure the configuration persists after a system reboot.
 ---
 
 ## Question 48
-Configure interface ens160 with the following IPv6 settings:
+Configure interface enp0s8 with the following IPv6 settings:
 
 - IPv6 Address: 2001:db8::10/64
 - Gateway: 2001:db8::1
@@ -247,7 +247,7 @@ Verify that hostname resolution functions correctly.
 ---
 
 ## Question 51
-The network connection ens160 exists but is currently disconnected.
+The network connection enp0s8 exists but is currently disconnected.
 
 Restore network connectivity and ensure the connection activates automatically at system boot.
 

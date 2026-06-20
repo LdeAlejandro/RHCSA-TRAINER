@@ -1020,6 +1020,9 @@ Apply the configuration so that the changes take effect immediately.
 
   #check enabled ports
   firewall-cmd --list-ports
+
+  #check permanent services
+  firewall-cmd --permanent --list-services
 ```
 ---
 
@@ -1125,7 +1128,7 @@ getenforce
 ---
 ## Question 47: Configure a Static IPv4 Network Connection
 
-Configure a network connection named static-ens160 on interface ens160 with the following settings:
+Configure a network connection named static-enp0s8 on interface enp0s8 with the following settings:
 
 * IPv4 Address: 192.168.100.50/24
 * Gateway: 192.168.100.1
@@ -1135,24 +1138,24 @@ Ensure the configuration persists after a system reboot.
 
 ```bash
   #Create the connection
-  nmcli connection add type ethernet con-name static-ens160 ifname ens160 \
+  nmcli connection add type ethernet con-name static-enp0s8 ifname enp0s8 \
   ipv4.addresses 192.168.100.50/24 \
   ipv4.gateway 192.168.100.1 \
   ipv4.dns 8.8.8.8 \
   ipv4.method manual
 
   #Activate the connection
-  nmcli connection up static-ens160
+  nmcli connection up static-enp0s8
 
   #Verify configuration
-  nmcli connection show static-ens160
+  nmcli connection show static-enp0s8
 ```
 
 ---
 
 ## Question 48: Configure IPv6 Networking
 
-Configure interface ens160 with the following IPv6 settings:
+Configure interface enp0s8 with the following IPv6 settings:
 
 * IPv6 Address: 2001:db8::10/64
 * Gateway: 2001:db8::1
@@ -1161,16 +1164,16 @@ Activate the configuration immediately.
 
 ```bash
   #Configure IPv6
-  nmcli connection modify ens160 \
+  nmcli connection modify enp0s8 \
   ipv6.addresses 2001:db8::10/64 \
   ipv6.gateway 2001:db8::1 \
   ipv6.method manual
 
   #Activate changes
-  nmcli connection up ens160
+  nmcli connection up enp0s8
 
   #Verify
-  ip -6 addr show ens160
+  ip -6 addr show enp0s8
 ```
 
 ---
@@ -1207,10 +1210,10 @@ Verify that hostname resolution functions correctly.
   nmcli connection show --active
 
   #Configure DNS
-  nmcli connection modify ens160 ipv4.dns "1.1.1.1 8.8.8.8"
+  nmcli connection modify enp0s8 ipv4.dns "1.1.1.1 8.8.8.8"
 
   #Apply changes
-  nmcli connection up ens160
+  nmcli connection up enp0s8
 
   #Verify
   cat /etc/resolv.conf
@@ -1221,16 +1224,16 @@ Verify that hostname resolution functions correctly.
 
 ## Question 51: Restore Network Connectivity
 
-The network connection ens160 exists but is currently disconnected.
+The network connection enp0s8 exists but is currently disconnected.
 
 Restore network connectivity and ensure the connection activates automatically at system boot.
 
 ```bash
   #Bring connection up
-  nmcli connection up ens160
+  nmcli connection up enp0s8
 
   #Enable autoconnect
-  nmcli connection modify ens160 connection.autoconnect yes
+  nmcli connection modify enp0s8 connection.autoconnect yes
 
   #Verify
   nmcli connection show --active

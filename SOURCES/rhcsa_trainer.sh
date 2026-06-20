@@ -1804,9 +1804,9 @@ check_Q46() {
 # ===== Infra =====
 
 # ===== Exercise Q47 =====
-Q47_DESC="Configure a connection named static-ens160 on interface ens160 with IPv4 address 192.168.100.50/24, gateway 192.168.100.1, and DNS server 8.8.8.8. Ensure the configuration persists after reboot."
+Q47_DESC="Configure a connection named static-enp0s8 on interface enp0s8 with IPv4 address 192.168.100.50/24, gateway 192.168.100.1, and DNS server 8.8.8.8. Ensure the configuration persists after reboot."
 check_Q47() {
-  local con="static-ens160" iface="ens160"
+  local con="static-enp0s8" iface="enp0s8"
   nmcli -t -f NAME con show | grep -qx "$con" || { echo "❌ Q47 failed: connection $con not found."; return 1; }
   [[ "$(nmcli -g connection.interface-name con show "$con" 2>/dev/null)" == "$iface" ]] || { echo "❌ Q47 failed: $con is not bound to $iface."; return 1; }
   nmcli -g ipv4.addresses con show "$con" | grep -qw '192.168.100.50/24' || { echo "❌ Q47 failed: IPv4 address mismatch."; return 1; }
@@ -1818,11 +1818,11 @@ check_Q47() {
 }
 
 # ===== Exercise Q48 =====
-Q48_DESC="Configure interface ens160 with IPv6 address 2001:db8::10/64 and gateway 2001:db8::1. Activate the configuration immediately."
+Q48_DESC="Configure interface enp0s8 with IPv6 address 2001:db8::10/64 and gateway 2001:db8::1. Activate the configuration immediately."
 check_Q48() {
-  local iface="ens160"
+  local iface="enp0s8"
   ip -6 addr show dev "$iface" 2>/dev/null | grep -qw '2001:db8::10/64' || { echo "❌ Q48 failed: IPv6 address not active on $iface."; return 1; }
-  ip -6 route | grep -Eq '^default via 2001:db8::1 dev ens160|2001:db8::1 dev ens160' || { echo "❌ Q48 failed: IPv6 gateway/route not active."; return 1; }
+  ip -6 route | grep -Eq '^default via 2001:db8::1 dev enp0s8|2001:db8::1 dev enp0s8' || { echo "❌ Q48 failed: IPv6 gateway/route not active."; return 1; }
   echo "✅ Q48 PASSED."; return 0
 }
 
@@ -1848,12 +1848,12 @@ check_Q50() {
 }
 
 # ===== Exercise Q51 =====
-Q51_DESC="The network connection ens160 exists but is currently disconnected. Restore network connectivity and ensure the connection activates automatically at system boot."
+Q51_DESC="The network connection enp0s8 exists but is currently disconnected. Restore network connectivity and ensure the connection activates automatically at system boot."
 check_Q51() {
   local con
-  con="$(nmcli -t -f NAME,DEVICE con show | awk -F: '$2=="ens160"{print $1; exit}')"
-  [[ -n "$con" ]] || { echo "❌ Q51 failed: no connection profile for ens160 found."; return 1; }
-  nmcli -t -f DEVICE,STATE dev status | grep -q '^ens160:connected' || { echo "❌ Q51 failed: ens160 is not connected."; return 1; }
+  con="$(nmcli -t -f NAME,DEVICE con show | awk -F: '$2=="enp0s8"{print $1; exit}')"
+  [[ -n "$con" ]] || { echo "❌ Q51 failed: no connection profile for enp0s8 found."; return 1; }
+  nmcli -t -f DEVICE,STATE dev status | grep -q '^enp0s8:connected' || { echo "❌ Q51 failed: enp0s8 is not connected."; return 1; }
   [[ "$(nmcli -g connection.autoconnect con show "$con")" == "yes" ]] || { echo "❌ Q51 failed: autoconnect is not enabled."; return 1; }
   echo "✅ Q51 PASSED."; return 0
 }
@@ -2279,8 +2279,8 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
 
 
   #Clean Q47-Q51 network
-  sudo nmcli con delete static-ens160 2>/dev/null || true
-  sudo nmcli con mod ens160 ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns "" ipv6.method auto ipv6.addresses "" ipv6.gateway "" connection.autoconnect no 2>/dev/null || true
+  sudo nmcli con delete static-enp0s8 2>/dev/null || true
+  sudo nmcli con mod enp0s8 ipv4.method auto ipv4.addresses "" ipv4.gateway "" ipv4.dns "" ipv6.method auto ipv6.addresses "" ipv6.gateway "" connection.autoconnect no 2>/dev/null || true
   sudo hostnamectl set-hostname localhost.localdomain 2>/dev/null || true
 
   #Clean Q52-Q54 processes/log-only tasks
