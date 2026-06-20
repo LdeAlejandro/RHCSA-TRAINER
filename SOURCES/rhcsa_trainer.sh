@@ -1308,7 +1308,7 @@ check_Q35() {
 }
 
 # ===== Exercise Q36 =====
-Q36_DESC="n rhel-server, configure local storage according to the following requirements:
+Q36_DESC="On rhel-server, configure local storage according to the following requirements:
 
 - Create a volume group named cloud_vg.
 - Create a logical volume named cloud_lv from cloud_vg.
@@ -1430,7 +1430,7 @@ check_Q37() {
 # ===== Exercise Q38 =====
 Q38_DESC="Cron Job Configuration
 
-Configure a scheduled task for user rhel-user that records the following message in the system logs every 2 minutes:
+Configure a scheduled task for user rhel-user that records the following message in the system logs every 2 minutes: RHCSA Playlist Now Available
 "
 
 check_Q38() {
@@ -1554,28 +1554,19 @@ Q41_DESC="Ensure that the system network management service is enabled and autom
 
 check_Q41() {
 
-  # 1) Service must exist
-  if ! systemctl list-unit-files | awk '{print $1}' | grep -qx 'NetworkManager.service'; then
-    echo "❌ Q41 failed: NetworkManager service not found."
-    return 1
-  fi
-
-  # 2) Must be enabled on boot
   if ! systemctl is-enabled --quiet NetworkManager; then
-    echo "❌ Q41 failed: NetworkManager is not enabled at boot."
+    echo "❌ Q41 failed: NetworkManager is not enabled."
     return 1
   fi
 
-  # 3) Must be running
   if ! systemctl is-active --quiet NetworkManager; then
     echo "❌ Q41 failed: NetworkManager is not running."
     return 1
   fi
 
-  echo "✅ Q41 PASSED: NetworkManager enabled and running."
+  echo "✅ Q41 PASSED."
   return 0
 }
-
 # ===== Exercise Q42 =====
 Q42_DESC="Configure the firewall to allow access to the following services permanently:
 

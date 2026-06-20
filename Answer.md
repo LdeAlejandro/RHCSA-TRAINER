@@ -848,30 +848,36 @@ On rhel-server, configure local storage according to the following requirements:
 
 ```bash
 #create partition
-fdisk /dev/sdc
+fdisk /dev/sdb
 n
+p
+1
+ENTER
 +270M
-W
+w
 
-#create volume group
-vgcreate cloud_vg /dev/sdc
+# create volume group
+vgcreate cloud_vg /dev/sdbX
 
 # create logical volume
 lvcreate -L 200M -n cloud_lv cloud_vg
 
-#assign filesystem
+# create filesystem
 mkfs.ext4 /dev/cloud_vg/cloud_lv
 
-#create directory for mounting
-mkdir /mnt/cloud_lv
+# create mount point
+mkdir -p /mnt/cloud_lv
 
-#make it persistant
+# make it persistent
 vim /etc/fstab
-/dev/devops_vg/devops_lv                /mnt/devops_lv          ext4    defaults        0 0
+/dev/cloud_vg/cloud_lv /mnt/cloud_lv ext4 defaults 0 0
 
-#mount it
-mount -a 
-  
+# mount it
+mount -a
+
+# verify
+df -h /mnt/cloud_lv
+lsblk
 ```
 ---
 
@@ -911,10 +917,10 @@ RHCSA Playlist Now Available
   crontab -l
 
   #Check specific user crontabs
-  crontab -l -u rhel-user
+  crontab -l -u rhel
 
   #create crontab to run as an specific user
-  crontab -e -u rhel-user
+  crontab -e -u rhel
 
   #runs logger "RHCSA Playlist Now Available" every 2 minutes.
   */2 * * * * logger "RHCSA Playlist Now Available"
@@ -939,6 +945,12 @@ This task was easy!
 
   #write te message in the file
   echo 'echo "This task was easy!" >> /at-files/at.txt | at now +2 minutes' 
+
+  # Verify scheduled jobs
+atq
+
+# After 2 minutes, verify the file
+cat /at-files/at.txt
 
 ```
 ---
