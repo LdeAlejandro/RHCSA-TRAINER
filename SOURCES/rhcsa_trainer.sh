@@ -2021,17 +2021,55 @@ check_Q64() {
 
 
 # ===== Exercise Q65 =====
-Q65_DESC="An existing XFS filesystem requires additional storage. Extend the filesystem without unmounting it and verify that the additional capacity is available."
+# ===== Exercise Q65 =====
+Q65_DESC="An existing XFS filesystem requires additional storage. Extend the logical volume xfs_lv so that the final size is at least 300 MB. Grow the XFS filesystem without unmounting it and verify that the additional capacity is available."
+
 check_Q65() {
-  local lvpath="/dev/xfs_vg/xfs_lv" mp="/mnt/xfs_lv"
-  sudo -n lvs --noheadings "$lvpath" >/dev/null 2>&1 || { echo "❌ Q65 failed: $lvpath not found."; return 1; }
-  findmnt -n "$mp" >/dev/null 2>&1 || { echo "❌ Q65 failed: $mp is not mounted."; return 1; }
-  [[ "$(findmnt -n "$mp" -o FSTYPE)" == "xfs" ]] || { echo "❌ Q65 failed: filesystem is not XFS."; return 1; }
-  local sz n
-  sz="$(sudo -n lvs --noheadings --units m -o lv_size "$lvpath" 2>/dev/null | tr -d ' ' | tr 'A-Z' 'a-z')"
-  n="$(echo "$sz" | sed -n 's/^\([0-9]\+\).*/\1/p')"
-  [[ -n "$n" ]] && (( n >= 300 )) || { echo "❌ Q65 failed: LV size is $sz; expected at least 300M after extension."; return 1; }
-  echo "✅ Q65 PASSED."; return 0
+
+  local lvpath="/dev/xfs_vg/xfs_lv"
+  local mp="/mnt/xfs_lv"
+
+  # LV exists
+  sudo -n lvs --noheadings "$lvpath" >/dev/null 2>&1 || {
+    echo "❌ Q65 failed: $lvpath not found."
+    return 1
+  }
+
+  # Mounted
+  findmnt -n "$mp" >/dev/null 2>&1 || {
+    echo "❌ Q65 failed: $mp is not mounted."
+    return 1
+  }
+
+  # XFS filesystem
+  [[ "$(findmnt -n "$mp" -o FSTYPE)" == "xfs" ]] || {
+    echo "❌ Q65 failed: filesystem is not XFS."
+    return 1
+  }
+
+  # LV size >= 300M
+  local lvsz n
+  lvsz="$(sudo -n lvs --noheadings --units m -o lv_size "$lvpath" \
+      2>/dev/null | tr -d ' ' | tr 'A-Z' 'a-z')"
+
+  n="$(echo "$lvsz" | sed -n 's/^\([0-9]\+\).*/\1/p')"
+
+  [[ -n "$n" ]] && (( n >= 300 )) || {
+    echo "❌ Q65 failed: LV size is $lvsz; expected at least 300M."
+    return 1
+  }
+
+  # Filesystem size must also be >= 300M
+  local fssz
+  fssz="$(df -BM "$mp" | awk 'NR==2 {gsub("M","",$2); print $2}')"
+
+  [[ -n "$fssz" ]] && (( fssz >= 300 )) || {
+    echo "❌ Q65 failed: XFS filesystem was not grown."
+    return 1
+  }
+
+  echo "✅ Q65 PASSED."
+  return 0
 }
 
 # ===== Exercise Q66 =====
@@ -2344,13 +2382,33 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo systemctl daemon-reload 2>/dev/null || true
 
   #Clean Q65 XFS lab
-  sudo sed -i '\|^/dev/xfs_vg/xfs_lv[[:space:]]\+/mnt/xfs_lv[[:space:]]\+xfs|d' /etc/fstab 2>/dev/null || true
   sudo umount /mnt/xfs_lv 2>/dev/null || true
+
+  sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
+
   sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
   sudo vgremove -fy xfs_vg 2>/dev/null || true
-  sudo pvremove -ffy /dev/sdd1 2>/dev/null || true
-  sudo wipefs -a /dev/sdd1 2>/dev/null || true
-  sudo rmdir /mnt/xfs_lv 2>/dev/null || true
+  sudo pvremove -ff -y /dev/sdc 2>/dev/null || true
+
+  sudo wipefs -a /dev/sdc 2>/dev/null || true
+
+  sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
+
+  # Recreate exercise environment
+  sudo pvcreate /dev/sdc
+
+  sudo vgcreate xfs_vg /dev/sdc
+
+  sudo lvcreate -L 200M -n xfs_lv xfs_vg
+
+  sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
+
+  sudo mkdir -p /mnt/xfs_lv
+
+  echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | \
+  sudo tee -a /etc/fstab >/dev/null
+
+  sudo mount -a
 
   #Clean Q66-Q68 firewall
   sudo firewall-cmd --remove-port=8080/tcp --permanent 2>/dev/null || true

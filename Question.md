@@ -345,9 +345,11 @@ Verify that the service is enabled.
 ---
 
 ## Question 65
+Extend an XFS Filesystem
+
 An existing XFS filesystem requires additional storage.
 
-Extend the filesystem without unmounting it and verify that the additional capacity is available.
+Extend the logical volume `xfs_lv` so that the final size is at least 300 MB. Grow the XFS filesystem without unmounting it and verify that the additional capacity is available.
 
 ---
 
