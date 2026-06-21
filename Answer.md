@@ -1524,12 +1524,12 @@ Verify that the service is enabled.
 
 ## Question 65: Extend an XFS Filesystem
 
-An existing XFS filesystem is mounted on `/mnt/xfs_lv`.
+An existing XFS filesystem is mounted on "/mnt/xfs_lv".
 
 Increase the size of the filesystem by 200 MB without unmounting it and ensure the additional capacity is available immediately.
 
 ```bash
-  # Verify current size
+   # Verify current size
   lvs
   df -h /mnt/xfs_lv
 

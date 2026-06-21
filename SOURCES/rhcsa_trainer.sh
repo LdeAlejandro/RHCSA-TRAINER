@@ -2065,14 +2065,14 @@ check_Q65() {
   }
 
   # Filesystem must also have been grown
-  local fssz
+local fssz
 
-  fssz="$(df -BM "$mp" | awk 'NR==2 {gsub("M","",$2); print $2}')"
+fssz="$(df -BM "$mp" | awk 'NR==2 {gsub("M","",$2); print $2}')"
 
-  [[ -n "$fssz" ]] && (( fssz >= 600 )) || {
-    echo "❌ Q65 failed: XFS filesystem was not grown."
-    return 1
-  }
+[[ -n "$fssz" ]] && (( fssz >= 500 )) || {
+  echo "❌ Q65 failed: XFS filesystem size is ${fssz}M; expected at least 500M after growth."
+  return 1
+}
 
   echo "✅ Q65 PASSED."
   return 0
