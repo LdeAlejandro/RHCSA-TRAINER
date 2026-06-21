@@ -2019,9 +2019,8 @@ check_Q64() {
   echo "✅ Q64 PASSED."; return 0
 }
 
-
 # ===== Exercise Q65 =====
-Q65_DESC="An existing XFS filesystem requires additional storage. Extend the logical volume xfs_lv so that the final size is at least 300 MB. Grow the XFS filesystem without unmounting it and verify that the additional capacity is available."
+Q65_DESC="An existing XFS filesystem is mounted on /mnt/xfs_lv. Increase the size of the filesystem by 200 MB without unmounting it and ensure the additional capacity is available immediately."
 
 check_Q65() {
 
@@ -2034,35 +2033,43 @@ check_Q65() {
     return 1
   }
 
-  # Mounted
+  # Mount point exists
+  [[ -d "$mp" ]] || {
+    echo "❌ Q65 failed: $mp not found."
+    return 1
+  }
+
+  # Filesystem mounted
   findmnt -n "$mp" >/dev/null 2>&1 || {
     echo "❌ Q65 failed: $mp is not mounted."
     return 1
   }
 
-  # XFS filesystem
+  # Must be XFS
   [[ "$(findmnt -n "$mp" -o FSTYPE)" == "xfs" ]] || {
     echo "❌ Q65 failed: filesystem is not XFS."
     return 1
   }
 
-  # LV size >= 300M
+  # LV must be at least 600M (initial size = 400M)
   local lvsz n
+
   lvsz="$(sudo -n lvs --noheadings --units m -o lv_size "$lvpath" \
       2>/dev/null | tr -d ' ' | tr 'A-Z' 'a-z')"
 
   n="$(echo "$lvsz" | sed -n 's/^\([0-9]\+\).*/\1/p')"
 
-  [[ -n "$n" ]] && (( n >= 300 )) || {
-    echo "❌ Q65 failed: LV size is $lvsz; expected at least 300M."
+  [[ -n "$n" ]] && (( n >= 600 )) || {
+    echo "❌ Q65 failed: LV size is $lvsz; expected at least 600M."
     return 1
   }
 
-  # Filesystem size must also be >= 300M
+  # Filesystem must also have been grown
   local fssz
+
   fssz="$(df -BM "$mp" | awk 'NR==2 {gsub("M","",$2); print $2}')"
 
-  [[ -n "$fssz" ]] && (( fssz >= 300 )) || {
+  [[ -n "$fssz" ]] && (( fssz >= 600 )) || {
     echo "❌ Q65 failed: XFS filesystem was not grown."
     return 1
   }
@@ -2394,18 +2401,20 @@ sudo wipefs -af /dev/sdc 2>/dev/null || true
 sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
 # Recreate exercise environment
-sudo pvcreate -ff -y /dev/sdc || return
-sudo vgcreate xfs_vg /dev/sdc || return
-sudo lvcreate -L 200M -n xfs_lv xfs_vg || return
+sudo pvcreate -ff -y /dev/sdc
+sudo vgcreate xfs_vg /dev/sdc
 
-sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv || return
+# Initial size = 400M
+sudo lvcreate -L 400M -n xfs_lv xfs_vg
+
+sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
 
 sudo mkdir -p /mnt/xfs_lv
 
 echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | \
 sudo tee -a /etc/fstab >/dev/null
 
-sudo mount /dev/xfs_vg/xfs_lv /mnt/xfs_lv || return
+sudo mount /dev/xfs_vg/xfs_lv /mnt/xfs_lv
 
   #Clean Q66-Q68 firewall
   sudo firewall-cmd --remove-port=8080/tcp --permanent 2>/dev/null || true

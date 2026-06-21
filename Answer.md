@@ -1524,9 +1524,9 @@ Verify that the service is enabled.
 
 ## Question 65: Extend an XFS Filesystem
 
-An existing XFS filesystem requires additional storage.
+An existing XFS filesystem is mounted on `/mnt/xfs_lv`.
 
-Extend the logical volume `xfs_lv` so that the final size is at least 300 MB. Grow the XFS filesystem without unmounting it and verify that the additional capacity is available.
+Increase the size of the filesystem by 200 MB without unmounting it and ensure the additional capacity is available immediately.
 
 ```bash
   # Verify current size
@@ -1534,7 +1534,7 @@ Extend the logical volume `xfs_lv` so that the final size is at least 300 MB. Gr
   df -h /mnt/xfs_lv
 
   # Extend the logical volume
-  lvextend -L +100M /dev/xfs_vg/xfs_lv
+  lvextend -L +200M /dev/xfs_vg/xfs_lv
 
   # Grow the XFS filesystem online
   xfs_growfs /mnt/xfs_lv
@@ -1542,6 +1542,7 @@ Extend the logical volume `xfs_lv` so that the final size is at least 300 MB. Gr
   # Verify
   lvs
   df -h /mnt/xfs_lv
+```
 
 ---
 
