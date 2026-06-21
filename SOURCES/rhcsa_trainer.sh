@@ -2021,7 +2021,6 @@ check_Q64() {
 
 
 # ===== Exercise Q65 =====
-# ===== Exercise Q65 =====
 Q65_DESC="An existing XFS filesystem requires additional storage. Extend the logical volume xfs_lv so that the final size is at least 300 MB. Grow the XFS filesystem without unmounting it and verify that the additional capacity is available."
 
 check_Q65() {
@@ -2128,7 +2127,7 @@ check_Q70() {
   echo "✅ Q70 PASSED."; return 0
 }
 
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q32 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q46 Q47 Q48 Q49 Q50 Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60 Q61 Q62 Q63 Q64 Q65 Q65 Q66 Q67 Q68 Q69 Q70)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q32 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q46 Q47 Q48 Q49 Q50 Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60 Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70)
 declare -A STATUS
 
 evaluate_all() {
@@ -2381,34 +2380,32 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rm -f /etc/systemd/system/backup.service /etc/systemd/system/broken.service /root/backup.sh 2>/dev/null || true
   sudo systemctl daemon-reload 2>/dev/null || true
 
-  #Clean Q65 XFS lab
-  sudo umount /mnt/xfs_lv 2>/dev/null || true
+  # Clean Q65 XFS lab
+sudo umount /mnt/xfs_lv 2>/dev/null || true
 
-  sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
+sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
 
-  sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
-  sudo vgremove -fy xfs_vg 2>/dev/null || true
-  sudo pvremove -ff -y /dev/sdc 2>/dev/null || true
+sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
+sudo vgremove -fy xfs_vg 2>/dev/null || true
+sudo pvremove -ff -y /dev/sdc 2>/dev/null || true
 
-  sudo wipefs -a /dev/sdc 2>/dev/null || true
+sudo wipefs -af /dev/sdc 2>/dev/null || true
 
-  sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
+sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
-  # Recreate exercise environment
-  sudo pvcreate /dev/sdc
+# Recreate exercise environment
+sudo pvcreate -ff -y /dev/sdc || return
+sudo vgcreate xfs_vg /dev/sdc || return
+sudo lvcreate -L 200M -n xfs_lv xfs_vg || return
 
-  sudo vgcreate xfs_vg /dev/sdc
+sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv || return
 
-  sudo lvcreate -L 200M -n xfs_lv xfs_vg
+sudo mkdir -p /mnt/xfs_lv
 
-  sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
+echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | \
+sudo tee -a /etc/fstab >/dev/null
 
-  sudo mkdir -p /mnt/xfs_lv
-
-  echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | \
-  sudo tee -a /etc/fstab >/dev/null
-
-  sudo mount -a
+sudo mount /dev/xfs_vg/xfs_lv /mnt/xfs_lv || return
 
   #Clean Q66-Q68 firewall
   sudo firewall-cmd --remove-port=8080/tcp --permanent 2>/dev/null || true
