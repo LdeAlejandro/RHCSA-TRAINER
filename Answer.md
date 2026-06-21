@@ -1327,8 +1327,12 @@ Configure the system so that journal logs are retained across system reboots.
   #Restart journald
   systemctl restart systemd-journald
 
+  #flush
+  journalctl --flush
+
   #Verify
   journalctl --list-boots
+  /var/log/journal
 ```
 
 ---
@@ -1386,11 +1390,25 @@ Configure SELinux so that the Apache web server is permitted to access user home
 Ensure the configuration persists across reboots.
 
 ```bash
-  #Enable access to user home directories
+  #validar bools disponiveis
+  getsebool -a | grep httpd
+  #or
+  semanage boolean -l | grep httpd
+
+  # Verify SELinux is enabled
+  getenforce
+
+  # Enable access to user home directories
   setsebool -P httpd_enable_homedirs on
 
-  #Verify
+  # Verify the SELinux boolean
   getsebool httpd_enable_homedirs
+
+  # Alternative verification
+  getsebool -a | grep httpd_enable_homedirs
+
+  # Verify persistent boolean configuration
+  semanage boolean -l | grep httpd_enable_homedirs
 ```
 
 ---
