@@ -1929,12 +1929,13 @@ check_Q60() {
     return 1
   }
 
-  semanage boolean -l 2>/dev/null | awk '$1=="httpd_enable_homedirs"{print}' | grep -Eq '\((on|ativado)[[:space:]]*,[[:space:]]*(on|ativado)\)' || {
+  LC_ALL=C semanage boolean -l 2>/dev/null | awk '$1=="httpd_enable_homedirs"{print}' | grep -Eq '\(on[[:space:]]*,[[:space:]]*on\)' || {
     echo "❌ Q60 failed: httpd_enable_homedirs not persistent."
     return 1
   }
 
-  echo "✅ Q60 PASSED."; return 0
+  echo "✅ Q60 PASSED."
+  return 0
 }
 
 # ===== Exercise Q61 =====
