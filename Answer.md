@@ -1472,25 +1472,38 @@ The service must execute the script:
 Ensure the service definition is correctly recognized by systemd.
 
 ```bash
-  #Create service file
-  vim /etc/systemd/system/backup.service
+# Create the script
+vim /root/backup.sh
 
-  [Unit]
-  Description=Backup Service
+#!/bin/bash
+echo "Backup completed"
 
-  [Service]
-  ExecStart=/root/backup.sh
+# Make the script executable
+chmod +x /root/backup.sh
 
-  [Install]
-  WantedBy=multi-user.target
+# Create the service file
+vim /etc/systemd/system/backup.service
 
-  #Reload systemd
-  systemctl daemon-reload
+[Unit]
+Description=Backup Service
 
-  #Verify
-  systemctl status backup.service
+[Service]
+Type=oneshot
+ExecStart=/root/backup.sh
+
+[Install]
+WantedBy=multi-user.target
+
+# Reload systemd configuration
+systemctl daemon-reload
+
+# Verify the service definition
+systemctl status backup.service
+
+# Test the service
+systemctl start backup.service
+systemctl status backup.service
 ```
-
 ---
 
 ## Question 64: Enable a systemd Service
@@ -1509,26 +1522,7 @@ Verify that the service is enabled.
 
 ---
 
-## Question 65: Troubleshoot a Failed systemd Service
-
-A systemd service has failed to start.
-
-Identify the cause of the failure using systemd tools and relevant logs.
-
-```bash
-  #Check service status
-  systemctl status SERVICE_NAME
-
-  #View logs
-  journalctl -xeu SERVICE_NAME
-
-  #View service journal
-  journalctl -u SERVICE_NAME
-```
-
----
-
-## Question 66: Extend an XFS Filesystem
+## Question 65: Extend an XFS Filesystem
 
 An existing XFS filesystem requires additional storage.
 
@@ -1544,7 +1538,7 @@ Extend the filesystem without unmounting it and verify that the additional capac
 
 ---
 
-## Question 67: Configure Firewall Access for Port 8080
+## Question 66: Configure Firewall Access for Port 8080
 
 Configure the firewall to permanently allow access to TCP port 8080.
 
@@ -1563,7 +1557,7 @@ Apply the configuration immediately.
 
 ---
 
-## Question 68: Configure Firewall Access for NFS
+## Question 67: Configure Firewall Access for NFS
 
 Configure the firewall to permanently allow access to the NFS service.
 
@@ -1582,7 +1576,7 @@ Verify that the service is permitted through the firewall.
 
 ---
 
-## Question 69: Configure a Firewall Rich Rule
+## Question 68: Configure a Firewall Rich Rule
 
 Configure a firewall rich rule that permits SSH access only from the following network:
 
@@ -1604,7 +1598,7 @@ Apply the configuration immediately.
 
 ---
 
-## Question 70: Create a User Validation Script
+## Question 69: Create a User Validation Script
 
 Create a shell script that receives a username as an argument.
 
@@ -1635,7 +1629,7 @@ The script must be executable.
 
 ---
 
-## Question 71: Create a File Validation Script
+## Question 70: Create a File Validation Script
 
 Create a shell script that accepts multiple filenames as command-line arguments.
 

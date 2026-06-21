@@ -1967,14 +1967,49 @@ check_Q62() {
 }
 
 # ===== Exercise Q63 =====
+# ===== Exercise Q63 =====
 Q63_DESC="Create a custom systemd service named backup.service that executes /root/backup.sh. Ensure the service definition is correctly recognized by systemd."
+
 check_Q63() {
   local unit="/etc/systemd/system/backup.service"
-  [[ -f "$unit" ]] || { echo "❌ Q63 failed: $unit missing."; return 1; }
-  grep -Eq '^ExecStart=/root/backup\.sh' "$unit" || { echo "❌ Q63 failed: ExecStart is not /root/backup.sh."; return 1; }
-  [[ -f /root/backup.sh && -x /root/backup.sh ]] || { echo "❌ Q63 failed: /root/backup.sh missing or not executable."; return 1; }
-  systemctl cat backup.service >/dev/null 2>&1 || { echo "❌ Q63 failed: systemd does not recognize backup.service. Run systemctl daemon-reload."; return 1; }
-  echo "✅ Q63 PASSED."; return 0
+
+  [[ -f "$unit" ]] || {
+    echo "❌ Q63 failed: $unit missing."
+    return 1
+  }
+
+  grep -Eq '^ExecStart=/root/backup\.sh' "$unit" || {
+    echo "❌ Q63 failed: ExecStart is not /root/backup.sh."
+    return 1
+  }
+
+  [[ -f /root/backup.sh ]] || {
+    echo "❌ Q63 failed: /root/backup.sh missing."
+    return 1
+  }
+
+  [[ -x /root/backup.sh ]] || {
+    echo "❌ Q63 failed: /root/backup.sh is not executable."
+    return 1
+  }
+
+  [[ -s /root/backup.sh ]] || {
+    echo "❌ Q63 failed: /root/backup.sh is empty."
+    return 1
+  }
+
+  head -n1 /root/backup.sh | grep -q '^#!' || {
+    echo "❌ Q63 failed: /root/backup.sh missing shebang."
+    return 1
+  }
+
+  systemctl cat backup.service >/dev/null 2>&1 || {
+    echo "❌ Q63 failed: systemd does not recognize backup.service. Run systemctl daemon-reload."
+    return 1
+  }
+
+  echo "✅ Q63 PASSED."
+  return 0
 }
 
 # ===== Exercise Q64 =====
@@ -1984,87 +2019,78 @@ check_Q64() {
   echo "✅ Q64 PASSED."; return 0
 }
 
+
 # ===== Exercise Q65 =====
-Q65_DESC="A systemd service has failed to start. Identify the cause of the failure using systemd tools and relevant logs."
+Q65_DESC="An existing XFS filesystem requires additional storage. Extend the filesystem without unmounting it and verify that the additional capacity is available."
 check_Q65() {
-  local LOG="$RHCSA_SHM_DIR/cmd.log"
-  [[ -f "$LOG" ]] || { echo "❌ Q65 failed: no monitored shell log found."; return 1; }
-  grep -Eq 'systemctl[[:space:]]+status[[:space:]]+broken\.service|systemctl[[:space:]]+status[[:space:]]+backup\.service|systemctl[[:space:]]+--failed' "$LOG" || { echo "❌ Q65 failed: systemctl diagnostic command not detected."; return 1; }
-  grep -Eq 'journalctl[[:space:]].*(-xe|-u[[:space:]]+(broken|backup)\.service)' "$LOG" || { echo "❌ Q65 failed: journalctl service log inspection not detected."; return 1; }
+  local lvpath="/dev/xfs_vg/xfs_lv" mp="/mnt/xfs_lv"
+  sudo -n lvs --noheadings "$lvpath" >/dev/null 2>&1 || { echo "❌ Q65 failed: $lvpath not found."; return 1; }
+  findmnt -n "$mp" >/dev/null 2>&1 || { echo "❌ Q65 failed: $mp is not mounted."; return 1; }
+  [[ "$(findmnt -n "$mp" -o FSTYPE)" == "xfs" ]] || { echo "❌ Q65 failed: filesystem is not XFS."; return 1; }
+  local sz n
+  sz="$(sudo -n lvs --noheadings --units m -o lv_size "$lvpath" 2>/dev/null | tr -d ' ' | tr 'A-Z' 'a-z')"
+  n="$(echo "$sz" | sed -n 's/^\([0-9]\+\).*/\1/p')"
+  [[ -n "$n" ]] && (( n >= 300 )) || { echo "❌ Q65 failed: LV size is $sz; expected at least 300M after extension."; return 1; }
   echo "✅ Q65 PASSED."; return 0
 }
 
 # ===== Exercise Q66 =====
-Q66_DESC="An existing XFS filesystem requires additional storage. Extend the filesystem without unmounting it and verify that the additional capacity is available."
+Q66_DESC="Configure the firewall to permanently allow access to TCP port 8080. Apply the configuration immediately."
 check_Q66() {
-  local lvpath="/dev/xfs_vg/xfs_lv" mp="/mnt/xfs_lv"
-  sudo -n lvs --noheadings "$lvpath" >/dev/null 2>&1 || { echo "❌ Q66 failed: $lvpath not found."; return 1; }
-  findmnt -n "$mp" >/dev/null 2>&1 || { echo "❌ Q66 failed: $mp is not mounted."; return 1; }
-  [[ "$(findmnt -n "$mp" -o FSTYPE)" == "xfs" ]] || { echo "❌ Q66 failed: filesystem is not XFS."; return 1; }
-  local sz n
-  sz="$(sudo -n lvs --noheadings --units m -o lv_size "$lvpath" 2>/dev/null | tr -d ' ' | tr 'A-Z' 'a-z')"
-  n="$(echo "$sz" | sed -n 's/^\([0-9]\+\).*/\1/p')"
-  [[ -n "$n" ]] && (( n >= 300 )) || { echo "❌ Q66 failed: LV size is $sz; expected at least 300M after extension."; return 1; }
+  systemctl is-active --quiet firewalld || { echo "❌ Q66 failed: firewalld not running."; return 1; }
+  firewall-cmd --list-ports | grep -qw '8080/tcp' || { echo "❌ Q66 failed: 8080/tcp not active."; return 1; }
+  firewall-cmd --permanent --list-ports | grep -qw '8080/tcp' || { echo "❌ Q66 failed: 8080/tcp not permanent."; return 1; }
   echo "✅ Q66 PASSED."; return 0
 }
 
 # ===== Exercise Q67 =====
-Q67_DESC="Configure the firewall to permanently allow access to TCP port 8080. Apply the configuration immediately."
+Q67_DESC="Configure the firewall to permanently allow access to the NFS service. Verify that the service is permitted through the firewall."
 check_Q67() {
   systemctl is-active --quiet firewalld || { echo "❌ Q67 failed: firewalld not running."; return 1; }
-  firewall-cmd --list-ports | grep -qw '8080/tcp' || { echo "❌ Q67 failed: 8080/tcp not active."; return 1; }
-  firewall-cmd --permanent --list-ports | grep -qw '8080/tcp' || { echo "❌ Q67 failed: 8080/tcp not permanent."; return 1; }
+  firewall-cmd --list-services | grep -qw 'nfs' || { echo "❌ Q67 failed: nfs service not active."; return 1; }
+  firewall-cmd --permanent --list-services | grep -qw 'nfs' || { echo "❌ Q67 failed: nfs service not permanent."; return 1; }
   echo "✅ Q67 PASSED."; return 0
 }
 
 # ===== Exercise Q68 =====
-Q68_DESC="Configure the firewall to permanently allow access to the NFS service. Verify that the service is permitted through the firewall."
+Q68_DESC="Configure a firewall rich rule that permits SSH access only from 192.168.100.0/24. Apply the configuration immediately."
 check_Q68() {
+  local rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept'
   systemctl is-active --quiet firewalld || { echo "❌ Q68 failed: firewalld not running."; return 1; }
-  firewall-cmd --list-services | grep -qw 'nfs' || { echo "❌ Q68 failed: nfs service not active."; return 1; }
-  firewall-cmd --permanent --list-services | grep -qw 'nfs' || { echo "❌ Q68 failed: nfs service not permanent."; return 1; }
+  firewall-cmd --list-rich-rules | grep -Fq "$rule" || { echo "❌ Q68 failed: rich rule not active."; return 1; }
+  firewall-cmd --permanent --list-rich-rules | grep -Fq "$rule" || { echo "❌ Q68 failed: rich rule not permanent."; return 1; }
   echo "✅ Q68 PASSED."; return 0
 }
 
 # ===== Exercise Q69 =====
-Q69_DESC="Configure a firewall rich rule that permits SSH access only from 192.168.100.0/24. Apply the configuration immediately."
+Q69_DESC="Create an executable shell script /root/check-user.sh that receives a username argument and displays 'User Exists' if the user exists, otherwise 'User Not Found'."
 check_Q69() {
-  local rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept'
-  systemctl is-active --quiet firewalld || { echo "❌ Q69 failed: firewalld not running."; return 1; }
-  firewall-cmd --list-rich-rules | grep -Fq "$rule" || { echo "❌ Q69 failed: rich rule not active."; return 1; }
-  firewall-cmd --permanent --list-rich-rules | grep -Fq "$rule" || { echo "❌ Q69 failed: rich rule not permanent."; return 1; }
+  local script="/root/check-user.sh"
+  [[ -f "$script" && -x "$script" ]] || { echo "❌ Q69 failed: $script missing or not executable."; return 1; }
+  local existing="root" missing="rhcsa_missing_user_987" out1 out2
+  out1="$(bash "$script" "$existing" 2>/dev/null | sed 's/[[:space:]]\+$//')"
+  out2="$(bash "$script" "$missing" 2>/dev/null | sed 's/[[:space:]]\+$//')"
+  [[ "$out1" == "User Exists" ]] || { echo "❌ Q69 failed: existing user output is '$out1'."; return 1; }
+  [[ "$out2" == "User Not Found" ]] || { echo "❌ Q69 failed: missing user output is '$out2'."; return 1; }
   echo "✅ Q69 PASSED."; return 0
 }
 
 # ===== Exercise Q70 =====
-Q70_DESC="Create an executable shell script /root/check-user.sh that receives a username argument and displays 'User Exists' if the user exists, otherwise 'User Not Found'."
+Q70_DESC="Create an executable shell script /root/check-files.sh that accepts multiple filenames as arguments and displays only the filenames that currently exist on the system."
 check_Q70() {
-  local script="/root/check-user.sh"
+  local script="/root/check-files.sh"
   [[ -f "$script" && -x "$script" ]] || { echo "❌ Q70 failed: $script missing or not executable."; return 1; }
-  local existing="root" missing="rhcsa_missing_user_987" out1 out2
-  out1="$(bash "$script" "$existing" 2>/dev/null | sed 's/[[:space:]]\+$//')"
-  out2="$(bash "$script" "$missing" 2>/dev/null | sed 's/[[:space:]]\+$//')"
-  [[ "$out1" == "User Exists" ]] || { echo "❌ Q70 failed: existing user output is '$out1'."; return 1; }
-  [[ "$out2" == "User Not Found" ]] || { echo "❌ Q70 failed: missing user output is '$out2'."; return 1; }
+  sudo touch /tmp/Q70_exists_a /tmp/Q70_exists_b
+  sudo rm -f /tmp/Q70_missing_c
+  local out
+  out="$(bash "$script" /tmp/Q70_exists_a /tmp/Q70_missing_c /tmp/Q70_exists_b 2>/dev/null)"
+  echo "$out" | grep -Fxq '/tmp/Q70_exists_a' || { echo "❌ Q70 failed: existing file /tmp/Q70_exists_a not printed."; return 1; }
+  echo "$out" | grep -Fxq '/tmp/Q70_exists_b' || { echo "❌ Q70 failed: existing file /tmp/Q70_exists_b not printed."; return 1; }
+  if echo "$out" | grep -Fxq '/tmp/Q70_missing_c'; then echo "❌ Q70 failed: missing file was printed."; return 1; fi
   echo "✅ Q70 PASSED."; return 0
 }
 
-# ===== Exercise Q71 =====
-Q71_DESC="Create an executable shell script /root/check-files.sh that accepts multiple filenames as arguments and displays only the filenames that currently exist on the system."
-check_Q71() {
-  local script="/root/check-files.sh"
-  [[ -f "$script" && -x "$script" ]] || { echo "❌ Q71 failed: $script missing or not executable."; return 1; }
-  sudo touch /tmp/q71_exists_a /tmp/q71_exists_b
-  sudo rm -f /tmp/q71_missing_c
-  local out
-  out="$(bash "$script" /tmp/q71_exists_a /tmp/q71_missing_c /tmp/q71_exists_b 2>/dev/null)"
-  echo "$out" | grep -Fxq '/tmp/q71_exists_a' || { echo "❌ Q71 failed: existing file /tmp/q71_exists_a not printed."; return 1; }
-  echo "$out" | grep -Fxq '/tmp/q71_exists_b' || { echo "❌ Q71 failed: existing file /tmp/q71_exists_b not printed."; return 1; }
-  if echo "$out" | grep -Fxq '/tmp/q71_missing_c'; then echo "❌ Q71 failed: missing file was printed."; return 1; fi
-  echo "✅ Q71 PASSED."; return 0
-}
-
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q32 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q46 Q47 Q48 Q49 Q50 Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60 Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70 Q71)
+TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q32 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q46 Q47 Q48 Q49 Q50 Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60 Q61 Q62 Q63 Q64 Q65 Q65 Q66 Q67 Q68 Q69 Q70)
 declare -A STATUS
 
 evaluate_all() {
@@ -2317,7 +2343,7 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo rm -f /etc/systemd/system/backup.service /etc/systemd/system/broken.service /root/backup.sh 2>/dev/null || true
   sudo systemctl daemon-reload 2>/dev/null || true
 
-  #Clean Q66 XFS lab
+  #Clean Q65 XFS lab
   sudo sed -i '\|^/dev/xfs_vg/xfs_lv[[:space:]]\+/mnt/xfs_lv[[:space:]]\+xfs|d' /etc/fstab 2>/dev/null || true
   sudo umount /mnt/xfs_lv 2>/dev/null || true
   sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
@@ -2326,14 +2352,14 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
   sudo wipefs -a /dev/sdd1 2>/dev/null || true
   sudo rmdir /mnt/xfs_lv 2>/dev/null || true
 
-  #Clean Q67-Q69 firewall
+  #Clean Q66-Q68 firewall
   sudo firewall-cmd --remove-port=8080/tcp --permanent 2>/dev/null || true
   sudo firewall-cmd --remove-service=nfs --permanent 2>/dev/null || true
   sudo firewall-cmd --remove-rich-rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept' --permanent 2>/dev/null || true
   sudo firewall-cmd --reload 2>/dev/null || true
 
-  #Clean Q70-Q71 scripts
-  sudo rm -f /root/check-user.sh /root/check-files.sh /tmp/q71_exists_a /tmp/q71_exists_b /tmp/q71_missing_c 2>/dev/null || true
+  #Clean Q69-Q70 scripts
+  sudo rm -f /root/check-user.sh /root/check-files.sh /tmp/Q70_exists_a /tmp/Q70_exists_b /tmp/Q70_missing_c 2>/dev/null || true
 
   #Echo
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."

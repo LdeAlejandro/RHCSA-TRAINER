@@ -345,34 +345,27 @@ Verify that the service is enabled.
 ---
 
 ## Question 65
-A systemd service has failed to start.
-
-Identify the cause of the failure using systemd tools and relevant logs.
-
----
-
-## Question 66
 An existing XFS filesystem requires additional storage.
 
 Extend the filesystem without unmounting it and verify that the additional capacity is available.
 
 ---
 
-## Question 67
+## Question 66
 Configure the firewall to permanently allow access to TCP port 8080.
 
 Apply the configuration immediately.
 
 ---
 
-## Question 68
+## Question 67
 Configure the firewall to permanently allow access to the NFS service.
 
 Verify that the service is permitted through the firewall.
 
 ---
 
-## Question 69
+## Question 68
 Configure a firewall rich rule that permits SSH access only from the following network:
 
 192.168.100.0/24
@@ -381,7 +374,7 @@ Apply the configuration immediately.
 
 ---
 
-## Question 70
+## Question 69
 Create a shell script that receives a username as an argument.
 
 The script must behave as follows:
@@ -395,7 +388,7 @@ The script must be executable.
 
 ---
 
-## Question 71
+## Question 70
 Create a shell script that accepts multiple filenames as command-line arguments.
 
 The script must display only the filenames that currently exist on the system.
