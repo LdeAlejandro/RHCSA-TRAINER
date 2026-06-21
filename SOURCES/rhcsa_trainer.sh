@@ -2416,11 +2416,19 @@ sudo tee -a /etc/fstab >/dev/null
 
 sudo mount /dev/xfs_vg/xfs_lv /mnt/xfs_lv
 
-  #Clean Q66-Q68 firewall
-  sudo firewall-cmd --remove-port=8080/tcp --permanent 2>/dev/null || true
-  sudo firewall-cmd --remove-service=nfs --permanent 2>/dev/null || true
-  sudo firewall-cmd --remove-rich-rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept' --permanent 2>/dev/null || true
-  sudo firewall-cmd --reload 2>/dev/null || true
+  # Clean Q66-Q68 firewall
+sudo systemctl enable --now firewalld 2>/dev/null || true
+
+sudo firewall-cmd --remove-port=8080/tcp 2>/dev/null || true
+sudo firewall-cmd --remove-service=nfs 2>/dev/null || true
+sudo firewall-cmd --remove-rich-rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept' 2>/dev/null || true
+
+sudo firewall-cmd --permanent --remove-port=8080/tcp 2>/dev/null || true
+sudo firewall-cmd --permanent --remove-service=nfs 2>/dev/null || true
+sudo firewall-cmd --permanent --remove-rich-rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept' 2>/dev/null || true
+
+sudo firewall-cmd --reload 2>/dev/null || true
+sudo systemctl disable --now firewalld 2>/dev/null || true
 
   #Clean Q69-Q70 scripts
   sudo rm -f /root/check-user.sh /root/check-files.sh /tmp/Q70_exists_a /tmp/Q70_exists_b /tmp/Q70_missing_c 2>/dev/null || true
