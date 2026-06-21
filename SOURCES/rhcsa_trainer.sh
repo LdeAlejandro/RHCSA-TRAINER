@@ -1835,7 +1835,18 @@ check_Q49() {
 }
 
 # ===== Exercise Q50 =====
- 
+Q50_DESC="Configure the active network connection to use DNS servers 1.1.1.1 and 8.8.8.8. Verify that hostname resolution functions correctly."
+check_Q50() {
+  local con dns
+  con="$(nmcli -t -f NAME,DEVICE con show --active | awk -F: '$2!="lo"{print $1; exit}')"
+  [[ -n "$con" ]] || { echo "❌ Q50 failed: no active non-loopback connection found."; return 1; }
+  dns="$(nmcli -g ipv4.dns con show "$con" 2>/dev/null)"
+  echo "$dns" | grep -qw '1.1.1.1' || { echo "❌ Q50 failed: DNS 1.1.1.1 missing on active connection $con."; return 1; }
+  echo "$dns" | grep -qw '8.8.8.8' || { echo "❌ Q50 failed: DNS 8.8.8.8 missing on active connection $con."; return 1; }
+  getent hosts example.com >/dev/null 2>&1 || { echo "❌ Q50 failed: hostname resolution test failed."; return 1; }
+  echo "✅ Q50 PASSED."; return 0
+}
+
 # ===== Exercise Q51 =====
 Q51_DESC="The network connection enp0s8 exists but is currently disconnected. Restore network connectivity and ensure the connection activates automatically at system boot."
 check_Q51() {
@@ -1923,19 +1934,9 @@ check_Q59() {
 Q60_DESC="Configure SELinux so that the Apache web server is permitted to access user home directories. Ensure the configuration persists across reboots."
 check_Q60() {
   command -v getsebool >/dev/null 2>&1 || { echo "❌ Q60 failed: getsebool not available."; return 1; }
-
-  getsebool httpd_enable_homedirs 2>/dev/null | grep -Eq -- '--> (on|ativado)' || {
-    echo "❌ Q60 failed: httpd_enable_homedirs is not on."
-    return 1
-  }
-
-  LC_ALL=C semanage boolean -l 2>/dev/null | awk '$1=="httpd_enable_homedirs"{print}' | grep -Eq '\(on[[:space:]]*,[[:space:]]*on\)' || {
-    echo "❌ Q60 failed: httpd_enable_homedirs not persistent."
-    return 1
-  }
-
-  echo "✅ Q60 PASSED."
-  return 0
+  getsebool httpd_enable_homedirs 2>/dev/null | grep -q -- '--> on' || { echo "❌ Q60 failed: httpd_enable_homedirs is not on."; return 1; }
+  semanage boolean -l 2>/dev/null | awk '$1=="httpd_enable_homedirs"{print $3}' | grep -qx '(on' || { echo "❌ Q60 failed: httpd_enable_homedirs not persistent."; return 1; }
+  echo "✅ Q60 PASSED."; return 0
 }
 
 # ===== Exercise Q61 =====
