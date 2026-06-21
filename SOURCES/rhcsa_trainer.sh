@@ -1846,7 +1846,7 @@ check_Q50() {
   getent hosts example.com >/dev/null 2>&1 || { echo "❌ Q50 failed: hostname resolution test failed."; return 1; }
   echo "✅ Q50 PASSED."; return 0
 }
-
+ 
 # ===== Exercise Q51 =====
 Q51_DESC="The network connection enp0s8 exists but is currently disconnected. Restore network connectivity and ensure the connection activates automatically at system boot."
 check_Q51() {
@@ -1934,9 +1934,19 @@ check_Q59() {
 Q60_DESC="Configure SELinux so that the Apache web server is permitted to access user home directories. Ensure the configuration persists across reboots."
 check_Q60() {
   command -v getsebool >/dev/null 2>&1 || { echo "❌ Q60 failed: getsebool not available."; return 1; }
-  getsebool httpd_enable_homedirs 2>/dev/null | grep -q -- '--> on' || { echo "❌ Q60 failed: httpd_enable_homedirs is not on."; return 1; }
-  semanage boolean -l 2>/dev/null | awk '$1=="httpd_enable_homedirs"{print $3}' | grep -qx '(on' || { echo "❌ Q60 failed: httpd_enable_homedirs not persistent."; return 1; }
-  echo "✅ Q60 PASSED."; return 0
+
+  getsebool httpd_enable_homedirs 2>/dev/null | grep -Eq -- '--> (on|ativado)' || {
+    echo "❌ Q60 failed: httpd_enable_homedirs is not on."
+    return 1
+  }
+
+  LC_ALL=C semanage boolean -l 2>/dev/null | awk '$1=="httpd_enable_homedirs"{print}' | grep -Eq '\(on[[:space:]]*,[[:space:]]*on\)' || {
+    echo "❌ Q60 failed: httpd_enable_homedirs not persistent."
+    return 1
+  }
+
+  echo "✅ Q60 PASSED."
+  return 0
 }
 
 # ===== Exercise Q61 =====
