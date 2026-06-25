@@ -2398,18 +2398,8 @@ sudo rmdir /mnt/xfs_lv 2>/dev/null || true
   sudo rm -f /etc/systemd/system/backup.service /etc/systemd/system/broken.service /root/backup.sh 2>/dev/null || true
   sudo systemctl daemon-reload 2>/dev/null || true
 
-  # Clean Q65 XFS lab
-sudo umount /mnt/xfs_lv 2>/dev/null || true
-
+# Clean Q65 XFS lab
 sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
-
-sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
-sudo vgremove -fy xfs_vg 2>/dev/null || true
-sudo pvremove -ff -y /dev/sdc 2>/dev/null || true
-
-sudo wipefs -af /dev/sdc 2>/dev/null || true
-
-sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
 # Recreate exercise environment
 sudo pvcreate -ff -y /dev/sdc
