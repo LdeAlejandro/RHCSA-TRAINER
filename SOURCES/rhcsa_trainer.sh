@@ -2284,13 +2284,26 @@ sudo vgremove -fy xfs_vg 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc 2>/dev/null || true
 
+
+
 sudo wipefs -af /dev/sdc1 2>/dev/null || true
 
 sudo parted -s /dev/sdc rm 1 2>/dev/null || true
 sudo partprobe /dev/sdc 2>/dev/null || true
 sudo udevadm settle 2>/dev/null || true
 
+sudo dmsetup remove -f /dev/mapper/cloud_vg-cloud_lv 2>/dev/null || true
+sudo dmsetup remove -f cloud_vg-cloud_lv 2>/dev/null || true
+
+sudo lvchange -an cloud_vg 2>/dev/null || true
+sudo vgchange -an cloud_vg 2>/dev/null || true
+
+sudo lvremove -ffy /dev/cloud_vg/cloud_lv 2>/dev/null || true
+sudo vgremove -ffy cloud_vg 2>/dev/null || true
+sudo pvremove -ffy /dev/sdc 2>/dev/null || true
+
 sudo wipefs -af /dev/sdc 2>/dev/null || true
+sudo dd if=/dev/zero of=/dev/sdc bs=1M count=10 conv=fsync 2>/dev/null || true
 sudo partprobe /dev/sdc 2>/dev/null || true
 sudo udevadm settle 2>/dev/null || true
 
@@ -2402,13 +2415,13 @@ sudo rmdir /mnt/xfs_lv 2>/dev/null || true
 sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
 
 # Recreate exercise environment
-sudo pvcreate -ff -y /dev/sdc
-sudo vgcreate xfs_vg /dev/sdc
+sudo pvcreate -ff -y /dev/sdc 2>/dev/null || true
+sudo vgcreate xfs_vg /dev/sdc 2>/dev/null || true
 
 # Initial size = 400M
-sudo lvcreate -L 400M -n xfs_lv xfs_vg
+sudo lvcreate -L 400M -n xfs_lv xfs_vg 2>/dev/null || true
 
-sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
+sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv 2>/dev/null || true
 
 sudo mkdir -p /mnt/xfs_lv
 
