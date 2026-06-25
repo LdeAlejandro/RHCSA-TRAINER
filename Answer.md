@@ -546,58 +546,140 @@ Executar
 ```
 ---
 
-## Question 26: Reset the root password on the local system by using GRUB recovery mode. Set the root password to hoppy and ensure the system can boot normally after the password reset.
+# Question 26: Reset the Root Password Using GRUB Recovery Mode
 
-### Answer
+Reset the root password on the local system by using GRUB recovery mode. Set the root password to **hoppy** and ensure the system boots normally afterward.
 
-#### Access GRUB
-1. Reboot the VM.
-2. esc to access grub  
-3. At the GRUB menu, highlight the default kernel and press **`e`** to edit.  
-4. Find the line starting with `linux` or `linux16`.  
-5. At the end of that line, add:
+---
+
+## Method 1 – Using `rd.break` (RHCSA Standard)
+
+### Access GRUB
+
+1. Reboot the system.
+2. At the GRUB menu, highlight the default kernel.
+3. Press **e** to edit the boot entry.
+4. Find the line beginning with `linux`.
+5. Append the following option to the end of the line:
 
 ```bash
-   rd.break 
-   #or
-   rw init=/bin/bash
-   #or
-   init=/bin/bash
-   # Then press Ctrl + X 
- ```
-
-If it drops you into switch_root:/#, run:
-```bash
-    mount -o remount,rw /sysroot
-    chroot /sysroot
-    passwd 
-    # hoppy
-    touch /.autorelabel
-    exit
+rd.break
 ```
 
-Option 2 – For RHEL 9+ (recommended if rd.break fails)
-Replace everything after ro crashkernel=... with: rw init=/bin/bash
+6. Press **Ctrl + X** to boot.
 
+### Reset the Password
 
-  #Example full line
-  ```bash
-  linux ($root)/vmlinuz-6.12.0-55.38.1.el10.0.x86_64 root=/dev/mapper/rhel_vbox-root rw init=/bin/bash
-  ```
-  
-Then press Ctrl + X (or F10) to boot.
+When the emergency shell appears:
 
-When you see the shell prompt:
+```bash
+mount -o remount,rw /sysroot
+chroot /sysroot
 
-bash-5.2#
+passwd
+# Enter: hoppy
+
+touch /.autorelabel
+
+exit
+exit
+```
+
+The system will continue booting. During the next boot, SELinux will relabel files automatically.
+
+---
+
+## Method 2 – Using `init=/bin/bash`
+
+### Access GRUB
+
+1. Reboot the system.
+2. At the GRUB menu, highlight the default kernel.
+3. Press **e** to edit the boot entry.
+4. Find the line beginning with `linux`.
+5. Replace or append the boot options with:
+
+```bash
+rw init=/bin/bash
+```
+
+Example:
+
+```bash
+linux ($root)/vmlinuz-6.12.0-55.38.1.el10.x86_64 root=/dev/mapper/rhel-root rw init=/bin/bash
+```
+
+6. Press **Ctrl + X** to boot.
+
+### Reset the Password
+
+When the shell prompt appears:
 
 ```bash
 mount -o remount,rw /
+
 passwd
-# set password to hoppy
+# Enter: hoppy
+
 touch /.autorelabel
+
 exec /sbin/init
 ```
+
+The system will continue booting normally.
+
+---
+
+## RHCSA Exam Quick Reference
+
+### Using `rd.break`
+
+```bash
+# In GRUB:
+rd.break
+
+# Boot:
+Ctrl + X
+
+mount -o remount,rw /sysroot
+chroot /sysroot
+
+passwd
+# hoppy
+
+touch /.autorelabel
+
+exit
+exit
+```
+
+### Using `init=/bin/bash`
+
+```bash
+# In GRUB:
+rw init=/bin/bash
+
+# Boot:
+Ctrl + X
+
+mount -o remount,rw /
+
+passwd
+# hoppy
+
+touch /.autorelabel
+
+exec /sbin/init
+```
+
+---
+
+## Notes
+
+- `rd.break` is the method most commonly associated with RHCSA objectives.
+- `touch /.autorelabel` is required when SELinux is enabled to avoid authentication and labeling issues after the password change.
+- `rd.break` uses `/sysroot` and requires `chroot /sysroot`.
+- `init=/bin/bash` does **not** use `/sysroot` and does **not** require `chroot`.
 ---
 ## Question 27: On rhel-server, review the system tuning configuration and apply the recommended tuning profile. Configure SELinux to operate in permissive mode and ensure the appropriate network service is enabled and configured to start automatically at boot.
 

@@ -2254,38 +2254,31 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
     master-server@192.168.15.14 \
     'rm -f /home/master-server/rhel-file.txt' >/dev/null 2>&1 || true
 
-  #Clean Q34
-  # remove fstab line
-  sudo sed -i '\|^/dev/devops_vg/devops_lv[[:space:]]\+/mnt/devops_lv[[:space:]]\+ext4|d' /etc/fstab 2>/dev/null || true
-  
-  # unmount
-  sudo umount /mnt/devops_lv 2>/dev/null || true
+  # ===== Clean Q34 =====
+echo ">> Resetting Q34 (devops_vg/devops_lv)..."
 
-  # remove LV/VG/PV
-  sudo lvremove -fy /dev/devops_vg/devops_lv 2>/dev/null || true
-  sudo vgremove -fy devops_vg 2>/dev/null || true
-  sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
+sudo sed -i '\|/mnt/devops_lv|d' /etc/fstab 2>/dev/null || true
 
-  # wipe signatures (helps for next run)
-  sudo wipefs -a /dev/sdc1 2>/dev/null || true
+sudo umount /mnt/devops_lv 2>/dev/null || true
+sudo umount /dev/devops_vg/devops_lv 2>/dev/null || true
+sudo umount /dev/mapper/devops_vg-devops_lv 2>/dev/null || true
+sudo umount /dev/sdc1 2>/dev/null || true
 
-  # cleanup mount dir
-  sudo rmdir /mnt/devops_lv 2>/dev/null || true
+sudo lvremove -fy /dev/devops_vg/devops_lv 2>/dev/null || true
+sudo vgremove -fy devops_vg 2>/dev/null || true
+sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
 
-  #Clean Q35
-  sudo swapoff /dev/sdd2 2>/dev/null || true
+sudo wipefs -af /dev/sdc1 2>/dev/null || true
 
-  sudo sed -i '\|^/dev/sdd2[[:space:]]\+swap[[:space:]]\+swap|d' \
-  /etc/fstab 2>/dev/null || true
+sudo parted -s /dev/sdc rm 1 2>/dev/null || true
+sudo partprobe /dev/sdc 2>/dev/null || true
+sudo udevadm settle 2>/dev/null || true
 
-  sudo wipefs -a /dev/sdd2 2>/dev/null || true
+sudo wipefs -af /dev/sdc 2>/dev/null || true
+sudo partprobe /dev/sdc 2>/dev/null || true
+sudo udevadm settle 2>/dev/null || true
 
-  # Delete partition 2 from /dev/sdd
-  sudo parted -s /dev/sdd rm 2 2>/dev/null || true
-
-  # Reload partition table
-  sudo partprobe /dev/sdd 2>/dev/null || true
-  udevadm settle 2>/dev/null || true
+sudo rmdir /mnt/devops_lv 2>/dev/null || true
 
   #Clean 38
   sudo crontab -u rhel -r 2>/dev/null || true
