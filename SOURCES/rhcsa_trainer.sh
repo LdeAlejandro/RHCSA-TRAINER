@@ -2254,19 +2254,35 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
     master-server@192.168.15.14 \
     'rm -f /home/master-server/rhel-file.txt' >/dev/null 2>&1 || true
 
-  # ===== Clean Q34 =====
-echo ">> Resetting Q34 (devops_vg/devops_lv)..."
+  # ===== Reset shared /dev/sdc storage labs =====
+echo ">> Resetting shared /dev/sdc storage labs..."
 
-sudo sed -i '\|/mnt/devops_lv|d' /etc/fstab 2>/dev/null || true
+sudo sed -i '\|/mnt/devops_lv|d;\|/mnt/cloud_lv|d;\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
 
 sudo umount /mnt/devops_lv 2>/dev/null || true
+sudo umount /mnt/cloud_lv 2>/dev/null || true
+sudo umount /mnt/xfs_lv 2>/dev/null || true
+
 sudo umount /dev/devops_vg/devops_lv 2>/dev/null || true
+sudo umount /dev/cloud_vg/cloud_lv 2>/dev/null || true
+sudo umount /dev/xfs_vg/xfs_lv 2>/dev/null || true
+
 sudo umount /dev/mapper/devops_vg-devops_lv 2>/dev/null || true
+sudo umount /dev/mapper/cloud_vg-cloud_lv 2>/dev/null || true
+sudo umount /dev/mapper/xfs_vg-xfs_lv 2>/dev/null || true
+
 sudo umount /dev/sdc1 2>/dev/null || true
 
 sudo lvremove -fy /dev/devops_vg/devops_lv 2>/dev/null || true
+sudo lvremove -fy /dev/cloud_vg/cloud_lv 2>/dev/null || true
+sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
+
 sudo vgremove -fy devops_vg 2>/dev/null || true
+sudo vgremove -fy cloud_vg 2>/dev/null || true
+sudo vgremove -fy xfs_vg 2>/dev/null || true
+
 sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
+sudo pvremove -ffy /dev/sdc 2>/dev/null || true
 
 sudo wipefs -af /dev/sdc1 2>/dev/null || true
 
@@ -2279,6 +2295,8 @@ sudo partprobe /dev/sdc 2>/dev/null || true
 sudo udevadm settle 2>/dev/null || true
 
 sudo rmdir /mnt/devops_lv 2>/dev/null || true
+sudo rmdir /mnt/cloud_lv 2>/dev/null || true
+sudo rmdir /mnt/xfs_lv 2>/dev/null || true
 
   #Clean 38
   sudo crontab -u rhel -r 2>/dev/null || true
