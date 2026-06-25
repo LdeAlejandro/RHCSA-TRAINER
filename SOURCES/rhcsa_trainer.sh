@@ -2307,9 +2307,9 @@ sudo dd if=/dev/zero of=/dev/sdc bs=1M count=10 conv=fsync 2>/dev/null || true
 sudo partprobe /dev/sdc 2>/dev/null || true
 sudo udevadm settle 2>/dev/null || true
 
-sudo rmdir /mnt/devops_lv 2>/dev/null || true
-sudo rmdir /mnt/cloud_lv 2>/dev/null || true
-sudo rmdir /mnt/xfs_lv 2>/dev/null || true
+sudo rm -rf /mnt/devops_lv 2>/dev/null || true
+sudo rm -rf /mnt/cloud_lv 2>/dev/null || true
+sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
   #Clean 38
   sudo crontab -u rhel -r 2>/dev/null || true
@@ -2413,22 +2413,7 @@ sudo rmdir /mnt/xfs_lv 2>/dev/null || true
 
 # Clean Q65 XFS lab
 sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
-
-# Recreate exercise environment
-sudo pvcreate -ff -y /dev/sdc 2>/dev/null || true
-sudo vgcreate xfs_vg /dev/sdc 2>/dev/null || true
-
-# Initial size = 400M
-sudo lvcreate -L 400M -n xfs_lv xfs_vg 2>/dev/null || true
-
-sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv 2>/dev/null || true
-
-sudo mkdir -p /mnt/xfs_lv
-
-echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | \
-sudo tee -a /etc/fstab >/dev/null
-
-sudo mount /dev/xfs_vg/xfs_lv /mnt/xfs_lv
+sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
   # Clean Q66-Q68 firewall
 sudo systemctl enable --now firewalld 2>/dev/null || true
