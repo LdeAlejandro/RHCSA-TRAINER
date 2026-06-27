@@ -2254,7 +2254,7 @@ sudo rm -rf /var/tmp/chmod_lab 2>/dev/null || true
     master-server@192.168.15.14 \
     'rm -f /home/master-server/rhel-file.txt' >/dev/null 2>&1 || true
 
- # ===== Reset shared /dev/sdc storage labs =====
+# ===== Reset shared /dev/sdc storage labs =====
 echo ">> Resetting shared /dev/sdc storage labs..."
 
 sudo sed -i '\|/mnt/devops_lv|d;\|/mnt/cloud_lv|d;\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
@@ -2274,12 +2274,12 @@ sudo vgremove -fy xfs_vg 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc2 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc3 2>/dev/null || true
-sudo pvremove -ffy /dev/sdc 2>/dev/null || true
+sudo pvremove -ffy /dev/sdc  2>/dev/null || true
 
 sudo wipefs -af /dev/sdc1 2>/dev/null || true
 sudo wipefs -af /dev/sdc2 2>/dev/null || true
 sudo wipefs -af /dev/sdc3 2>/dev/null || true
-sudo wipefs -af /dev/sdc 2>/dev/null || true
+sudo wipefs -af /dev/sdc  2>/dev/null || true
 
 sudo dd if=/dev/zero of=/dev/sdc bs=1M count=10 conv=fsync 2>/dev/null || true
 
@@ -2295,8 +2295,8 @@ sudo partprobe /dev/sdc 2>/dev/null || true
 sudo udevadm settle 2>/dev/null || true
 
 sudo rm -rf /mnt/devops_lv 2>/dev/null || true
-sudo rm -rf /mnt/cloud_lv 2>/dev/null || true
-sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
+sudo rm -rf /mnt/cloud_lv  2>/dev/null || true
+sudo rm -rf /mnt/xfs_lv    2>/dev/null || true
 
 # Recreate initial Q65 state on /dev/sdc2
 if [ -b /dev/sdc2 ]; then
@@ -2307,9 +2307,14 @@ if [ -b /dev/sdc2 ]; then
   sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv >/dev/null
 
   sudo mkdir -p /mnt/xfs_lv
+
+  sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
   echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | sudo tee -a /etc/fstab >/dev/null
 
-  sudo mount -a
+  sudo mount /mnt/xfs_lv || {
+    echo "WARN: failed to mount /mnt/xfs_lv"
+    sudo mount -av
+  }
 else
   echo "WARN: /dev/sdc2 not found; Q65 XFS lab was not recreated."
 fi
