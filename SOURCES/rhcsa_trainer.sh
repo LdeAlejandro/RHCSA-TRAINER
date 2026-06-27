@@ -2414,19 +2414,38 @@ sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 # Clean Q65 XFS lab
 sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
 sudo umount /mnt/xfs_lv 2>/dev/null || true
+
+sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
+sudo vgremove -fy xfs_vg 2>/dev/null || true
+sudo pvremove -ffy /dev/sde1 2>/dev/null || true
+
+sudo wipefs -af /dev/sde1 2>/dev/null || true
+sudo parted -s /dev/sde rm 1 2>/dev/null || true
+sudo partprobe /dev/sde 2>/dev/null || true
+sudo udevadm settle 2>/dev/null || true
+
 sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
-# Recreate initial XFS lab state
-sudo pvcreate -ff -y /dev/sdc1 >/dev/null 2>&1 || true
-sudo vgcreate xfs_vg /dev/sdc1 >/dev/null 2>&1 || true
-sudo lvcreate -L 200M -n xfs_lv xfs_vg >/dev/null 2>&1 || true
+# Recreate initial Q65 state using isolated disk /dev/sde
+if [ -b /dev/sde ]; then
+  sudo parted -s /dev/sde mklabel gpt
+  sudo parted -s /dev/sde mkpart primary 1MiB 600MiB
+  sudo partprobe /dev/sde
+  sudo udevadm settle
 
-sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv >/dev/null 2>&1 || true
+  sudo pvcreate -ff -y /dev/sde1
+  sudo vgcreate xfs_vg /dev/sde1
+  sudo lvcreate -L 200M -n xfs_lv xfs_vg
 
-sudo mkdir -p /mnt/xfs_lv
-echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | sudo tee -a /etc/fstab >/dev/null
+  sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
 
-sudo mount -a >/dev/null 2>&1 || true
+  sudo mkdir -p /mnt/xfs_lv
+  echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | sudo tee -a /etc/fstab >/dev/null
+
+  sudo mount -a
+else
+  echo "WARN: /dev/sde not found; Q65 XFS lab was not recreated."
+fi
 
   # Clean Q66-Q68 firewall
 sudo systemctl enable --now firewalld 2>/dev/null || true
