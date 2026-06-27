@@ -2413,7 +2413,20 @@ sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
 
 # Clean Q65 XFS lab
 sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
+sudo umount /mnt/xfs_lv 2>/dev/null || true
 sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
+
+# Recreate initial XFS lab state
+sudo pvcreate -ff -y /dev/sdc1 >/dev/null 2>&1 || true
+sudo vgcreate xfs_vg /dev/sdc1 >/dev/null 2>&1 || true
+sudo lvcreate -L 200M -n xfs_lv xfs_vg >/dev/null 2>&1 || true
+
+sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv >/dev/null 2>&1 || true
+
+sudo mkdir -p /mnt/xfs_lv
+echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | sudo tee -a /etc/fstab >/dev/null
+
+sudo mount -a >/dev/null 2>&1 || true
 
   # Clean Q66-Q68 firewall
 sudo systemctl enable --now firewalld 2>/dev/null || true

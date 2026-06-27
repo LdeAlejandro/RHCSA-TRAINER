@@ -1026,7 +1026,7 @@ This task was easy!
   mkdir /at-files
 
   #write te message in the file
-  echo 'echo "This task was easy!" >> /at-files/at.txt | at now +2 minutes' 
+  echo 'echo "This task was easy!" >> /at-files/at.txt'  | at now +2 minutes
 
   # Verify scheduled jobs
   atq
