@@ -1967,8 +1967,11 @@ check_Q62() {
 }
 
 # ===== Exercise Q63 =====
-# ===== Exercise Q63 =====
-Q63_DESC="Create a custom systemd service named backup.service that executes /root/backup.sh. Ensure the service definition is correctly recognized by systemd."
+Q63_DESC="The service must execute the script:
+
+/root/backup.sh echo 'Backup completed'
+
+Ensure the service definition is correctly recognized by systemd."
 
 check_Q63() {
   local unit="/etc/systemd/system/backup.service"
@@ -2302,7 +2305,7 @@ sudo rm -rf /mnt/xfs_lv    2>/dev/null || true
 if [ -b /dev/sdc2 ]; then
   sudo pvcreate -ff -y /dev/sdc2 >/dev/null
   sudo vgcreate xfs_vg /dev/sdc2 >/dev/null
-  sudo lvcreate -L 200M -n xfs_lv xfs_vg >/dev/null
+  sudo lvcreate -L 300M -n xfs_lv xfs_vg >/dev/null
 
   sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv >/dev/null
 
@@ -2442,7 +2445,7 @@ if [ -b /dev/sde ]; then
 
   sudo pvcreate -ff -y /dev/sde1
   sudo vgcreate xfs_vg /dev/sde1
-  sudo lvcreate -L 200M -n xfs_lv xfs_vg
+  sudo lvcreate -L 400M -n xfs_lv xfs_vg
 
   sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
 
