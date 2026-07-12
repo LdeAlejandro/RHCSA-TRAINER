@@ -3510,6 +3510,391 @@ check_Q98() {
   return 0
 }
 
+# ===== Exercise Q99 =====
+Q99_DESC="Reduce the ext4 logical volume /dev/data_vg/data_lv from 500 MB to 300 MB. Ensure that the filesystem remains usable and its existing data is preserved."
+
+check_Q99() {
+  local lvpath="/dev/data_vg/data_lv"
+  local mountpoint="/mnt/data_lv"
+  local marker="$mountpoint/q99-preserve.txt"
+
+  # LV must exist
+  if ! lvs "$lvpath" >/dev/null 2>&1; then
+    echo "❌ Q99 failed: logical volume $lvpath does not exist."
+    return 1
+  fi
+
+  # Filesystem must remain ext4
+  local fstype
+  fstype="$(blkid -o value -s TYPE "$lvpath" 2>/dev/null || true)"
+
+  if [[ "$fstype" != "ext4" ]]; then
+    echo "❌ Q99 failed: filesystem is '$fstype' (expected ext4)."
+    return 1
+  fi
+
+  # LV final size should be approximately 300 MB.
+  local size_raw size_mb
+  size_raw="$(
+    lvs \
+      --noheadings \
+      --units m \
+      --nosuffix \
+      -o lv_size \
+      "$lvpath" 2>/dev/null |
+    tr -d ' '
+  )"
+
+  size_mb="${size_raw%.*}"
+
+  if [[ ! "$size_mb" =~ ^[0-9]+$ ]]; then
+    echo "❌ Q99 failed: could not determine logical volume size."
+    return 1
+  fi
+
+  if (( size_mb < 290 || size_mb > 310 )); then
+    echo "❌ Q99 failed: logical volume size is ${size_raw} MB."
+    echo "    Expected approximately 300 MB."
+    return 1
+  fi
+
+  # Filesystem must be mounted and usable
+  if ! findmnt -rn -S "$lvpath" -T "$mountpoint" >/dev/null 2>&1; then
+    echo "❌ Q99 failed: $lvpath is not mounted at $mountpoint."
+    return 1
+  fi
+
+  # Existing data must remain present
+  if [[ ! -f "$marker" ]]; then
+    echo "❌ Q99 failed: original test data was not preserved."
+    echo "    Missing: $marker"
+    return 1
+  fi
+
+  if ! grep -Fxq \
+    'Q99 data must survive logical volume reduction' \
+    "$marker"; then
+    echo "❌ Q99 failed: preserved test file contains incorrect data."
+    return 1
+  fi
+
+  # Verify that the filesystem is writable
+  local testfile="$mountpoint/.q99-write-test"
+
+  if ! echo "Q99 writable test" > "$testfile" 2>/dev/null; then
+    echo "❌ Q99 failed: filesystem is not writable."
+    return 1
+  fi
+
+  rm -f "$testfile"
+
+  echo "✅ Q99 PASSED: ext4 filesystem and logical volume reduced safely."
+  return 0
+}
+
+
+# ===== Exercise Q100 =====
+Q100_DESC="Determine the filesystem type of /dev/archive_vg/archive_lv. If the filesystem supports shrinking, reduce it to 400 MB. If it does not support shrinking, do not perform a destructive operation."
+
+check_Q100() {
+  local lvpath="/dev/archive_vg/archive_lv"
+  local mountpoint="/mnt/archive_lv"
+  local marker="$mountpoint/q100-preserve.txt"
+  local log="$RHCSA_SHM_DIR/cmd.log"
+
+  # LV must exist
+  if ! lvs "$lvpath" >/dev/null 2>&1; then
+    echo "❌ Q100 failed: logical volume $lvpath does not exist."
+    return 1
+  fi
+
+  # The reset intentionally prepares this LV with XFS.
+  local fstype
+  fstype="$(blkid -o value -s TYPE "$lvpath" 2>/dev/null || true)"
+
+  if [[ "$fstype" != "xfs" ]]; then
+    echo "❌ Q100 failed: filesystem is '$fstype' (expected XFS lab volume)."
+    return 1
+  fi
+
+  # XFS must not be reduced.
+  local size_raw size_mb
+  size_raw="$(
+    lvs \
+      --noheadings \
+      --units m \
+      --nosuffix \
+      -o lv_size \
+      "$lvpath" 2>/dev/null |
+    tr -d ' '
+  )"
+
+  size_mb="${size_raw%.*}"
+
+  if [[ ! "$size_mb" =~ ^[0-9]+$ ]]; then
+    echo "❌ Q100 failed: could not determine logical volume size."
+    return 1
+  fi
+
+  if (( size_mb < 490 || size_mb > 510 )); then
+    echo "❌ Q100 failed: XFS logical volume size was modified."
+    echo "    Current size: ${size_raw} MB"
+    echo "    Expected approximately 500 MB."
+    return 1
+  fi
+
+  # Filesystem must remain mounted and usable
+  if ! findmnt -rn -S "$lvpath" -T "$mountpoint" >/dev/null 2>&1; then
+    echo "❌ Q100 failed: $lvpath is not mounted at $mountpoint."
+    return 1
+  fi
+
+  if [[ ! -f "$marker" ]]; then
+    echo "❌ Q100 failed: original XFS data was not preserved."
+    return 1
+  fi
+
+  if ! grep -Fxq \
+    'Q100 XFS data must not be destroyed' \
+    "$marker"; then
+    echo "❌ Q100 failed: preserved XFS file contains incorrect data."
+    return 1
+  fi
+
+  # User must have inspected the filesystem.
+  if [[ ! -f "$log" ]]; then
+    echo "❌ Q100 failed: monitored command log was not found."
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '(lsblk.*archive_vg|blkid.*archive_vg|findmnt.*archive_vg|file[[:space:]]+-s.*archive_vg)' \
+    "$log"; then
+    echo "❌ Q100 failed: filesystem inspection command was not detected."
+    echo "    Use lsblk -f, blkid, findmnt, or file -s."
+    return 1
+  fi
+
+  # Reject a destructive reduction attempt against this LV.
+  if grep -Eq \
+    'lvreduce.*archive_vg(/|-)archive_lv|lvreduce.*archive_lv' \
+    "$log"; then
+    echo "❌ Q100 failed: an lvreduce attempt against the XFS volume was detected."
+    return 1
+  fi
+
+  echo "✅ Q100 PASSED: XFS was identified and no destructive reduction was performed."
+  return 0
+}
+
+
+# ===== Exercise Q101 =====
+Q101_DESC="Configure a permanent firewall rich rule that permits SSH access only from 192.168.100.0/24 and apply it immediately."
+
+check_Q101() {
+  local zone="${FIREWALL_ZONE:-public}"
+  local rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept'
+
+  if ! systemctl is-active --quiet firewalld; then
+    echo "❌ Q101 failed: firewalld is not running."
+    return 1
+  fi
+
+  # Rich rule must exist permanently.
+  if ! firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q101 failed: permanent SSH rich rule was not found."
+    return 1
+  fi
+
+  # Rich rule must also exist at runtime.
+  if ! firewall-cmd \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q101 failed: SSH rich rule was not applied at runtime."
+    return 1
+  fi
+
+  # SSH must not remain globally open.
+  if firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-service=ssh \
+    >/dev/null 2>&1; then
+    echo "❌ Q101 failed: SSH is still allowed globally in the permanent configuration."
+    return 1
+  fi
+
+  if firewall-cmd \
+    --zone="$zone" \
+    --query-service=ssh \
+    >/dev/null 2>&1; then
+    echo "❌ Q101 failed: SSH is still allowed globally at runtime."
+    return 1
+  fi
+
+  echo "✅ Q101 PASSED: SSH is allowed only from the required network."
+  return 0
+}
+
+
+# ===== Exercise Q102 =====
+Q102_DESC="Configure a permanent firewall rich rule that rejects HTTP access from 192.168.100.50 and apply it immediately."
+
+check_Q102() {
+  local zone="${FIREWALL_ZONE:-public}"
+  local rule='rule family="ipv4" source address="192.168.100.50" service name="http" reject'
+
+  if ! systemctl is-active --quiet firewalld; then
+    echo "❌ Q102 failed: firewalld is not running."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q102 failed: permanent HTTP reject rule was not found."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q102 failed: HTTP reject rule was not applied at runtime."
+    return 1
+  fi
+
+  echo "✅ Q102 PASSED: HTTP access from 192.168.100.50 is rejected."
+  return 0
+}
+
+
+# ===== Exercise Q103 =====
+Q103_DESC="Configure a permanent firewall rich rule that permits HTTPS access from 192.168.100.0/24 and apply it immediately."
+
+check_Q103() {
+  local zone="${FIREWALL_ZONE:-public}"
+  local rule='rule family="ipv4" source address="192.168.100.0/24" service name="https" accept'
+
+  if ! systemctl is-active --quiet firewalld; then
+    echo "❌ Q103 failed: firewalld is not running."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q103 failed: permanent HTTPS rich rule was not found."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q103 failed: HTTPS rich rule was not applied at runtime."
+    return 1
+  fi
+
+  echo "✅ Q103 PASSED: HTTPS access is allowed from the required network."
+  return 0
+}
+
+
+# ===== Exercise Q104 =====
+Q104_DESC="Configure a permanent firewall rich rule that logs and drops SSH connections from 10.10.10.0/24 using the prefix blocked-ssh."
+
+check_Q104() {
+  local zone="${FIREWALL_ZONE:-public}"
+  local rule='rule family="ipv4" source address="10.10.10.0/24" service name="ssh" log prefix="blocked-ssh" limit value="5/m" drop'
+
+  if ! systemctl is-active --quiet firewalld; then
+    echo "❌ Q104 failed: firewalld is not running."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q104 failed: permanent log-and-drop rule was not found."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q104 failed: log-and-drop rule was not applied at runtime."
+    return 1
+  fi
+
+  echo "✅ Q104 PASSED: SSH attempts are logged and dropped."
+  return 0
+}
+
+
+# ===== Exercise Q105 =====
+Q105_DESC="Configure a permanent firewall rich rule that allows TCP port 8080 only from 172.16.50.0/24 and apply it immediately."
+
+check_Q105() {
+  local zone="${FIREWALL_ZONE:-public}"
+  local rule='rule family="ipv4" source address="172.16.50.0/24" port port="8080" protocol="tcp" accept'
+
+  if ! systemctl is-active --quiet firewalld; then
+    echo "❌ Q105 failed: firewalld is not running."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q105 failed: permanent port 8080 rich rule was not found."
+    return 1
+  fi
+
+  if ! firewall-cmd \
+    --zone="$zone" \
+    --query-rich-rule="$rule" \
+    >/dev/null 2>&1; then
+    echo "❌ Q105 failed: port 8080 rich rule was not applied at runtime."
+    return 1
+  fi
+
+  # Port 8080 must not remain globally open.
+  if firewall-cmd \
+    --permanent \
+    --zone="$zone" \
+    --query-port=8080/tcp \
+    >/dev/null 2>&1; then
+    echo "❌ Q105 failed: port 8080 is still globally allowed permanently."
+    return 1
+  fi
+
+  if firewall-cmd \
+    --zone="$zone" \
+    --query-port=8080/tcp \
+    >/dev/null 2>&1; then
+    echo "❌ Q105 failed: port 8080 is still globally allowed at runtime."
+    return 1
+  fi
+
+  echo "✅ Q105 PASSED: port 8080 is restricted to the required network."
+  return 0
+}
+
 TASKS=(
   Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10
   Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20
@@ -3520,7 +3905,8 @@ TASKS=(
   Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70
   Q71 Q72 Q73 Q74 Q75 Q76 Q77 Q78 Q79 Q80
   Q81 Q82 Q83 Q84 Q85 Q86 Q87 Q88 Q89 Q90
-  Q91 Q92 Q93 Q94 Q95 Q96 Q97 Q98
+  Q91 Q92 Q93 Q94 Q95 Q96 Q97 Q98 Q99 Q100
+  Q101 Q102 Q103 Q104 Q105
 )
 
 declare -A STATUS
@@ -4286,6 +4672,263 @@ sudo systemctl disable --now firewalld 2>/dev/null || true
     2>/dev/null || true
 
   echo ">> Q88-Q98 reset completed."
+
+    # =========================================================
+  # Reset Q99-Q105: LVM reduction and firewalld rich rules
+  # =========================================================
+
+  echo ">> Resetting Q99-Q105 LVM and firewall labs..."
+
+  # ---------------------------------------------------------
+  # Q99-Q100: remove previous LVM loop laboratories
+  # ---------------------------------------------------------
+
+  sudo umount /mnt/data_lv \
+    >/dev/null 2>&1 || true
+
+  sudo umount /mnt/archive_lv \
+    >/dev/null 2>&1 || true
+
+  if sudo lvs /dev/data_vg/data_lv \
+    >/dev/null 2>&1; then
+    sudo lvremove -fy /dev/data_vg/data_lv \
+      >/dev/null 2>&1 || true
+  fi
+
+  if sudo vgs data_vg \
+    >/dev/null 2>&1; then
+    sudo vgremove -fy data_vg \
+      >/dev/null 2>&1 || true
+  fi
+
+  if sudo lvs /dev/archive_vg/archive_lv \
+    >/dev/null 2>&1; then
+    sudo lvremove -fy /dev/archive_vg/archive_lv \
+      >/dev/null 2>&1 || true
+  fi
+
+  if sudo vgs archive_vg \
+    >/dev/null 2>&1; then
+    sudo vgremove -fy archive_vg \
+      >/dev/null 2>&1 || true
+  fi
+
+  # Read loop device paths saved by the previous reset.
+  if [[ -f /var/lib/rhcsa-trainer/q99-loop-device ]]; then
+    q99_old_loop="$(
+      cat /var/lib/rhcsa-trainer/q99-loop-device
+    )"
+
+    sudo pvremove -ff -y "$q99_old_loop" \
+      >/dev/null 2>&1 || true
+
+    sudo losetup -d "$q99_old_loop" \
+      >/dev/null 2>&1 || true
+  fi
+
+  if [[ -f /var/lib/rhcsa-trainer/q100-loop-device ]]; then
+    q100_old_loop="$(
+      cat /var/lib/rhcsa-trainer/q100-loop-device
+    )"
+
+    sudo pvremove -ff -y "$q100_old_loop" \
+      >/dev/null 2>&1 || true
+
+    sudo losetup -d "$q100_old_loop" \
+      >/dev/null 2>&1 || true
+  fi
+
+    # Detach stale loop devices that still reference the lab images.
+  while read -r stale_loop; do
+    [[ -z "$stale_loop" ]] && continue
+
+    sudo losetup -d "$stale_loop" \
+      >/dev/null 2>&1 || true
+  done < <(
+    sudo losetup -j \
+      /var/lib/rhcsa-trainer/q99-lvm.img \
+      2>/dev/null |
+    cut -d: -f1
+  )
+
+  while read -r stale_loop; do
+    [[ -z "$stale_loop" ]] && continue
+
+    sudo losetup -d "$stale_loop" \
+      >/dev/null 2>&1 || true
+  done < <(
+    sudo losetup -j \
+      /var/lib/rhcsa-trainer/q100-lvm.img \
+      2>/dev/null |
+    cut -d: -f1
+  )
+
+  sudo rm -f \
+    /var/lib/rhcsa-trainer/q99-loop-device \
+    /var/lib/rhcsa-trainer/q100-loop-device \
+    /var/lib/rhcsa-trainer/q99-lvm.img \
+    /var/lib/rhcsa-trainer/q100-lvm.img \
+    2>/dev/null || true
+
+  sudo rm -rf \
+    /mnt/data_lv \
+    /mnt/archive_lv \
+    2>/dev/null || true
+
+  sudo mkdir -p \
+    /var/lib/rhcsa-trainer \
+    /mnt/data_lv \
+    /mnt/archive_lv
+
+  # ---------------------------------------------------------
+  # Q99: ext4 LV, initially 500 MB
+  # ---------------------------------------------------------
+
+  sudo truncate \
+    -s 700M \
+    /var/lib/rhcsa-trainer/q99-lvm.img
+
+  q99_loop="$(
+    sudo losetup \
+      --find \
+      --show \
+      /var/lib/rhcsa-trainer/q99-lvm.img
+  )"
+
+  echo "$q99_loop" |
+    sudo tee \
+      /var/lib/rhcsa-trainer/q99-loop-device \
+      >/dev/null
+
+  sudo pvcreate -ff -y "$q99_loop"
+  sudo vgcreate data_vg "$q99_loop"
+  sudo lvcreate \
+    -L 500M \
+    -n data_lv \
+    data_vg
+
+  sudo mkfs.ext4 \
+    -F \
+    /dev/data_vg/data_lv \
+    >/dev/null
+
+  sudo mount \
+    /dev/data_vg/data_lv \
+    /mnt/data_lv
+
+  echo 'Q99 data must survive logical volume reduction' |
+    sudo tee \
+      /mnt/data_lv/q99-preserve.txt \
+      >/dev/null
+
+  sudo sync
+
+  # ---------------------------------------------------------
+  # Q100: XFS LV, initially 500 MB
+  # ---------------------------------------------------------
+
+  sudo truncate \
+    -s 700M \
+    /var/lib/rhcsa-trainer/q100-lvm.img
+
+  q100_loop="$(
+    sudo losetup \
+      --find \
+      --show \
+      /var/lib/rhcsa-trainer/q100-lvm.img
+  )"
+
+  echo "$q100_loop" |
+    sudo tee \
+      /var/lib/rhcsa-trainer/q100-loop-device \
+      >/dev/null
+
+  sudo pvcreate -ff -y "$q100_loop"
+  sudo vgcreate archive_vg "$q100_loop"
+  sudo lvcreate \
+    -L 500M \
+    -n archive_lv \
+    archive_vg
+
+  sudo mkfs.xfs \
+    -f \
+    /dev/archive_vg/archive_lv \
+    >/dev/null
+
+  sudo mount \
+    /dev/archive_vg/archive_lv \
+    /mnt/archive_lv
+
+  echo 'Q100 XFS data must not be destroyed' |
+    sudo tee \
+      /mnt/archive_lv/q100-preserve.txt \
+      >/dev/null
+
+  sudo sync
+
+  # ---------------------------------------------------------
+  # Q101-Q105: firewalld rich rules
+  # ---------------------------------------------------------
+
+  FIREWALL_ZONE="${FIREWALL_ZONE:-public}"
+
+  sudo systemctl enable --now firewalld \
+    >/dev/null 2>&1 || true
+
+  q101_rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept'
+  q102_rule='rule family="ipv4" source address="192.168.100.50" service name="http" reject'
+  q103_rule='rule family="ipv4" source address="192.168.100.0/24" service name="https" accept'
+  q104_rule='rule family="ipv4" source address="10.10.10.0/24" service name="ssh" log prefix="blocked-ssh" limit value="5/m" drop'
+  q105_rule='rule family="ipv4" source address="172.16.50.0/24" port port="8080" protocol="tcp" accept'
+
+  # Remove exercise rules from permanent configuration.
+  for rule in \
+    "$q101_rule" \
+    "$q102_rule" \
+    "$q103_rule" \
+    "$q104_rule" \
+    "$q105_rule"
+  do
+    sudo firewall-cmd \
+      --permanent \
+      --zone="$FIREWALL_ZONE" \
+      --remove-rich-rule="$rule" \
+      >/dev/null 2>&1 || true
+  done
+
+  # Remove exercise rules from runtime configuration.
+  for rule in \
+    "$q101_rule" \
+    "$q102_rule" \
+    "$q103_rule" \
+    "$q104_rule" \
+    "$q105_rule"
+  do
+    sudo firewall-cmd \
+      --zone="$FIREWALL_ZONE" \
+      --remove-rich-rule="$rule" \
+      >/dev/null 2>&1 || true
+  done
+
+  # Establish the initial challenge state:
+  # SSH and port 8080 are globally open and must be restricted
+  # by Q101 and Q105.
+  sudo firewall-cmd \
+    --permanent \
+    --zone="$FIREWALL_ZONE" \
+    --add-service=ssh \
+    >/dev/null 2>&1 || true
+
+  sudo firewall-cmd \
+    --permanent \
+    --zone="$FIREWALL_ZONE" \
+    --add-port=8080/tcp \
+    >/dev/null 2>&1 || true
+
+  sudo firewall-cmd --reload \
+    >/dev/null 2>&1 || true
+
+  echo ">> Q99-Q105 reset completed."
 
   #Echo
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."

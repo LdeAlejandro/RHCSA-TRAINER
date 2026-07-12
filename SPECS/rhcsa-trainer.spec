@@ -7,6 +7,26 @@ URL:            https://github.com/LdeAlejandro/RHCSA-TRAINER
 Source0:        rhcsa_trainer.sh
 BuildArch:      noarch
 Requires:       bash, coreutils
+Requires:       findutils
+Requires:       util-linux
+Requires:       shadow-utils
+Requires:       grep
+Requires:       sed
+Requires:       gawk
+Requires:       acl
+Requires:       systemd
+Requires:       cronie
+Requires:       at
+Requires:       openssh-clients
+Requires:       firewalld
+Requires:       policycoreutils
+Requires:       policycoreutils-python-utils
+Requires:       lvm2
+Requires:       e2fsprogs
+Requires:       xfsprogs
+Requires:       rpm
+Requires:       dnf
+Requires:       flatpak
 
 %description
 Small trainer for RHCSA tasks.
