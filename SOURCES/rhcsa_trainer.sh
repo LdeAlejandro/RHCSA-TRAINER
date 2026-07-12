@@ -2981,6 +2981,535 @@ check_Q87() {
   return 0
 }
 
+# ===== Exercise Q88 =====
+Q88_DESC="Determine whether the httpd package is installed and save its package name, version, release, and architecture to /root/httpd-version.txt."
+
+check_Q88() {
+  local package="httpd"
+  local output="/root/httpd-version.txt"
+  local expected
+
+  if ! rpm -q "$package" >/dev/null 2>&1; then
+    echo "❌ Q88 failed: package $package is not installed."
+    return 1
+  fi
+
+  if [[ ! -f "$output" ]]; then
+    echo "❌ Q88 failed: $output does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$output" ]]; then
+    echo "❌ Q88 failed: $output is empty."
+    return 1
+  fi
+
+  expected="$(rpm -q \
+    --qf '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' \
+    "$package" 2>/dev/null)"
+
+  if ! grep -Fxq "$expected" "$output"; then
+    echo "❌ Q88 failed: $output does not contain the expected package information."
+    echo "    Expected: $expected"
+    return 1
+  fi
+
+  echo "✅ Q88 PASSED: httpd package information saved correctly."
+  return 0
+}
+
+
+# ===== Exercise Q89 =====
+Q89_DESC="Determine which installed RPM package owns /usr/bin/ssh and save the package name to /root/ssh-package.txt."
+
+check_Q89() {
+  local file="/usr/bin/ssh"
+  local output="/root/ssh-package.txt"
+  local expected
+
+  if [[ ! -e "$file" ]]; then
+    echo "❌ Q89 failed: $file does not exist."
+    return 1
+  fi
+
+  if [[ ! -f "$output" ]]; then
+    echo "❌ Q89 failed: $output does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$output" ]]; then
+    echo "❌ Q89 failed: $output is empty."
+    return 1
+  fi
+
+  expected="$(rpm -qf "$file" 2>/dev/null || true)"
+
+  if [[ -z "$expected" ]]; then
+    echo "❌ Q89 failed: RPM database could not identify the owner of $file."
+    return 1
+  fi
+
+  if ! grep -Fxq "$expected" "$output"; then
+    echo "❌ Q89 failed: incorrect package saved to $output."
+    echo "    Expected: $expected"
+    return 1
+  fi
+
+  echo "✅ Q89 PASSED: owning RPM package identified correctly."
+  return 0
+}
+
+
+# ===== Exercise Q90 =====
+Q90_DESC="Install the local RPM package /root/packages/demo-package.rpm and verify that it is installed."
+
+check_Q90() {
+  local rpm_file="/root/packages/demo-package.rpm"
+  local package_name
+
+  if [[ ! -f "$rpm_file" ]]; then
+    echo "❌ Q90 failed: lab package $rpm_file was not found."
+    return 1
+  fi
+
+  if ! rpm -K "$rpm_file" >/dev/null 2>&1; then
+    echo "❌ Q90 failed: $rpm_file is not a valid RPM package."
+    return 1
+  fi
+
+  package_name="$(rpm -qp --qf '%{NAME}' "$rpm_file" 2>/dev/null || true)"
+
+  if [[ -z "$package_name" ]]; then
+    echo "❌ Q90 failed: could not determine package name."
+    return 1
+  fi
+
+  if ! rpm -q "$package_name" >/dev/null 2>&1; then
+    echo "❌ Q90 failed: package $package_name is not installed."
+    return 1
+  fi
+
+  local installed_version package_version
+  installed_version="$(rpm -q \
+    --qf '%{VERSION}-%{RELEASE}' \
+    "$package_name" 2>/dev/null)"
+
+  package_version="$(rpm -qp \
+    --qf '%{VERSION}-%{RELEASE}' \
+    "$rpm_file" 2>/dev/null)"
+
+  if [[ "$installed_version" != "$package_version" ]]; then
+    echo "❌ Q90 failed: installed package version does not match the local RPM."
+    echo "    Installed: $installed_version"
+    echo "    Package:   $package_version"
+    return 1
+  fi
+
+  echo "✅ Q90 PASSED: local RPM package installed correctly."
+  return 0
+}
+
+
+# ===== Exercise Q91 =====
+Q91_DESC="Install Flatpak and configure the Flathub repository named userrepo for user chisha only."
+
+check_Q91() {
+  local user="chisha"
+  local home
+
+  if ! getent passwd "$user" >/dev/null; then
+    echo "❌ Q91 failed: user $user does not exist."
+    return 1
+  fi
+
+  if ! command -v flatpak >/dev/null 2>&1; then
+    echo "❌ Q91 failed: Flatpak is not installed."
+    return 1
+  fi
+
+  home="$(getent passwd "$user" | cut -d: -f6)"
+
+  local user_remotes
+  user_remotes="$(
+    runuser -u "$user" -- env HOME="$home" \
+      flatpak remotes --user \
+      --columns=name,url 2>/dev/null || true
+  )"
+
+  if ! awk -F'\t' '
+      $1 == "userrepo" &&
+      $2 ~ /^https:\/\/(dl\.)?flathub\.org\/repo\/?$/ {
+        found=1
+      }
+      END { exit(found ? 0 : 1) }
+    ' <<< "$user_remotes"; then
+    echo "❌ Q91 failed: userrepo was not configured correctly for chisha."
+    return 1
+  fi
+
+  # The same repository name must not exist system-wide.
+  if flatpak remotes --system --columns=name 2>/dev/null |
+    grep -Fxq 'userrepo'; then
+    echo "❌ Q91 failed: userrepo was configured system-wide."
+    echo "    The repository must exist for chisha only."
+    return 1
+  fi
+
+  echo "✅ Q91 PASSED: user-only Flatpak repository configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q92 =====
+Q92_DESC="Install org.gimp.GIMP as a Flatpak application for user chisha only."
+
+check_Q92() {
+  local user="chisha"
+  local app="org.gimp.GIMP"
+  local home
+
+  if ! getent passwd "$user" >/dev/null; then
+    echo "❌ Q92 failed: user $user does not exist."
+    return 1
+  fi
+
+  if ! command -v flatpak >/dev/null 2>&1; then
+    echo "❌ Q92 failed: Flatpak is not installed."
+    return 1
+  fi
+
+  home="$(getent passwd "$user" | cut -d: -f6)"
+
+  if ! runuser -u "$user" -- env HOME="$home" \
+    flatpak info --user "$app" >/dev/null 2>&1; then
+    echo "❌ Q92 failed: $app is not installed for user chisha."
+    return 1
+  fi
+
+  if flatpak info --system "$app" >/dev/null 2>&1; then
+    echo "❌ Q92 failed: $app is installed system-wide."
+    echo "    It must be installed for chisha only."
+    return 1
+  fi
+
+  echo "✅ Q92 PASSED: GIMP installed in chisha's user Flatpak environment."
+  return 0
+}
+
+
+# ===== Exercise Q93 =====
+Q93_DESC="Create user developer, create groups devops and qa, and add developer to both groups without removing existing supplementary memberships."
+
+check_Q93() {
+  local user="developer"
+
+  if ! getent passwd "$user" >/dev/null; then
+    echo "❌ Q93 failed: user $user does not exist."
+    return 1
+  fi
+
+  for group in devops qa; do
+    if ! getent group "$group" >/dev/null; then
+      echo "❌ Q93 failed: group $group does not exist."
+      return 1
+    fi
+
+    if ! id -nG "$user" | tr ' ' '\n' | grep -Fxq "$group"; then
+      echo "❌ Q93 failed: developer is not a member of $group."
+      return 1
+    fi
+  done
+
+  echo "✅ Q93 PASSED: developer has the required supplementary groups."
+  return 0
+}
+
+
+# ===== Exercise Q94 =====
+Q94_DESC="Rename group developers to engineering while preserving its GID and memberships."
+
+check_Q94() {
+  local original_gid_file="/var/lib/rhcsa-trainer/q94-developers-gid"
+  local expected_gid current_gid
+
+  if getent group developers >/dev/null; then
+    echo "❌ Q94 failed: old group name developers still exists."
+    return 1
+  fi
+
+  if ! getent group engineering >/dev/null; then
+    echo "❌ Q94 failed: group engineering does not exist."
+    return 1
+  fi
+
+  if [[ ! -f "$original_gid_file" ]]; then
+    echo "❌ Q94 failed: reset metadata for the original GID is missing."
+    return 1
+  fi
+
+  expected_gid="$(cat "$original_gid_file")"
+  current_gid="$(getent group engineering | cut -d: -f3)"
+
+  if [[ "$current_gid" != "$expected_gid" ]]; then
+    echo "❌ Q94 failed: group GID changed during rename."
+    echo "    Expected: $expected_gid"
+    echo "    Current:  $current_gid"
+    return 1
+  fi
+
+  # A prepared member confirms that memberships survived groupmod -n.
+  if ! id -nG q94member 2>/dev/null |
+    tr ' ' '\n' |
+    grep -Fxq engineering; then
+    echo "❌ Q94 failed: existing group membership was not preserved."
+    return 1
+  fi
+
+  echo "✅ Q94 PASSED: group renamed with GID and membership preserved."
+  return 0
+}
+
+
+# ===== Exercise Q95 =====
+Q95_DESC="Modify developer to UID 4500, shell /bin/bash, and home /home/developer-new, moving the existing home contents."
+
+check_Q95() {
+  local user="developer"
+  local expected_uid="4500"
+  local expected_shell="/bin/bash"
+  local expected_home="/home/developer-new"
+  local marker="$expected_home/q95-original-home.txt"
+
+  if ! getent passwd "$user" >/dev/null; then
+    echo "❌ Q95 failed: user $user does not exist."
+    return 1
+  fi
+
+  local passwd_entry uid home shell
+  passwd_entry="$(getent passwd "$user")"
+  uid="$(cut -d: -f3 <<< "$passwd_entry")"
+  home="$(cut -d: -f6 <<< "$passwd_entry")"
+  shell="$(cut -d: -f7 <<< "$passwd_entry")"
+
+  if [[ "$uid" != "$expected_uid" ]]; then
+    echo "❌ Q95 failed: developer UID is $uid; expected $expected_uid."
+    return 1
+  fi
+
+  if [[ "$shell" != "$expected_shell" ]]; then
+    echo "❌ Q95 failed: developer shell is $shell; expected $expected_shell."
+    return 1
+  fi
+
+  if [[ "$home" != "$expected_home" ]]; then
+    echo "❌ Q95 failed: developer home is $home; expected $expected_home."
+    return 1
+  fi
+
+  if [[ ! -d "$expected_home" ]]; then
+    echo "❌ Q95 failed: new home directory does not exist."
+    return 1
+  fi
+
+  if [[ "$(stat -c '%U' "$expected_home" 2>/dev/null)" != "$user" ]]; then
+    echo "❌ Q95 failed: new home directory is not owned by developer."
+    return 1
+  fi
+
+  if [[ ! -f "$marker" ]]; then
+    echo "❌ Q95 failed: original home contents were not moved."
+    echo "    Missing: $marker"
+    return 1
+  fi
+
+  if ! grep -Fxq 'Q95 original home content' "$marker"; then
+    echo "❌ Q95 failed: moved marker file has incorrect content."
+    return 1
+  fi
+
+  echo "✅ Q95 PASSED: developer account modified correctly."
+  return 0
+}
+
+
+# ===== Exercise Q96 =====
+Q96_DESC="Locate all regular files under /var owned by developer and copy them to /root/developer-files while preserving their filenames."
+
+check_Q96() {
+  local destination="/root/developer-files"
+  local source_a="/var/tmp/q96-developer-alpha.txt"
+  local source_b="/var/lib/rhcsa-trainer/q96-developer-beta.txt"
+
+  if ! getent passwd developer >/dev/null; then
+    echo "❌ Q96 failed: user developer does not exist."
+    return 1
+  fi
+
+  if [[ ! -d "$destination" ]]; then
+    echo "❌ Q96 failed: destination directory $destination does not exist."
+    return 1
+  fi
+
+  for source in "$source_a" "$source_b"; do
+    if [[ ! -f "$source" ]]; then
+      echo "❌ Q96 failed: expected source test file is missing: $source"
+      return 1
+    fi
+
+    if [[ "$(stat -c '%U' "$source" 2>/dev/null)" != "developer" ]]; then
+      echo "❌ Q96 failed: test file is not owned by developer: $source"
+      echo "    Complete Q95 before Q96."
+      return 1
+    fi
+
+    local filename found
+    filename="$(basename "$source")"
+
+    found="$(
+      find "$destination" \
+        -type f \
+        -name "$filename" \
+        -print -quit 2>/dev/null
+    )"
+
+    if [[ -z "$found" ]]; then
+      echo "❌ Q96 failed: $filename was not copied."
+      return 1
+    fi
+
+    if ! cmp -s "$source" "$found"; then
+      echo "❌ Q96 failed: copied file differs from source: $filename"
+      return 1
+    fi
+  done
+
+  echo "✅ Q96 PASSED: developer-owned files copied correctly."
+  return 0
+}
+
+
+# ===== Exercise Q97 =====
+Q97_DESC="Locate all directories with SGID enabled and save their absolute paths to /root/sgid-directories.txt."
+
+check_Q97() {
+  local output="/root/sgid-directories.txt"
+  local sentinel="/var/tmp/rhcsa-special-perms/sgid-directory"
+
+  if [[ ! -f "$output" ]]; then
+    echo "❌ Q97 failed: $output does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$output" ]]; then
+    echo "❌ Q97 failed: $output is empty."
+    return 1
+  fi
+
+  if ! grep -Fxq "$sentinel" "$output"; then
+    echo "❌ Q97 failed: known SGID directory is missing."
+    echo "    Missing: $sentinel"
+    return 1
+  fi
+
+  local path bad=0
+
+  while IFS= read -r path || [[ -n "$path" ]]; do
+    [[ -z "$path" ]] && continue
+
+    if [[ "$path" != /* ]]; then
+      echo "❌ Q97 failed: path is not absolute: $path"
+      bad=1
+      continue
+    fi
+
+    if [[ ! -d "$path" ]]; then
+      echo "❌ Q97 failed: listed path is not a directory: $path"
+      bad=1
+      continue
+    fi
+
+    if ! find "$path" \
+      -maxdepth 0 \
+      -type d \
+      -perm -2000 \
+      -print -quit 2>/dev/null |
+      grep -q .; then
+      echo "❌ Q97 failed: directory does not have SGID enabled: $path"
+      bad=1
+    fi
+  done < "$output"
+
+  if [[ "$bad" -ne 0 ]]; then
+    return 1
+  fi
+
+  echo "✅ Q97 PASSED: SGID directory list is valid."
+  return 0
+}
+
+
+# ===== Exercise Q98 =====
+Q98_DESC="Locate all regular files with either SUID or SGID enabled and save their absolute paths to /root/special-permissions.txt."
+
+check_Q98() {
+  local output="/root/special-permissions.txt"
+  local suid_sentinel="/var/tmp/rhcsa-special-perms/suid-test"
+  local sgid_sentinel="/var/tmp/rhcsa-special-perms/sgid-test"
+
+  if [[ ! -f "$output" ]]; then
+    echo "❌ Q98 failed: $output does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$output" ]]; then
+    echo "❌ Q98 failed: $output is empty."
+    return 1
+  fi
+
+  for sentinel in "$suid_sentinel" "$sgid_sentinel"; do
+    if ! grep -Fxq "$sentinel" "$output"; then
+      echo "❌ Q98 failed: known special-permission file is missing."
+      echo "    Missing: $sentinel"
+      return 1
+    fi
+  done
+
+  local path bad=0
+
+  while IFS= read -r path || [[ -n "$path" ]]; do
+    [[ -z "$path" ]] && continue
+
+    if [[ "$path" != /* ]]; then
+      echo "❌ Q98 failed: path is not absolute: $path"
+      bad=1
+      continue
+    fi
+
+    if [[ ! -f "$path" ]]; then
+      echo "❌ Q98 failed: listed path is not a regular file: $path"
+      bad=1
+      continue
+    fi
+
+    if ! find "$path" \
+      -maxdepth 0 \
+      -type f \
+      -perm /6000 \
+      -print -quit 2>/dev/null |
+      grep -q .; then
+      echo "❌ Q98 failed: file has neither SUID nor SGID: $path"
+      bad=1
+    fi
+  done < "$output"
+
+  if [[ "$bad" -ne 0 ]]; then
+    return 1
+  fi
+
+  echo "✅ Q98 PASSED: SUID/SGID file list is valid."
+  return 0
+}
+
 TASKS=(
   Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10
   Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20
@@ -2990,7 +3519,8 @@ TASKS=(
   Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60
   Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70
   Q71 Q72 Q73 Q74 Q75 Q76 Q77 Q78 Q79 Q80
-  Q81 Q82 Q83 Q84 Q85 Q86 Q87
+  Q81 Q82 Q83 Q84 Q85 Q86 Q87 Q88 Q89 Q90
+  Q91 Q92 Q93 Q94 Q95 Q96 Q97 Q98
 )
 
 declare -A STATUS
@@ -3515,6 +4045,247 @@ sudo systemctl disable --now firewalld 2>/dev/null || true
     >/dev/null 2>&1 || true
 
   echo ">> Q81-Q87 reset completed."
+
+    # =========================================================
+  # Reset Q88-Q98: RPM, Flatpak, users, groups and find labs
+  # =========================================================
+
+  echo ">> Resetting Q88-Q98 package and account labs..."
+
+  # ---------------------------------------------------------
+  # Q88-Q89: generated query output
+  # ---------------------------------------------------------
+
+  sudo rm -f \
+    /root/httpd-version.txt \
+    /root/ssh-package.txt \
+    2>/dev/null || true
+
+  # httpd and openssh-clients are base requirements for these labs.
+  # Installation should preferably be guaranteed by the RPM spec.
+  if ! rpm -q httpd >/dev/null 2>&1; then
+    sudo dnf install -y httpd >/dev/null 2>&1 || \
+      echo "WARN: httpd could not be installed; Q88 may not be available."
+  fi
+
+  if ! rpm -q openssh-clients >/dev/null 2>&1; then
+    sudo dnf install -y openssh-clients >/dev/null 2>&1 || \
+      echo "WARN: openssh-clients could not be installed; Q89 may not be available."
+  fi
+
+  # ---------------------------------------------------------
+  # Q90: local demo RPM
+  # ---------------------------------------------------------
+
+  sudo mkdir -p /root/packages
+  sudo rm -f /root/packages/demo-package.rpm
+
+  DEMO_RPM_SOURCE="/usr/share/rhcsa-trainer/demo-package.rpm"
+
+  if [[ -f "$DEMO_RPM_SOURCE" ]]; then
+    demo_package_name="$(
+      rpm -qp --qf '%{NAME}' "$DEMO_RPM_SOURCE" 2>/dev/null || true
+    )"
+
+    if [[ -n "$demo_package_name" ]]; then
+      sudo dnf remove -y "$demo_package_name" \
+        >/dev/null 2>&1 || true
+    fi
+
+    sudo install \
+      -o root \
+      -g root \
+      -m 0644 \
+      "$DEMO_RPM_SOURCE" \
+      /root/packages/demo-package.rpm
+  else
+    echo "WARN: $DEMO_RPM_SOURCE not found; Q90 package was not prepared."
+  fi
+
+  # ---------------------------------------------------------
+  # Q91-Q92: Flatpak user repository and application
+  # ---------------------------------------------------------
+
+  if ! getent passwd chisha >/dev/null; then
+    sudo useradd -m chisha
+  fi
+
+  chisha_home="$(getent passwd chisha | cut -d: -f6)"
+
+  if command -v flatpak >/dev/null 2>&1; then
+    sudo runuser -u chisha -- env HOME="$chisha_home" \
+      flatpak uninstall \
+      --user \
+      --noninteractive \
+      --delete-data \
+      org.gimp.GIMP \
+      >/dev/null 2>&1 || true
+
+    sudo runuser -u chisha -- env HOME="$chisha_home" \
+      flatpak remote-delete \
+      --user \
+      --force \
+      userrepo \
+      >/dev/null 2>&1 || true
+
+    # Remove a system-wide repository with the exercise name,
+    # but do not remove unrelated Flatpak remotes.
+    sudo flatpak remote-delete \
+      --system \
+      --force \
+      userrepo \
+      >/dev/null 2>&1 || true
+  fi
+
+  # ---------------------------------------------------------
+  # Q93 and Q95: developer account and supplementary groups
+  # ---------------------------------------------------------
+
+  # Remove the account from a previous attempt.
+  if getent passwd developer >/dev/null; then
+    sudo pkill -u developer 2>/dev/null || true
+    sudo userdel -r developer 2>/dev/null || true
+  fi
+
+  sudo rm -rf \
+    /home/developer \
+    /home/developer-new \
+    2>/dev/null || true
+
+  # Remove exercise groups. They must be created by the student in Q93.
+  for group in devops qa; do
+    if getent group "$group" >/dev/null; then
+      # Avoid failure if an older lab user still has this as primary group.
+      members="$(
+        getent group "$group" |
+        cut -d: -f4
+      )"
+
+      if [[ -z "$members" ]]; then
+        sudo groupdel "$group" 2>/dev/null || true
+      else
+        echo "WARN: group $group still has members and was not removed."
+      fi
+    fi
+  done
+
+  # Q95 needs content in developer's original home.
+  # Because developer is created during Q93, prepare a staging file.
+  sudo mkdir -p /var/lib/rhcsa-trainer/q95-template
+
+  echo 'Q95 original home content' |
+    sudo tee \
+      /var/lib/rhcsa-trainer/q95-template/q95-original-home.txt \
+      >/dev/null
+
+  sudo chown root:root \
+    /var/lib/rhcsa-trainer/q95-template/q95-original-home.txt
+
+  sudo chmod 0644 \
+    /var/lib/rhcsa-trainer/q95-template/q95-original-home.txt
+
+  # ---------------------------------------------------------
+  # Q94: group rename lab
+  # ---------------------------------------------------------
+
+  if getent passwd q94member >/dev/null; then
+    sudo pkill -u q94member 2>/dev/null || true
+    sudo userdel -r q94member 2>/dev/null || true
+  fi
+
+  for group in engineering developers; do
+    if getent group "$group" >/dev/null; then
+      sudo groupdel "$group" 2>/dev/null || true
+    fi
+  done
+
+  # Use a fixed GID to make preservation objectively testable.
+  Q94_GID=4600
+
+  # Avoid collision when 4600 already belongs to another group.
+  if getent group "$Q94_GID" >/dev/null; then
+    Q94_GID=4601
+  fi
+
+  sudo groupadd -g "$Q94_GID" developers
+  sudo useradd -m -G developers q94member
+
+  sudo mkdir -p /var/lib/rhcsa-trainer
+  echo "$Q94_GID" |
+    sudo tee /var/lib/rhcsa-trainer/q94-developers-gid \
+    >/dev/null
+
+  sudo chmod 0644 \
+    /var/lib/rhcsa-trainer/q94-developers-gid
+
+  # ---------------------------------------------------------
+  # Q96: files that will belong to developer after UID change
+  # ---------------------------------------------------------
+
+  sudo rm -rf /root/developer-files
+  sudo rm -f \
+    /var/tmp/q96-developer-alpha.txt \
+    /var/lib/rhcsa-trainer/q96-developer-beta.txt \
+    2>/dev/null || true
+
+  echo 'Q96 alpha developer file' |
+    sudo tee /var/tmp/q96-developer-alpha.txt \
+    >/dev/null
+
+  echo 'Q96 beta developer file' |
+    sudo tee /var/lib/rhcsa-trainer/q96-developer-beta.txt \
+    >/dev/null
+
+  # Preassign numeric UID 4500.
+  # After Q95 changes developer to UID 4500, these become developer-owned.
+  sudo chown 4500:root \
+    /var/tmp/q96-developer-alpha.txt \
+    /var/lib/rhcsa-trainer/q96-developer-beta.txt
+
+  sudo chmod 0644 \
+    /var/tmp/q96-developer-alpha.txt \
+    /var/lib/rhcsa-trainer/q96-developer-beta.txt
+
+  # ---------------------------------------------------------
+  # Q97-Q98: deterministic special-permission objects
+  # ---------------------------------------------------------
+
+  sudo mkdir -p /var/tmp/rhcsa-special-perms
+
+  sudo rm -rf \
+    /var/tmp/rhcsa-special-perms/sgid-directory \
+    2>/dev/null || true
+
+  sudo mkdir \
+    /var/tmp/rhcsa-special-perms/sgid-directory
+
+  sudo chown root:root \
+    /var/tmp/rhcsa-special-perms/sgid-directory
+
+  sudo chmod 2755 \
+    /var/tmp/rhcsa-special-perms/sgid-directory
+
+  # Reapply sentinels in case earlier exercises changed them.
+  sudo touch \
+    /var/tmp/rhcsa-special-perms/suid-test \
+    /var/tmp/rhcsa-special-perms/sgid-test
+
+  sudo chown root:root \
+    /var/tmp/rhcsa-special-perms/suid-test \
+    /var/tmp/rhcsa-special-perms/sgid-test
+
+  sudo chmod 4755 \
+    /var/tmp/rhcsa-special-perms/suid-test
+
+  sudo chmod 2755 \
+    /var/tmp/rhcsa-special-perms/sgid-test
+
+  sudo rm -f \
+    /root/sgid-directories.txt \
+    /root/special-permissions.txt \
+    2>/dev/null || true
+
+  echo ">> Q88-Q98 reset completed."
 
   #Echo
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
