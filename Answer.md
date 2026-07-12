@@ -1742,3 +1742,999 @@ The script must be executable.
   #Make executable
   chmod 755 filecheck.sh
 ```
+---
+## Question 71: Configure a File with SUID Permission
+
+Create a file named `/secure/passwd-tool`.
+
+Configure the file so that:
+
+* The owner is root.
+* The group is root.
+* The file has the SUID permission enabled.
+* The owner has read, write, and execute permissions.
+* The group and other users have read and execute permissions.
+
+Verify your work.
+
+```bash
+  #Create directory and file
+  mkdir -p /secure
+  touch /secure/passwd-tool
+
+  #Configure ownership
+  chown root:root /secure/passwd-tool
+
+  #Configure SUID and permissions
+  chmod 4755 /secure/passwd-tool
+
+  #Verify
+  ls -l /secure/passwd-tool
+  stat -c '%A %a %U:%G' /secure/passwd-tool
+```
+
+---
+
+## Question 72: Configure an SGID Shared Directory
+
+Create a directory named `/shared-devs`.
+
+Configure the directory so that:
+
+* The group owner is `devs`.
+* Members of the group can create files inside the directory.
+* New files and directories created inside it inherit the group ownership automatically.
+
+Verify your work.
+
+```bash
+  #Create group if necessary
+  groupadd devs
+
+  #Create directory
+  mkdir -p /shared-devs
+
+  #Configure group ownership
+  chown root:devs /shared-devs
+
+  #Configure SGID and group access
+  chmod 2770 /shared-devs
+
+  #Verify
+  ls -ld /shared-devs
+  stat -c '%A %a %U:%G' /shared-devs
+```
+
+---
+
+## Question 73: Configure a Directory with Sticky Bit
+
+Create a directory named `/public-share`.
+
+Configure the directory so that:
+
+* All users can create files inside it.
+* Users cannot delete files owned by other users.
+
+Verify your work.
+
+```bash
+  #Create directory
+  mkdir -p /public-share
+
+  #Give all users full access and enable sticky bit
+  chmod 1777 /public-share
+
+  #Verify
+  ls -ld /public-share
+  stat -c '%A %a' /public-share
+```
+
+---
+
+## Question 74: Locate Files with SUID Permission
+
+Locate all regular files on the system that have the SUID permission enabled.
+
+Save their absolute paths to `/root/suid-files.txt`.
+
+```bash
+  #Find regular files with SUID enabled
+  find / -type f -perm -4000 2>/dev/null > /root/suid-files.txt
+
+  #Verify
+  cat /root/suid-files.txt
+```
+
+---
+
+## Question 75: Locate Files with SGID Permission
+
+Locate all regular files on the system that have the SGID permission enabled.
+
+Save their absolute paths to `/root/sgid-files.txt`.
+
+```bash
+  #Find regular files with SGID enabled
+  find / -type f -perm -2000 2>/dev/null > /root/sgid-files.txt
+
+  #Verify
+  cat /root/sgid-files.txt
+```
+
+---
+
+## Question 76: Configure ACL Permissions on fstab
+
+Copy `/etc/fstab` to `/acl-lab/fstab`.
+
+Configure the following permissions:
+
+* The owner must have read and write access.
+* The group must have read-only access.
+* User `adam` must have read and write access.
+* User `maryam` must have no access.
+* All other users must have read-only access.
+
+Use ACLs where required.
+
+```bash
+  #Create users if necessary
+  useradd adam
+  useradd maryam
+
+  #Create directory and copy file
+  mkdir -p /acl-lab
+  cp /etc/fstab /acl-lab/fstab
+
+  #Configure standard permissions
+  chown root:root /acl-lab/fstab
+  chmod 644 /acl-lab/fstab
+
+  #Configure ACL entries
+  setfacl -m u:adam:rw- /acl-lab/fstab
+  setfacl -m u:maryam:--- /acl-lab/fstab
+  setfacl -m m::rw- /acl-lab/fstab
+  setfacl -m o::r-- /acl-lab/fstab
+
+  #Verify
+  getfacl /acl-lab/fstab
+```
+
+---
+
+## Question 77: Configure an ACL for a Specific User
+
+Create the file `/project/report.txt`.
+
+Configure the following permissions:
+
+* The owner must have read and write access.
+* The group must have read-only access.
+* User `jacob` must have read and write access through an ACL.
+* Other users must have no access.
+
+```bash
+  #Create user if necessary
+  useradd jacob
+
+  #Create directory and file
+  mkdir -p /project
+  touch /project/report.txt
+
+  #Configure standard permissions
+  chmod 640 /project/report.txt
+
+  #Give jacob read and write access
+  setfacl -m u:jacob:rw- /project/report.txt
+  setfacl -m m::rw- /project/report.txt
+
+  #Verify
+  getfacl /project/report.txt
+```
+
+---
+
+## Question 78: Configure a Default ACL
+
+Create the directory `/projects`.
+
+Configure a default ACL so that user `adam` automatically receives read and write access to newly created files and directories inside `/projects`.
+
+```bash
+  #Create user if necessary
+  useradd adam
+
+  #Create directory
+  mkdir -p /projects
+
+  #Allow adam to access the existing directory
+  setfacl -m u:adam:rwx /projects
+
+  #Configure default ACL
+  setfacl -m d:u:adam:rwx /projects
+
+  #Verify default ACL
+  getfacl /projects
+
+  #Test inheritance
+  touch /projects/test-file
+  mkdir /projects/test-directory
+
+  getfacl /projects/test-file
+  getfacl /projects/test-directory
+```
+
+---
+
+## Question 79: Configure Default Group ACL Permissions
+
+Create the directory `/shared-reports`.
+
+Configure the following default ACL permissions:
+
+* Members of group `finance` must receive read and write access.
+* Other users must receive no access.
+
+The permissions must apply automatically to new files and directories created inside `/shared-reports`.
+
+```bash
+  #Create group if necessary
+  groupadd finance
+
+  #Create directory
+  mkdir -p /shared-reports
+
+  #Configure group ownership and SGID
+  chown root:finance /shared-reports
+  chmod 2770 /shared-reports
+
+  #Configure access ACL on the existing directory
+  setfacl -m g:finance:rwx /shared-reports
+  setfacl -m o::--- /shared-reports
+
+  #Configure default ACL
+  setfacl -m d:g:finance:rwx /shared-reports
+  setfacl -m d:o::--- /shared-reports
+
+  #Verify
+  getfacl /shared-reports
+```
+
+---
+
+## Question 80: Back Up ACL Configuration
+
+Create a backup of the ACL configuration for `/projects`.
+
+Save the ACL backup to `/root/projects.acl`.
+
+```bash
+  #Back up ACL configuration recursively
+  getfacl -R /projects > /root/projects.acl
+
+  #Verify
+  cat /root/projects.acl
+```
+
+To restore the ACL backup:
+
+```bash
+  setfacl --restore=/root/projects.acl
+```
+
+---
+
+## Question 81: Configure a User Cron Job
+
+Configure a cron job for user `student`.
+
+The job must execute the following command every day at 01:30:
+
+```bash
+logger "daily backup"
+```
+
+```bash
+  #Create user if necessary
+  useradd student
+
+  #Edit student's crontab
+  crontab -u student -e
+
+  #Add this entry
+  30 1 * * * /usr/bin/logger "daily backup"
+
+  #Verify
+  crontab -u student -l
+```
+
+---
+
+## Question 82: Configure a Root Cron Job
+
+Configure a cron job for root.
+
+The job must execute the following command every Sunday at 02:00:
+
+```bash
+touch /root/cron-success
+```
+
+```bash
+  #Edit root's crontab
+  crontab -e
+
+  #Add this entry
+  0 2 * * 0 /usr/bin/touch /root/cron-success
+
+  #Verify
+  crontab -l
+```
+
+---
+
+## Question 83: Configure a Cron Job Every Five Minutes
+
+Configure a cron job that runs every five minutes.
+
+The job must append the current date to `/var/log/cron-test.log`.
+
+```bash
+  #Edit root's crontab
+  crontab -e
+
+  #Add this entry
+  */5 * * * * /usr/bin/date >> /var/log/cron-test.log
+
+  #Verify
+  crontab -l
+
+  #Ensure crond is enabled and running
+  systemctl enable --now crond
+  systemctl status crond
+```
+
+---
+
+## Question 84: Configure Cron Access Control
+
+Configure cron access so that:
+
+* User `maryam` is allowed to create cron jobs.
+* User `jacob` is denied access to cron.
+
+```bash
+  #Create users if necessary
+  useradd maryam
+  useradd jacob
+
+  #When cron.allow exists, only listed users may use cron
+  printf 'root\nmaryam\n' > /etc/cron.allow
+
+  #Explicitly record jacob as denied
+  echo 'jacob' > /etc/cron.deny
+
+  #Secure the files
+  chmod 600 /etc/cron.allow /etc/cron.deny
+  chown root:root /etc/cron.allow /etc/cron.deny
+
+  #Verify
+  cat /etc/cron.allow
+  cat /etc/cron.deny
+```
+
+---
+
+## Question 85: Create a Daily Systemd Timer
+
+Create a systemd service named `hello.service`.
+
+The service must execute:
+
+```bash
+/usr/bin/logger "hello folks"
+```
+
+Create a timer named `hello.timer` that runs the service every day at 03:00.
+
+```bash
+  #Create service unit
+  vim /etc/systemd/system/hello.service
+
+  [Unit]
+  Description=Write hello folks to the journal
+
+  [Service]
+  Type=oneshot
+  ExecStart=/usr/bin/logger "hello folks"
+```
+
+```bash
+  #Create timer unit
+  vim /etc/systemd/system/hello.timer
+
+  [Unit]
+  Description=Run hello.service every day at 03:00
+
+  [Timer]
+  OnCalendar=*-*-* 03:00:00
+  Persistent=true
+  Unit=hello.service
+
+  [Install]
+  WantedBy=timers.target
+```
+
+```bash
+  #Reload systemd and enable timer
+  systemctl daemon-reload
+  systemctl enable --now hello.timer
+
+  #Verify
+  systemctl status hello.timer
+  systemctl list-timers hello.timer
+```
+
+---
+
+## Question 86: Create a Systemd Timer That Runs Every Ten Minutes
+
+Create a service named `timer-test.service`.
+
+The service must append the current date and time to `/var/log/timer-test.log`.
+
+Create a timer named `timer-test.timer` that executes the service every ten minutes.
+
+```bash
+  #Create service unit
+  vim /etc/systemd/system/timer-test.service
+
+  [Unit]
+  Description=Write the current date to a log file
+
+  [Service]
+  Type=oneshot
+  ExecStart=/usr/bin/bash -c '/usr/bin/date >> /var/log/timer-test.log'
+```
+
+```bash
+  #Create timer unit
+  vim /etc/systemd/system/timer-test.timer
+
+  [Unit]
+  Description=Run timer-test.service every ten minutes
+
+  [Timer]
+  OnBootSec=10min
+  OnUnitActiveSec=10min
+  Unit=timer-test.service
+
+  [Install]
+  WantedBy=timers.target
+```
+
+```bash
+  #Reload and enable timer
+  systemctl daemon-reload
+  systemctl enable --now timer-test.timer
+
+  #Verify
+  systemctl list-timers timer-test.timer
+  systemctl status timer-test.timer
+```
+
+---
+
+## Question 87: Create a User Systemd Timer
+
+Create a user service and timer for user `chisha`.
+
+The timer must run from Monday through Friday at 02:00 and execute:
+
+```bash
+/usr/bin/logger "user timer"
+```
+
+```bash
+  #Enable user services while chisha is logged out
+  loginctl enable-linger chisha
+
+  #Switch to chisha
+  su - chisha
+
+  #Create user systemd directory
+  mkdir -p ~/.config/systemd/user
+```
+
+```bash
+  #Create user service
+  vim ~/.config/systemd/user/hello-user.service
+
+  [Unit]
+  Description=Write a user timer message to the journal
+
+  [Service]
+  Type=oneshot
+  ExecStart=/usr/bin/logger "user timer"
+```
+
+```bash
+  #Create user timer
+  vim ~/.config/systemd/user/hello-user.timer
+
+  [Unit]
+  Description=Run hello-user.service from Monday through Friday
+
+  [Timer]
+  OnCalendar=Mon..Fri *-*-* 02:00:00
+  Persistent=true
+  Unit=hello-user.service
+
+  [Install]
+  WantedBy=timers.target
+```
+
+```bash
+  #Reload user systemd and enable timer
+  systemctl --user daemon-reload
+  systemctl --user enable --now hello-user.timer
+
+  #Verify
+  systemctl --user status hello-user.timer
+  systemctl --user list-timers hello-user.timer
+```
+
+---
+
+## Question 88: Query an Installed RPM Package
+
+Determine whether the `httpd` package is installed.
+
+Save its package name, version, and release to `/root/httpd-version.txt`.
+
+```bash
+  #Check whether httpd is installed
+  rpm -q httpd
+
+  #Save package information
+  rpm -q --qf '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' httpd \
+    > /root/httpd-version.txt
+
+  #Verify
+  cat /root/httpd-version.txt
+```
+
+---
+
+## Question 89: Determine Which RPM Owns a File
+
+Use the RPM database to determine which installed package provides `/usr/bin/ssh`.
+
+Save the package name to `/root/ssh-package.txt`.
+
+```bash
+  #Query the package that owns the file
+  rpm -qf /usr/bin/ssh > /root/ssh-package.txt
+
+  #Verify
+  cat /root/ssh-package.txt
+```
+
+---
+
+## Question 90: Install a Local RPM Package
+
+Install the local RPM package located at `/root/packages/demo-package.rpm`.
+
+Verify that the package is installed.
+
+```bash
+  #Inspect the RPM package
+  rpm -qpi /root/packages/demo-package.rpm
+
+  #Get the package name
+  PACKAGE_NAME=$(rpm -qp --qf '%{NAME}' /root/packages/demo-package.rpm)
+
+  #Install the package and resolve dependencies
+  dnf install -y /root/packages/demo-package.rpm
+
+  #Verify installation
+  rpm -q "$PACKAGE_NAME"
+```
+
+---
+
+## Question 91: Configure a User Flatpak Repository
+
+Install Flatpak on the system.
+
+Configure the Flathub repository for user `chisha` only.
+
+The repository must be named `userrepo`.
+
+```bash
+  #Install Flatpak system-wide
+  dnf install -y flatpak
+
+  #Add Flathub for chisha only
+  runuser -u chisha -- flatpak remote-add \
+    --user \
+    --if-not-exists \
+    userrepo \
+    https://dl.flathub.org/repo/flathub.flatpakrepo
+
+  #Verify user repository
+  runuser -u chisha -- flatpak remotes --user
+```
+
+---
+
+## Question 92: Install a User Flatpak Application
+
+Install `org.gimp.GIMP` for user `chisha` only.
+
+```bash
+  #Install GIMP from the user repository
+  runuser -u chisha -- flatpak install \
+    --user \
+    -y \
+    userrepo \
+    org.gimp.GIMP
+
+  #Verify
+  runuser -u chisha -- flatpak list --user
+  runuser -u chisha -- flatpak info --user org.gimp.GIMP
+```
+
+---
+
+## Question 93: Add a User to Supplementary Groups
+
+Create a user named `developer`.
+
+Create the groups `devops` and `qa`.
+
+Add `developer` to both groups without removing existing supplementary group memberships.
+
+```bash
+  #Create groups
+  groupadd devops
+  groupadd qa
+
+  #Create user
+  useradd developer
+
+  #Append supplementary groups
+  usermod -aG devops,qa developer
+
+  #Verify
+  id developer
+  groups developer
+```
+
+---
+
+## Question 94: Rename a Group
+
+Rename the group `developers` to `engineering`.
+
+Preserve the existing GID and memberships.
+
+```bash
+  #Create the original group if necessary
+  groupadd developers
+
+  #Check the original GID
+  getent group developers
+
+  #Rename the group
+  groupmod -n engineering developers
+
+  #Verify
+  getent group engineering
+```
+
+---
+
+## Question 95: Modify a User Account
+
+Modify user `developer` so that:
+
+* The UID is `4500`.
+* The login shell is `/bin/bash`.
+* The home directory is `/home/developer-new`.
+* Existing home directory contents are moved to the new location.
+
+```bash
+  #Modify UID, shell and home directory
+  usermod \
+    -u 4500 \
+    -s /bin/bash \
+    -d /home/developer-new \
+    -m \
+    developer
+
+  #Verify
+  id developer
+  getent passwd developer
+  ls -ld /home/developer-new
+```
+
+---
+
+## Question 96: Find Files Owned by a User
+
+Locate all regular files under `/var` owned by user `developer`.
+
+Copy the matching files to `/root/developer-files`.
+
+Preserve their original filenames and directory structure.
+
+```bash
+  #Create destination directory
+  mkdir -p /root/developer-files
+
+  #Find and copy files while preserving their paths
+  find /var -type f -user developer \
+    -exec cp --parents {} /root/developer-files \;
+
+  #Verify
+  find /root/developer-files -type f
+```
+
+---
+
+## Question 97: Locate Directories with SGID Permission
+
+Locate all directories on the system that have the SGID permission enabled.
+
+Save their absolute paths to `/root/sgid-directories.txt`.
+
+```bash
+  #Find directories with SGID enabled
+  find / -type d -perm -2000 2>/dev/null \
+    > /root/sgid-directories.txt
+
+  #Verify
+  cat /root/sgid-directories.txt
+```
+
+---
+
+## Question 98: Locate Files with SUID or SGID Permissions
+
+Locate all regular files on the system that have either the SUID or SGID permission enabled.
+
+Save their absolute paths to `/root/special-permissions.txt`.
+
+```bash
+  #Find files with SUID or SGID enabled
+  find / -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null \
+    > /root/special-permissions.txt
+
+  #Alternative using either special permission bit
+  find / -type f -perm /6000 2>/dev/null \
+    > /root/special-permissions.txt
+
+  #Verify
+  cat /root/special-permissions.txt
+```
+
+---
+
+## Question 99: Reduce an ext4 Logical Volume
+
+An ext4 logical volume exists at `/dev/data_vg/data_lv`.
+
+Reduce the filesystem and logical volume from 500 MB to 300 MB.
+
+Ensure the filesystem remains usable.
+
+```bash
+  #Verify the filesystem type and current size
+  lsblk -f /dev/data_vg/data_lv
+  lvs /dev/data_vg/data_lv
+
+  #Identify the mount point
+  findmnt /dev/data_vg/data_lv
+
+  #Save the mount point
+  MOUNTPOINT=$(findmnt -n -o TARGET /dev/data_vg/data_lv)
+
+  #Unmount the filesystem
+  umount "$MOUNTPOINT"
+
+  #Check the ext4 filesystem
+  e2fsck -f /dev/data_vg/data_lv
+
+  #Reduce the filesystem first
+  resize2fs /dev/data_vg/data_lv 300M
+
+  #Reduce the logical volume
+  lvreduce -L 300M /dev/data_vg/data_lv
+
+  #Check the filesystem again
+  e2fsck -f /dev/data_vg/data_lv
+
+  #Mount it again using /etc/fstab
+  mount "$MOUNTPOINT"
+
+  #Verify
+  lvs /dev/data_vg/data_lv
+  df -h "$MOUNTPOINT"
+```
+
+---
+
+## Question 100: Safely Determine Whether a Logical Volume Can Be Reduced
+
+A logical volume exists at `/dev/archive_vg/archive_lv`.
+
+Determine the filesystem type.
+
+If the filesystem supports reduction, reduce the logical volume to 400 MB while preserving the data.
+
+If the filesystem does not support reduction, do not perform a destructive operation.
+
+```bash
+  #Determine the filesystem type
+  lsblk -f /dev/archive_vg/archive_lv
+  blkid /dev/archive_vg/archive_lv
+
+  #Save filesystem type
+  FSTYPE=$(lsblk -n -o FSTYPE /dev/archive_vg/archive_lv)
+
+  echo "$FSTYPE"
+```
+
+For an ext4 filesystem:
+
+```bash
+  #Identify and save mount point
+  MOUNTPOINT=$(findmnt -n -o TARGET /dev/archive_vg/archive_lv)
+
+  #Unmount filesystem
+  umount "$MOUNTPOINT"
+
+  #Check filesystem
+  e2fsck -f /dev/archive_vg/archive_lv
+
+  #Reduce filesystem first
+  resize2fs /dev/archive_vg/archive_lv 400M
+
+  #Reduce logical volume
+  lvreduce -L 400M /dev/archive_vg/archive_lv
+
+  #Mount filesystem again
+  mount "$MOUNTPOINT"
+
+  #Verify
+  lvs /dev/archive_vg/archive_lv
+  df -h "$MOUNTPOINT"
+```
+
+For an XFS filesystem:
+
+```bash
+  #XFS filesystems cannot be reduced
+  echo "XFS does not support shrinking. No reduction performed."
+
+  #Verify that no destructive operation was performed
+  lvs /dev/archive_vg/archive_lv
+```
+
+---
+
+## Question 101: Allow SSH from a Specific Network
+
+Configure a permanent firewall rich rule that permits SSH access only from `192.168.100.0/24`.
+
+Apply the configuration immediately.
+
+```bash
+  #Remove the globally allowed SSH service
+  firewall-cmd --permanent --remove-service=ssh
+
+  #Add source-specific SSH rich rule
+  firewall-cmd --permanent \
+    --add-rich-rule='rule family="ipv4" source address="192.168.100.0/24" service name="ssh" accept'
+
+  #Apply configuration
+  firewall-cmd --reload
+
+  #Verify
+  firewall-cmd --list-services
+  firewall-cmd --list-rich-rules
+```
+
+---
+
+## Question 102: Reject HTTP from a Specific Host
+
+Configure a permanent firewall rich rule that rejects HTTP access from `192.168.100.50`.
+
+Apply the configuration immediately.
+
+```bash
+  #Add rich rule
+  firewall-cmd --permanent \
+    --add-rich-rule='rule family="ipv4" source address="192.168.100.50" service name="http" reject'
+
+  #Apply configuration
+  firewall-cmd --reload
+
+  #Verify
+  firewall-cmd --list-rich-rules
+```
+
+---
+
+## Question 103: Allow HTTPS from a Specific Network
+
+Configure a permanent firewall rich rule that permits HTTPS access from `192.168.100.0/24`.
+
+Apply the configuration immediately.
+
+```bash
+  #Add rich rule
+  firewall-cmd --permanent \
+    --add-rich-rule='rule family="ipv4" source address="192.168.100.0/24" service name="https" accept'
+
+  #Apply configuration
+  firewall-cmd --reload
+
+  #Verify
+  firewall-cmd --list-rich-rules
+```
+
+---
+
+## Question 104: Log and Drop SSH Attempts
+
+Configure a permanent firewall rich rule that logs and drops all SSH connection attempts from `10.10.10.0/24`.
+
+Use the log prefix `blocked-ssh`.
+
+Apply the configuration immediately.
+
+```bash
+  #Add rich rule with logging and rate limiting
+  firewall-cmd --permanent \
+    --add-rich-rule='rule family="ipv4" source address="10.10.10.0/24" service name="ssh" log prefix="blocked-ssh" limit value="5/m" drop'
+
+  #Apply configuration
+  firewall-cmd --reload
+
+  #Verify
+  firewall-cmd --list-rich-rules
+
+  #Check logged messages
+  journalctl -k | grep blocked-ssh
+```
+
+---
+
+## Question 105: Allow Port 8080 from a Specific Network
+
+Configure a permanent firewall rich rule that allows TCP traffic to port `8080` only from `172.16.50.0/24`.
+
+Apply the configuration immediately.
+
+```bash
+  #Remove port 8080 if it is globally allowed
+  firewall-cmd --permanent --remove-port=8080/tcp
+
+  #Add source-specific rich rule
+  firewall-cmd --permanent \
+    --add-rich-rule='rule family="ipv4" source address="172.16.50.0/24" port port="8080" protocol="tcp" accept'
+
+  #Apply configuration
+  firewall-cmd --reload
+
+  #Verify
+  firewall-cmd --list-ports
+  firewall-cmd --list-rich-rules
+```
+
+---

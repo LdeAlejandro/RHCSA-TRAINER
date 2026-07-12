@@ -2137,7 +2137,479 @@ check_Q70() {
   echo "✅ Q70 PASSED."; return 0
 }
 
-TASKS=(Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q32 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q46 Q47 Q48 Q49 Q50 Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60 Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70)
+# ===== Exercise Q71 =====
+Q71_DESC="Create a file named /secure/passwd-tool. Configure it as root:root with permissions 4755 so that the SUID permission is enabled."
+
+check_Q71() {
+  local file="/secure/passwd-tool"
+
+  if [[ ! -f "$file" ]]; then
+    echo "❌ Q71 failed: $file does not exist."
+    return 1
+  fi
+
+  local owner group mode
+  owner="$(stat -c '%U' "$file" 2>/dev/null || true)"
+  group="$(stat -c '%G' "$file" 2>/dev/null || true)"
+  mode="$(stat -c '%a' "$file" 2>/dev/null || true)"
+
+  if [[ "$owner" != "root" ]]; then
+    echo "❌ Q71 failed: owner is '$owner' (expected root)."
+    return 1
+  fi
+
+  if [[ "$group" != "root" ]]; then
+    echo "❌ Q71 failed: group is '$group' (expected root)."
+    return 1
+  fi
+
+  if [[ "$mode" != "4755" ]]; then
+    echo "❌ Q71 failed: permissions are '$mode' (expected 4755)."
+    return 1
+  fi
+
+  echo "✅ Q71 PASSED: SUID file configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q72 =====
+Q72_DESC="Create /shared-devs with group ownership devs and permissions 2770 so that new files inherit the directory group."
+
+check_Q72() {
+  local dir="/shared-devs"
+
+  if [[ ! -d "$dir" ]]; then
+    echo "❌ Q72 failed: $dir does not exist."
+    return 1
+  fi
+
+  if ! getent group devs >/dev/null; then
+    echo "❌ Q72 failed: group devs does not exist."
+    return 1
+  fi
+
+  local owner group mode
+  owner="$(stat -c '%U' "$dir" 2>/dev/null || true)"
+  group="$(stat -c '%G' "$dir" 2>/dev/null || true)"
+  mode="$(stat -c '%a' "$dir" 2>/dev/null || true)"
+
+  if [[ "$owner" != "root" ]]; then
+    echo "❌ Q72 failed: owner is '$owner' (expected root)."
+    return 1
+  fi
+
+  if [[ "$group" != "devs" ]]; then
+    echo "❌ Q72 failed: group is '$group' (expected devs)."
+    return 1
+  fi
+
+  if [[ "$mode" != "2770" ]]; then
+    echo "❌ Q72 failed: permissions are '$mode' (expected 2770)."
+    return 1
+  fi
+
+  echo "✅ Q72 PASSED: SGID shared directory configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q73 =====
+Q73_DESC="Create /public-share with permissions 1777 so that all users can create files but cannot delete files owned by other users."
+
+check_Q73() {
+  local dir="/public-share"
+
+  if [[ ! -d "$dir" ]]; then
+    echo "❌ Q73 failed: $dir does not exist."
+    return 1
+  fi
+
+  local mode
+  mode="$(stat -c '%a' "$dir" 2>/dev/null || true)"
+
+  if [[ "$mode" != "1777" ]]; then
+    echo "❌ Q73 failed: permissions are '$mode' (expected 1777)."
+    return 1
+  fi
+
+  echo "✅ Q73 PASSED: sticky bit directory configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q74 =====
+Q74_DESC="Locate all regular files with the SUID permission enabled and save their absolute paths to /root/suid-files.txt."
+
+check_Q74() {
+  local output="/root/suid-files.txt"
+  local sentinel="/var/tmp/rhcsa-special-perms/suid-test"
+
+  if [[ ! -f "$output" ]]; then
+    echo "❌ Q74 failed: $output does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$output" ]]; then
+    echo "❌ Q74 failed: $output is empty."
+    return 1
+  fi
+
+  if ! grep -Fxq "$sentinel" "$output"; then
+    echo "❌ Q74 failed: known SUID test file is missing from the results."
+    echo "    Missing: $sentinel"
+    return 1
+  fi
+
+  local path
+  local bad=0
+
+  while IFS= read -r path || [[ -n "$path" ]]; do
+    [[ -z "$path" ]] && continue
+
+    if [[ "$path" != /* ]]; then
+      echo "❌ Q74 failed: path is not absolute: $path"
+      bad=1
+      continue
+    fi
+
+    if [[ ! -f "$path" ]]; then
+      echo "❌ Q74 failed: listed path is not a regular file: $path"
+      bad=1
+      continue
+    fi
+
+    if ! find "$path" -maxdepth 0 -type f -perm -4000 -print -quit \
+      2>/dev/null | grep -q .; then
+      echo "❌ Q74 failed: listed file does not have SUID enabled: $path"
+      bad=1
+    fi
+  done < "$output"
+
+  if [[ "$bad" -ne 0 ]]; then
+    return 1
+  fi
+
+  echo "✅ Q74 PASSED: SUID file list is valid."
+  return 0
+}
+
+
+# ===== Exercise Q75 =====
+Q75_DESC="Locate all regular files with the SGID permission enabled and save their absolute paths to /root/sgid-files.txt."
+
+check_Q75() {
+  local output="/root/sgid-files.txt"
+  local sentinel="/var/tmp/rhcsa-special-perms/sgid-test"
+
+  if [[ ! -f "$output" ]]; then
+    echo "❌ Q75 failed: $output does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$output" ]]; then
+    echo "❌ Q75 failed: $output is empty."
+    return 1
+  fi
+
+  if ! grep -Fxq "$sentinel" "$output"; then
+    echo "❌ Q75 failed: known SGID test file is missing from the results."
+    echo "    Missing: $sentinel"
+    return 1
+  fi
+
+  local path
+  local bad=0
+
+  while IFS= read -r path || [[ -n "$path" ]]; do
+    [[ -z "$path" ]] && continue
+
+    if [[ "$path" != /* ]]; then
+      echo "❌ Q75 failed: path is not absolute: $path"
+      bad=1
+      continue
+    fi
+
+    if [[ ! -f "$path" ]]; then
+      echo "❌ Q75 failed: listed path is not a regular file: $path"
+      bad=1
+      continue
+    fi
+
+    if ! find "$path" -maxdepth 0 -type f -perm -2000 -print -quit \
+      2>/dev/null | grep -q .; then
+      echo "❌ Q75 failed: listed file does not have SGID enabled: $path"
+      bad=1
+    fi
+  done < "$output"
+
+  if [[ "$bad" -ne 0 ]]; then
+    return 1
+  fi
+
+  echo "✅ Q75 PASSED: SGID file list is valid."
+  return 0
+}
+
+
+# ===== Exercise Q76 =====
+Q76_DESC="Copy /etc/fstab to /acl-lab/fstab and configure ACL permissions for users adam and maryam."
+
+check_Q76() {
+  local file="/acl-lab/fstab"
+
+  if [[ ! -f "$file" ]]; then
+    echo "❌ Q76 failed: $file does not exist."
+    return 1
+  fi
+
+  if ! command -v getfacl >/dev/null 2>&1; then
+    echo "❌ Q76 failed: getfacl command is not installed."
+    return 1
+  fi
+
+  local acl
+  acl="$(getfacl -cp "$file" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'user::rw-' <<< "$acl"; then
+    echo "❌ Q76 failed: owner permissions must be rw-."
+    return 1
+  fi
+
+  if ! grep -Fxq 'user:adam:rw-' <<< "$acl"; then
+    echo "❌ Q76 failed: ACL for adam must be rw-."
+    return 1
+  fi
+
+  if ! grep -Fxq 'user:maryam:---' <<< "$acl"; then
+    echo "❌ Q76 failed: ACL for maryam must be ---."
+    return 1
+  fi
+
+  if ! grep -Fxq 'group::r--' <<< "$acl"; then
+    echo "❌ Q76 failed: owning group permissions must be r--."
+    return 1
+  fi
+
+  if ! grep -Fxq 'mask::rw-' <<< "$acl"; then
+    echo "❌ Q76 failed: ACL mask must allow rw-."
+    return 1
+  fi
+
+  if ! grep -Fxq 'other::r--' <<< "$acl"; then
+    echo "❌ Q76 failed: other permissions must be r--."
+    return 1
+  fi
+
+  if (( $(stat -c '%a' "$file") & 111 )); then
+    echo "❌ Q76 failed: file must not be executable."
+    return 1
+  fi
+
+  echo "✅ Q76 PASSED: ACL permissions configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q77 =====
+Q77_DESC="Create /project/report.txt and grant user jacob read and write access through an ACL."
+
+check_Q77() {
+  local file="/project/report.txt"
+
+  if [[ ! -f "$file" ]]; then
+    echo "❌ Q77 failed: $file does not exist."
+    return 1
+  fi
+
+  local acl
+  acl="$(getfacl -cp "$file" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'user::rw-' <<< "$acl"; then
+    echo "❌ Q77 failed: owner permissions must be rw-."
+    return 1
+  fi
+
+  if ! grep -Fxq 'user:jacob:rw-' <<< "$acl"; then
+    echo "❌ Q77 failed: ACL for jacob must be rw-."
+    return 1
+  fi
+
+  if ! grep -Fxq 'group::r--' <<< "$acl"; then
+    echo "❌ Q77 failed: owning group permissions must be r--."
+    return 1
+  fi
+
+  if ! grep -Fxq 'mask::rw-' <<< "$acl"; then
+    echo "❌ Q77 failed: ACL mask must allow rw-."
+    return 1
+  fi
+
+  if ! grep -Fxq 'other::---' <<< "$acl"; then
+    echo "❌ Q77 failed: other users must have no access."
+    return 1
+  fi
+
+  echo "✅ Q77 PASSED: ACL for jacob configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q78 =====
+Q78_DESC="Create /projects and configure a default ACL so that user adam receives read and write access to new files and directories."
+
+check_Q78() {
+  local dir="/projects"
+
+  if [[ ! -d "$dir" ]]; then
+    echo "❌ Q78 failed: $dir does not exist."
+    return 1
+  fi
+
+  local acl
+  acl="$(getfacl -cp "$dir" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'default:user:adam:rwx' <<< "$acl"; then
+    echo "❌ Q78 failed: default ACL for adam must be rwx."
+    return 1
+  fi
+
+  local default_mask
+  default_mask="$(awk -F: '$1=="default" && $2=="mask" {print $4}' <<< "$acl")"
+
+  if [[ "$default_mask" != "rwx" ]]; then
+    echo "❌ Q78 failed: default ACL mask must be rwx."
+    return 1
+  fi
+
+  local testfile
+  testfile="$(mktemp "$dir/.q78-test.XXXXXX")" || {
+    echo "❌ Q78 failed: could not create a test file in $dir."
+    return 1
+  }
+
+  local inherited_acl
+  inherited_acl="$(getfacl -cp "$testfile" 2>/dev/null || true)"
+  rm -f "$testfile"
+
+  if ! grep -Fxq 'user:adam:rw-' <<< "$inherited_acl"; then
+    echo "❌ Q78 failed: new files do not inherit adam ACL permissions."
+    return 1
+  fi
+
+  echo "✅ Q78 PASSED: default ACL inheritance configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q79 =====
+Q79_DESC="Create /shared-reports and configure default ACL permissions for group finance while denying access to other users."
+
+check_Q79() {
+  local dir="/shared-reports"
+
+  if [[ ! -d "$dir" ]]; then
+    echo "❌ Q79 failed: $dir does not exist."
+    return 1
+  fi
+
+  if ! getent group finance >/dev/null; then
+    echo "❌ Q79 failed: group finance does not exist."
+    return 1
+  fi
+
+  local acl
+  acl="$(getfacl -cp "$dir" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'default:group:finance:rwx' <<< "$acl"; then
+    echo "❌ Q79 failed: default ACL for group finance must be rwx."
+    return 1
+  fi
+
+  if ! grep -Fxq 'default:other::---' <<< "$acl"; then
+    echo "❌ Q79 failed: default ACL for other users must be ---."
+    return 1
+  fi
+
+  local default_mask
+  default_mask="$(awk -F: '$1=="default" && $2=="mask" {print $4}' <<< "$acl")"
+
+  if [[ "$default_mask" != "rwx" ]]; then
+    echo "❌ Q79 failed: default ACL mask must be rwx."
+    return 1
+  fi
+
+  local testfile
+  testfile="$(mktemp "$dir/.q79-test.XXXXXX")" || {
+    echo "❌ Q79 failed: could not create a test file in $dir."
+    return 1
+  }
+
+  local inherited_acl
+  inherited_acl="$(getfacl -cp "$testfile" 2>/dev/null || true)"
+  rm -f "$testfile"
+
+  if ! grep -Fxq 'group:finance:rw-' <<< "$inherited_acl"; then
+    echo "❌ Q79 failed: new files do not inherit finance ACL permissions."
+    return 1
+  fi
+
+  if ! grep -Fxq 'other::---' <<< "$inherited_acl"; then
+    echo "❌ Q79 failed: new files grant access to other users."
+    return 1
+  fi
+
+  echo "✅ Q79 PASSED: default group ACL configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q80 =====
+Q80_DESC="Back up the ACL configuration of /projects to /root/projects.acl."
+
+check_Q80() {
+  local source="/projects"
+  local backup="/root/projects.acl"
+
+  if [[ ! -d "$source" ]]; then
+    echo "❌ Q80 failed: source directory $source does not exist."
+    return 1
+  fi
+
+  if [[ ! -f "$backup" ]]; then
+    echo "❌ Q80 failed: $backup does not exist."
+    return 1
+  fi
+
+  if [[ ! -s "$backup" ]]; then
+    echo "❌ Q80 failed: $backup is empty."
+    return 1
+  fi
+
+  if ! grep -Eq '^# file: /?projects$' "$backup"; then
+    echo "❌ Q80 failed: backup does not contain an ACL record for /projects."
+    return 1
+  fi
+
+  if ! grep -Fxq 'default:user:adam:rwx' "$backup"; then
+    echo "❌ Q80 failed: backup does not contain the default ACL for adam."
+    return 1
+  fi
+
+  echo "✅ Q80 PASSED: ACL backup created correctly."
+  return 0
+}
+
+TASKS=(
+  Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10
+  Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20
+  Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30
+  Q31 Q32 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40
+  Q41 Q42 Q43 Q44 Q45 Q46 Q47 Q48 Q49 Q50
+  Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60
+  Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70
+  Q71 Q72 Q73 Q74 Q75 Q76 Q77 Q78 Q79 Q80
+)
 declare -A STATUS
 
 evaluate_all() {
@@ -2473,6 +2945,61 @@ sudo systemctl disable --now firewalld 2>/dev/null || true
 
   #Clean Q69-Q70 scripts
   sudo rm -f /root/check-user.sh /root/check-files.sh /tmp/Q70_exists_a /tmp/Q70_exists_b /tmp/Q70_missing_c 2>/dev/null || true
+
+    # =========================================================
+  # Reset Q71-Q80: special permissions, find and ACL exercises
+  # =========================================================
+
+  echo ">> Resetting Q71-Q80 permissions and ACL labs..."
+
+  # Q71: SUID file
+  sudo rm -rf /secure 2>/dev/null || true
+
+  # Q72: SGID shared directory
+  sudo rm -rf /shared-devs 2>/dev/null || true
+
+  # Q73: sticky bit directory
+  sudo rm -rf /public-share 2>/dev/null || true
+
+  # Q74-Q75: generated answer files
+  sudo rm -f \
+    /root/suid-files.txt \
+    /root/sgid-files.txt \
+    2>/dev/null || true
+
+  # Recreate deterministic SUID and SGID test files.
+  # These ensure that Q74 and Q75 always have known results.
+  sudo rm -rf /var/tmp/rhcsa-special-perms 2>/dev/null || true
+  sudo mkdir -p /var/tmp/rhcsa-special-perms
+
+  sudo install \
+    -o root \
+    -g root \
+    -m 4755 \
+    /dev/null \
+    /var/tmp/rhcsa-special-perms/suid-test
+
+  sudo install \
+    -o root \
+    -g root \
+    -m 2755 \
+    /dev/null \
+    /var/tmp/rhcsa-special-perms/sgid-test
+
+  # Q76: ACL fstab copy
+  sudo rm -rf /acl-lab 2>/dev/null || true
+
+  # Q77: report ACL
+  sudo rm -rf /project 2>/dev/null || true
+
+  # Q78 and Q80: default ACL and ACL backup
+  sudo rm -rf /projects 2>/dev/null || true
+  sudo rm -f /root/projects.acl 2>/dev/null || true
+
+  # Q79: finance default ACL
+  sudo rm -rf /shared-reports 2>/dev/null || true
+
+  echo ">> Q71-Q80 reset completed."
 
   #Echo
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
