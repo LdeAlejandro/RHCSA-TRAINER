@@ -2600,6 +2600,387 @@ check_Q80() {
   return 0
 }
 
+# ===== Exercise Q81 =====
+Q81_DESC="Configure a cron job for user student that executes /usr/bin/logger \"daily backup\" every day at 01:30."
+
+check_Q81() {
+  local user="student"
+
+  if ! getent passwd "$user" >/dev/null; then
+    echo "❌ Q81 failed: user $user does not exist."
+    return 1
+  fi
+
+  if ! systemctl is-active --quiet crond; then
+    echo "❌ Q81 failed: crond is not running."
+    return 1
+  fi
+
+  local crontab
+  crontab="$(crontab -u "$user" -l 2>/dev/null || true)"
+
+  if [[ -z "$crontab" ]]; then
+    echo "❌ Q81 failed: no crontab found for user $user."
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '^[[:space:]]*30[[:space:]]+1[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*[[:space:]]+(/usr/bin/)?logger[[:space:]]+"?daily backup"?[[:space:]]*$' \
+    <<< "$crontab"; then
+    echo "❌ Q81 failed: expected daily cron job at 01:30 was not found."
+    return 1
+  fi
+
+  echo "✅ Q81 PASSED: student cron job configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q82 =====
+Q82_DESC="Configure a root cron job that executes /usr/bin/touch /root/cron-success every Sunday at 02:00."
+
+check_Q82() {
+  if ! systemctl is-active --quiet crond; then
+    echo "❌ Q82 failed: crond is not running."
+    return 1
+  fi
+
+  local crontab
+  crontab="$(crontab -u root -l 2>/dev/null || true)"
+
+  if [[ -z "$crontab" ]]; then
+    echo "❌ Q82 failed: no root crontab was found."
+    return 1
+  fi
+
+  # Accept Sunday as 0 or 7.
+  if ! grep -Eq \
+    '^[[:space:]]*0[[:space:]]+2[[:space:]]+\*[[:space:]]+\*[[:space:]]+(0|7)[[:space:]]+(/usr/bin/)?touch[[:space:]]+/root/cron-success[[:space:]]*$' \
+    <<< "$crontab"; then
+    echo "❌ Q82 failed: expected Sunday cron job at 02:00 was not found."
+    return 1
+  fi
+
+  echo "✅ Q82 PASSED: root cron job configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q83 =====
+Q83_DESC="Configure a cron job that appends the current date and time to /var/log/cron-test.log every five minutes."
+
+check_Q83() {
+  if ! systemctl is-active --quiet crond; then
+    echo "❌ Q83 failed: crond is not running."
+    return 1
+  fi
+
+  if ! systemctl is-enabled --quiet crond; then
+    echo "❌ Q83 failed: crond is not enabled at boot."
+    return 1
+  fi
+
+  local crontab
+  crontab="$(crontab -u root -l 2>/dev/null || true)"
+
+  if [[ -z "$crontab" ]]; then
+    echo "❌ Q83 failed: no root crontab was found."
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '^[[:space:]]*\*/5[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*[[:space:]]+(/usr/bin/)?date[[:space:]]*>>[[:space:]]*/var/log/cron-test\.log[[:space:]]*$' \
+    <<< "$crontab"; then
+    echo "❌ Q83 failed: expected job running every five minutes was not found."
+    return 1
+  fi
+
+  echo "✅ Q83 PASSED: five-minute cron job configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q84 =====
+Q84_DESC="Configure cron access so that user maryam is allowed to use cron and user jacob is denied access."
+
+check_Q84() {
+  if ! getent passwd maryam >/dev/null; then
+    echo "❌ Q84 failed: user maryam does not exist."
+    return 1
+  fi
+
+  if ! getent passwd jacob >/dev/null; then
+    echo "❌ Q84 failed: user jacob does not exist."
+    return 1
+  fi
+
+  if [[ ! -f /etc/cron.allow ]]; then
+    echo "❌ Q84 failed: /etc/cron.allow does not exist."
+    return 1
+  fi
+
+  if ! grep -Eq '^[[:space:]]*maryam[[:space:]]*$' /etc/cron.allow; then
+    echo "❌ Q84 failed: maryam is not listed in /etc/cron.allow."
+    return 1
+  fi
+
+  if grep -Eq '^[[:space:]]*jacob[[:space:]]*$' /etc/cron.allow; then
+    echo "❌ Q84 failed: jacob must not be listed in /etc/cron.allow."
+    return 1
+  fi
+
+  # cron.allow takes precedence when it exists.
+  # cron.deny is checked as an additional explicit requirement.
+  if [[ ! -f /etc/cron.deny ]]; then
+    echo "❌ Q84 failed: /etc/cron.deny does not exist."
+    return 1
+  fi
+
+  if ! grep -Eq '^[[:space:]]*jacob[[:space:]]*$' /etc/cron.deny; then
+    echo "❌ Q84 failed: jacob is not listed in /etc/cron.deny."
+    return 1
+  fi
+
+  local allow_owner allow_group allow_mode
+  allow_owner="$(stat -c '%U' /etc/cron.allow)"
+  allow_group="$(stat -c '%G' /etc/cron.allow)"
+  allow_mode="$(stat -c '%a' /etc/cron.allow)"
+
+  if [[ "$allow_owner" != "root" || "$allow_group" != "root" ]]; then
+    echo "❌ Q84 failed: /etc/cron.allow must be owned by root:root."
+    return 1
+  fi
+
+  if [[ "$allow_mode" != "600" ]]; then
+    echo "❌ Q84 failed: /etc/cron.allow permissions are $allow_mode; expected 600."
+    return 1
+  fi
+
+  echo "✅ Q84 PASSED: cron access control configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q85 =====
+Q85_DESC="Create hello.service and hello.timer. The service must log \"hello folks\" and the timer must run every day at 03:00."
+
+check_Q85() {
+  local service="/etc/systemd/system/hello.service"
+  local timer="/etc/systemd/system/hello.timer"
+
+  if [[ ! -f "$service" ]]; then
+    echo "❌ Q85 failed: $service does not exist."
+    return 1
+  fi
+
+  if [[ ! -f "$timer" ]]; then
+    echo "❌ Q85 failed: $timer does not exist."
+    return 1
+  fi
+
+  if ! systemd-analyze verify "$service" "$timer" >/dev/null 2>&1; then
+    echo "❌ Q85 failed: one or more unit files contain invalid syntax."
+    systemd-analyze verify "$service" "$timer" 2>&1 | head -10
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '^ExecStart=/usr/bin/logger[[:space:]]+"?hello folks"?[[:space:]]*$' \
+    "$service"; then
+    echo "❌ Q85 failed: hello.service has an incorrect ExecStart."
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '^OnCalendar=(\*-\*-\*[[:space:]]+)?03:00(:00)?$' \
+    "$timer"; then
+    echo "❌ Q85 failed: hello.timer is not scheduled daily at 03:00."
+    return 1
+  fi
+
+  if ! grep -Eq '^Persistent=(true|yes|1)$' "$timer"; then
+    echo "❌ Q85 failed: Persistent=true is not configured."
+    return 1
+  fi
+
+  if ! systemctl is-enabled --quiet hello.timer; then
+    echo "❌ Q85 failed: hello.timer is not enabled."
+    return 1
+  fi
+
+  if ! systemctl is-active --quiet hello.timer; then
+    echo "❌ Q85 failed: hello.timer is not active."
+    return 1
+  fi
+
+  echo "✅ Q85 PASSED: daily systemd timer configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q86 =====
+Q86_DESC="Create timer-test.service and timer-test.timer. The service must append the date to /var/log/timer-test.log and run every ten minutes."
+
+check_Q86() {
+  local service="/etc/systemd/system/timer-test.service"
+  local timer="/etc/systemd/system/timer-test.timer"
+
+  if [[ ! -f "$service" ]]; then
+    echo "❌ Q86 failed: $service does not exist."
+    return 1
+  fi
+
+  if [[ ! -f "$timer" ]]; then
+    echo "❌ Q86 failed: $timer does not exist."
+    return 1
+  fi
+
+  if ! systemd-analyze verify "$service" "$timer" >/dev/null 2>&1; then
+    echo "❌ Q86 failed: one or more unit files contain invalid syntax."
+    systemd-analyze verify "$service" "$timer" 2>&1 | head -10
+    return 1
+  fi
+
+  local execstart
+  execstart="$(systemctl show timer-test.service \
+    -p ExecStart --value 2>/dev/null || true)"
+
+  if [[ "$execstart" != *"/usr/bin/date"* ||
+        "$execstart" != *"/var/log/timer-test.log"* ]]; then
+    echo "❌ Q86 failed: timer-test.service does not append date output to the expected file."
+    return 1
+  fi
+
+  if ! grep -Eq '^OnUnitActiveSec=10min$' "$timer"; then
+    echo "❌ Q86 failed: OnUnitActiveSec=10min was not found."
+    return 1
+  fi
+
+  if ! systemctl is-enabled --quiet timer-test.timer; then
+    echo "❌ Q86 failed: timer-test.timer is not enabled."
+    return 1
+  fi
+
+  if ! systemctl is-active --quiet timer-test.timer; then
+    echo "❌ Q86 failed: timer-test.timer is not active."
+    return 1
+  fi
+
+  # Execute the service directly to validate its behavior.
+  local before after
+  before="$(stat -c '%Y' /var/log/timer-test.log 2>/dev/null || echo 0)"
+
+  if ! systemctl start timer-test.service >/dev/null 2>&1; then
+    echo "❌ Q86 failed: timer-test.service could not be started."
+    return 1
+  fi
+
+  after="$(stat -c '%Y' /var/log/timer-test.log 2>/dev/null || echo 0)"
+
+  if [[ ! -s /var/log/timer-test.log ]]; then
+    echo "❌ Q86 failed: /var/log/timer-test.log was not created or is empty."
+    return 1
+  fi
+
+  if (( after < before )); then
+    echo "❌ Q86 failed: the log file was not updated."
+    return 1
+  fi
+
+  echo "✅ Q86 PASSED: ten-minute systemd timer configured correctly."
+  return 0
+}
+
+
+# ===== Exercise Q87 =====
+Q87_DESC="Create hello-user.service and hello-user.timer for user chisha. Run the service Monday through Friday at 02:00 and enable linger."
+
+check_Q87() {
+  local user="chisha"
+  local home
+  local service
+  local timer
+  local wants
+
+  if ! getent passwd "$user" >/dev/null; then
+    echo "❌ Q87 failed: user $user does not exist."
+    return 1
+  fi
+
+  home="$(getent passwd "$user" | cut -d: -f6)"
+  service="$home/.config/systemd/user/hello-user.service"
+  timer="$home/.config/systemd/user/hello-user.timer"
+  wants="$home/.config/systemd/user/timers.target.wants/hello-user.timer"
+
+  if [[ ! -f "$service" ]]; then
+    echo "❌ Q87 failed: $service does not exist."
+    return 1
+  fi
+
+  if [[ ! -f "$timer" ]]; then
+    echo "❌ Q87 failed: $timer does not exist."
+    return 1
+  fi
+
+  if [[ "$(stat -c '%U' "$service")" != "$user" ||
+        "$(stat -c '%U' "$timer")" != "$user" ]]; then
+    echo "❌ Q87 failed: user unit files must be owned by chisha."
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '^ExecStart=/usr/bin/logger[[:space:]]+"?user timer"?[[:space:]]*$' \
+    "$service"; then
+    echo "❌ Q87 failed: hello-user.service has an incorrect ExecStart."
+    return 1
+  fi
+
+  if ! grep -Eq \
+    '^OnCalendar=Mon\.\.Fri[[:space:]]+\*-\*-\*[[:space:]]+02:00(:00)?$' \
+    "$timer"; then
+    echo "❌ Q87 failed: user timer schedule is incorrect."
+    return 1
+  fi
+
+  if ! grep -Eq '^Persistent=(true|yes|1)$' "$timer"; then
+    echo "❌ Q87 failed: Persistent=true is not configured."
+    return 1
+  fi
+
+  if [[ ! -L "$wants" ]]; then
+    echo "❌ Q87 failed: hello-user.timer is not enabled for user chisha."
+    return 1
+  fi
+
+  if [[ "$(readlink -f "$wants" 2>/dev/null)" != "$timer" ]]; then
+    echo "❌ Q87 failed: enabled timer symlink points to the wrong unit."
+    return 1
+  fi
+
+  if ! loginctl show-user "$user" -p Linger --value 2>/dev/null |
+    grep -qx 'yes'; then
+    echo "❌ Q87 failed: linger is not enabled for user chisha."
+    return 1
+  fi
+
+  # Verify user manager state when a runtime directory is available.
+  local uid runtime
+  uid="$(id -u "$user")"
+  runtime="/run/user/$uid"
+
+  if [[ -d "$runtime" ]]; then
+    if ! runuser -u "$user" -- env \
+      XDG_RUNTIME_DIR="$runtime" \
+      systemctl --user is-active --quiet hello-user.timer; then
+      echo "❌ Q87 failed: hello-user.timer is not active."
+      return 1
+    fi
+  fi
+
+  echo "✅ Q87 PASSED: user systemd timer configured correctly."
+  return 0
+}
+
 TASKS=(
   Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10
   Q11 Q12 Q13 Q14 Q15 Q16 Q17 Q18 Q19 Q20
@@ -2609,7 +2990,9 @@ TASKS=(
   Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q60
   Q61 Q62 Q63 Q64 Q65 Q66 Q67 Q68 Q69 Q70
   Q71 Q72 Q73 Q74 Q75 Q76 Q77 Q78 Q79 Q80
+  Q81 Q82 Q83 Q84 Q85 Q86 Q87
 )
+
 declare -A STATUS
 
 evaluate_all() {
@@ -3000,6 +3383,138 @@ sudo systemctl disable --now firewalld 2>/dev/null || true
   sudo rm -rf /shared-reports 2>/dev/null || true
 
   echo ">> Q71-Q80 reset completed."
+
+    # =========================================================
+  # Reset Q81-Q87: cron and systemd timer exercises
+  # =========================================================
+
+  echo ">> Resetting Q81-Q87 cron and timer labs..."
+
+  # ---------------------------------------------------------
+  # Q81-Q83: remove only the entries created by these labs
+  # ---------------------------------------------------------
+
+  remove_cron_matching() {
+    local user="$1"
+    local pattern="$2"
+    local tmp
+
+    tmp="$(mktemp)"
+
+    crontab -u "$user" -l 2>/dev/null |
+      grep -Ev "$pattern" > "$tmp" || true
+
+    if [[ -s "$tmp" ]]; then
+      crontab -u "$user" "$tmp" 2>/dev/null || true
+    else
+      crontab -u "$user" -r 2>/dev/null || true
+    fi
+
+    rm -f "$tmp"
+  }
+
+  # Q81
+  if getent passwd student >/dev/null; then
+    remove_cron_matching \
+      student \
+      'daily backup|30[[:space:]]+1[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*'
+  fi
+
+  # Q82 and Q83
+  remove_cron_matching \
+    root \
+    '/root/cron-success|/var/log/cron-test\.log'
+
+  sudo rm -f \
+    /root/cron-success \
+    /var/log/cron-test.log \
+    2>/dev/null || true
+
+  # Keep crond available as a normal base system service.
+  sudo systemctl enable --now crond 2>/dev/null || true
+
+  # ---------------------------------------------------------
+  # Q84: reset cron authorization files
+  # ---------------------------------------------------------
+
+  sudo rm -f /etc/cron.allow 2>/dev/null || true
+
+  # Keep the standard cron.deny file present and empty.
+  sudo truncate -s 0 /etc/cron.deny 2>/dev/null || true
+  sudo chown root:root /etc/cron.deny 2>/dev/null || true
+  sudo chmod 600 /etc/cron.deny 2>/dev/null || true
+
+  # ---------------------------------------------------------
+  # Q85: system hello timer
+  # ---------------------------------------------------------
+
+  sudo systemctl disable --now hello.timer \
+    >/dev/null 2>&1 || true
+
+  sudo systemctl stop hello.service \
+    >/dev/null 2>&1 || true
+
+  sudo rm -f \
+    /etc/systemd/system/hello.service \
+    /etc/systemd/system/hello.timer \
+    /etc/systemd/system/timers.target.wants/hello.timer \
+    2>/dev/null || true
+
+  # ---------------------------------------------------------
+  # Q86: ten-minute timer
+  # ---------------------------------------------------------
+
+  sudo systemctl disable --now timer-test.timer \
+    >/dev/null 2>&1 || true
+
+  sudo systemctl stop timer-test.service \
+    >/dev/null 2>&1 || true
+
+  sudo rm -f \
+    /etc/systemd/system/timer-test.service \
+    /etc/systemd/system/timer-test.timer \
+    /etc/systemd/system/timers.target.wants/timer-test.timer \
+    /var/log/timer-test.log \
+    2>/dev/null || true
+
+  # ---------------------------------------------------------
+  # Q87: user timer for chisha
+  # ---------------------------------------------------------
+
+  if getent passwd chisha >/dev/null; then
+    chisha_home="$(getent passwd chisha | cut -d: -f6)"
+    chisha_uid="$(id -u chisha)"
+    chisha_runtime="/run/user/$chisha_uid"
+
+    if [[ -d "$chisha_runtime" ]]; then
+      sudo runuser -u chisha -- env \
+        XDG_RUNTIME_DIR="$chisha_runtime" \
+        systemctl --user disable --now hello-user.timer \
+        >/dev/null 2>&1 || true
+
+      sudo runuser -u chisha -- env \
+        XDG_RUNTIME_DIR="$chisha_runtime" \
+        systemctl --user daemon-reload \
+        >/dev/null 2>&1 || true
+    fi
+
+    sudo rm -f \
+      "$chisha_home/.config/systemd/user/hello-user.service" \
+      "$chisha_home/.config/systemd/user/hello-user.timer" \
+      "$chisha_home/.config/systemd/user/timers.target.wants/hello-user.timer" \
+      2>/dev/null || true
+
+    sudo loginctl disable-linger chisha \
+      >/dev/null 2>&1 || true
+  fi
+
+  sudo systemctl daemon-reload
+  sudo systemctl reset-failed \
+    hello.service \
+    timer-test.service \
+    >/dev/null 2>&1 || true
+
+  echo ">> Q81-Q87 reset completed."
 
   #Echo
   echo ">> Progress reset: all tasks are now ${YELLOW}PENDING${RESET}."
