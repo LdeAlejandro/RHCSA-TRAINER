@@ -205,14 +205,14 @@ Perform the following administrative tasks:
 Verify that firewalld and SELinux are enabled and active on the system. If firewalld is not running, configure it to start immediately and automatically at boot. Ensure SELinux is configured in enforcing mode.
 ---
 
-```md
+
 ## Question 47
 Configure a connection named static-enp0s8 on interface enp0s8 with the following settings:
-
+```md
 - IPv4 Address: 192.168.100.50/24
 - Gateway: 192.168.100.1
 - DNS Server: 8.8.8.8
-
+```
 Ensure the configuration persists after a system reboot.
 
 ---
@@ -396,4 +396,552 @@ Create a shell script that accepts multiple filenames as command-line arguments.
 The script must display only the filenames that currently exist on the system.
 
 The script must be executable.
+
+---
+
+## Question 71
+
+Create a file named `/secure/passwd-tool`.
+
+Configure the file so that:
+
+* The owner is root.
+* The group is root.
+* The file has the SUID permission enabled.
+* The owner has read, write, and execute permissions.
+* The group and other users have read and execute permissions.
+
+Verify your work.
+
+---
+
+## Question 72
+
+Create a directory named `/shared-devs`.
+
+Configure the directory so that:
+
+* The group owner is `devs`.
+* Members of the group can create files inside the directory.
+* New files and directories created inside it inherit the group ownership automatically.
+
+Verify your work.
+
+---
+
+## Question 73
+
+Create a directory named `/public-share`.
+
+Configure the directory so that:
+
+* All users can create files inside it.
+* Users cannot delete files owned by other users.
+
+Verify your work.
+
+---
+
+## Question 74
+
+Locate all regular files on the system that have the SUID permission enabled.
+
+Save their absolute paths to:
+
+```bash
+/root/suid-files.txt
 ```
+
+---
+
+## Question 75
+
+Locate all regular files on the system that have the SGID permission enabled.
+
+Save their absolute paths to:
+
+```bash
+/root/sgid-files.txt
+```
+
+---
+
+## Question 76
+
+Copy the file `/etc/fstab` to:
+
+```bash
+/acl-lab/fstab
+```
+
+Configure the following permissions:
+
+* The owner must have read and write access.
+* The group must have read-only access.
+* User `adam` must have read and write access.
+* User `maryam` must have no access.
+* All other users must have read-only access.
+
+Use ACLs where required.
+
+Verify your work.
+
+---
+
+## Question 77
+
+Create the file:
+
+```bash
+/project/report.txt
+```
+
+Configure the following permissions:
+
+* The owner must have read and write access.
+* The group must have read-only access.
+* User `jacob` must have read and write access through an ACL.
+* Other users must have no access.
+
+Verify your work.
+
+---
+
+## Question 78
+
+Create the directory:
+
+```bash
+/projects
+```
+
+Configure a default ACL so that user `adam` automatically receives read and write access to newly created files and directories inside `/projects`.
+
+Verify your work.
+
+---
+
+## Question 79
+
+Create the directory:
+
+```bash
+/shared-reports
+```
+
+Configure the following default ACL permissions:
+
+* Members of group `finance` must receive read and write access.
+* Other users must receive no access.
+
+The permissions must apply automatically to new files and directories created inside `/shared-reports`.
+
+Verify your work.
+
+---
+
+## Question 80
+
+Create a backup of the ACL configuration for:
+
+```bash
+/projects
+```
+
+Save the ACL backup to:
+
+```bash
+/root/projects.acl
+```
+
+---
+
+## Question 81
+
+Configure a cron job for user `student`.
+
+The job must execute the following command every day at 01:30:
+
+```bash
+logger "daily backup"
+```
+
+Verify your work.
+
+---
+
+## Question 82
+
+Configure a cron job for root.
+
+The job must execute the following command every Sunday at 02:00:
+
+```bash
+touch /root/cron-success
+```
+
+Verify your work.
+
+---
+
+## Question 83
+
+Configure a cron job that runs every five minutes.
+
+The job must execute the following command:
+
+```bash
+date >> /var/log/cron-test.log
+```
+
+Verify your work.
+
+---
+
+## Question 84
+
+Configure cron access so that:
+
+* User `maryam` is allowed to create cron jobs.
+* User `jacob` is denied access to cron.
+
+Verify your work.
+
+---
+
+## Question 85
+
+Create a systemd service named:
+
+```bash
+hello.service
+```
+
+The service must execute the following command:
+
+```bash
+/usr/bin/logger "hello folks"
+```
+
+Create a systemd timer named:
+
+```bash
+hello.timer
+```
+
+The timer must run the service every day at 03:00.
+
+Enable and start the timer.
+
+---
+
+## Question 86
+
+Create a systemd service named:
+
+```bash
+timer-test.service
+```
+
+The service must append the current date and time to:
+
+```bash
+/var/log/timer-test.log
+```
+
+Create a systemd timer named:
+
+```bash
+timer-test.timer
+```
+
+The timer must execute the service every 10 minutes.
+
+Enable and start the timer.
+
+---
+
+## Question 87
+
+Create a user systemd service for user `chisha` named:
+
+```bash
+hello-user.service
+```
+
+The service must execute:
+
+```bash
+/usr/bin/logger "user timer"
+```
+
+Create a user timer named:
+
+```bash
+hello-user.timer
+```
+
+The timer must run the service from Monday through Friday at 02:00.
+
+Configure the user service so that it can run even when the user is not logged in.
+
+---
+
+## Question 88
+
+Determine whether the package `httpd` is installed.
+
+Save the installed package name, version, and release to:
+
+```bash
+/root/httpd-version.txt
+```
+
+---
+
+## Question 89
+
+Use the RPM database to determine which installed package provides the following file:
+
+```bash
+/usr/bin/ssh
+```
+
+Save the package name to:
+
+```bash
+/root/ssh-package.txt
+```
+
+---
+
+## Question 90
+
+Install the local RPM package located at:
+
+```bash
+/root/packages/demo-package.rpm
+```
+
+Verify that the package is installed.
+
+---
+
+## Question 91
+
+Install Flatpak on the system.
+
+Configure the Flathub repository for user `chisha` only.
+
+The repository must be named:
+
+```bash
+userrepo
+```
+
+Verify your work.
+
+---
+
+## Question 92
+
+Install the following Flatpak application for user `chisha` only:
+
+```bash
+org.gimp.GIMP
+```
+
+Verify that the application is installed in the user's Flatpak environment.
+
+---
+
+## Question 93
+
+Create a user named:
+
+```bash
+developer
+```
+
+Create the following groups:
+
+```bash
+devops
+qa
+```
+
+Add user `developer` to both groups without removing any existing supplementary group memberships.
+
+Verify your work.
+
+---
+
+## Question 94
+
+Rename the group:
+
+```bash
+developers
+```
+
+to:
+
+```bash
+engineering
+```
+
+Preserve the existing GID and group memberships.
+
+Verify your work.
+
+---
+
+## Question 95
+
+Modify user `developer` so that:
+
+* The UID is `4500`.
+* The login shell is `/bin/bash`.
+* The home directory is `/home/developer-new`.
+
+Move the existing contents of the old home directory to the new location.
+
+Verify your work.
+
+---
+
+## Question 96
+
+Locate all regular files under `/var` that are owned by user `developer`.
+
+Copy the matching files to:
+
+```bash
+/root/developer-files
+```
+
+Preserve the original filenames.
+
+---
+
+## Question 97
+
+Locate all directories on the system that have the SGID permission enabled.
+
+Save their absolute paths to:
+
+```bash
+/root/sgid-directories.txt
+```
+
+---
+
+## Question 98
+
+Locate all regular files on the system that have either the SUID or SGID permission enabled.
+
+Save their absolute paths to:
+
+```bash
+/root/special-permissions.txt
+```
+
+---
+
+## Question 99
+
+An ext4 logical volume exists at:
+
+```bash
+/dev/data_vg/data_lv
+```
+
+The logical volume is currently 500 MB.
+
+Reduce the filesystem and logical volume so that the final size is 300 MB.
+
+Ensure that the filesystem remains usable after the operation.
+
+---
+
+## Question 100
+
+A logical volume exists at:
+
+```bash
+/dev/archive_vg/archive_lv
+```
+
+Determine the filesystem type.
+
+If the filesystem supports reduction, reduce the logical volume to 400 MB while preserving the data.
+
+If the filesystem does not support reduction, do not perform a destructive operation.
+
+---
+
+## Question 101
+
+Configure a permanent firewall rich rule that permits SSH access only from the following network:
+
+```bash
+192.168.100.0/24
+```
+
+Apply the configuration immediately.
+
+---
+
+## Question 102
+
+Configure a permanent firewall rich rule that rejects HTTP access from the following host:
+
+```bash
+192.168.100.50
+```
+
+Apply the configuration immediately.
+
+---
+
+## Question 103
+
+Configure a permanent firewall rich rule that permits HTTPS access from the following network:
+
+```bash
+192.168.100.0/24
+```
+
+Apply the configuration immediately.
+
+---
+
+## Question 104
+
+Configure a permanent firewall rich rule that logs and drops all SSH connection attempts from the following network:
+
+```bash
+10.10.10.0/24
+```
+
+Use the log prefix:
+
+```bash
+blocked-ssh
+```
+
+Apply the configuration immediately.
+
+---
+
+## Question 105
+
+Configure a permanent firewall rich rule that allows TCP traffic to port `8080` only from the following network:
+
+```bash
+172.16.50.0/24
+```
+
+Apply the configuration immediately.
+
+---
