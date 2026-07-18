@@ -2569,68 +2569,119 @@ check_Q78() {
   return 0
 }
 
-
 # ===== Exercise Q79 =====
-Q79_DESC="Create /shared-reports and configure default ACL permissions for group finance while denying access to other users."
+Q79_DESC="Create the directory /shared-reports and configure it so that members of the finance group have read, write, and traverse access. Ensure that new files automatically grant the finance group read and write access, new directories grant read, write, and traverse access, and all other users receive no access."
 
 check_Q79() {
   local dir="/shared-reports"
+  local testfile="$dir/.q79-test-file-$$"
+  local testdir="$dir/.q79-test-dir-$$"
+  local acl
+  local inherited_acl
+
+  cleanup_Q79() {
+    rm -f "$testfile"
+    rm -rf "$testdir"
+  }
 
   if [[ ! -d "$dir" ]]; then
     echo "❌ Q79 failed: $dir does not exist."
     return 1
   fi
 
-  if ! getent group finance >/dev/null; then
+  if ! getent group finance &>/dev/null; then
     echo "❌ Q79 failed: group finance does not exist."
     return 1
   fi
 
-  local acl
-  acl="$(getfacl -cp "$dir" 2>/dev/null || true)"
+  if ! command -v getfacl &>/dev/null; then
+    echo "❌ Q79 failed: getfacl command is not installed."
+    return 1
+  fi
+
+  acl="$(getfacl -cpE "$dir" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'group:finance:rwx' <<< "$acl"; then
+    echo "❌ Q79 failed: group finance must have rwx access to $dir."
+    return 1
+  fi
+
+  if ! grep -Fxq 'other::---' <<< "$acl"; then
+    echo "❌ Q79 failed: other users must have no access to $dir."
+    return 1
+  fi
 
   if ! grep -Fxq 'default:group:finance:rwx' <<< "$acl"; then
-    echo "❌ Q79 failed: default ACL for group finance must be rwx."
+    echo "❌ Q79 failed: inherited permissions for group finance are not configured."
+    return 1
+  fi
+
+  if ! grep -Fxq 'default:mask::rwx' <<< "$acl"; then
+    echo "❌ Q79 failed: default ACL mask must permit rwx."
     return 1
   fi
 
   if ! grep -Fxq 'default:other::---' <<< "$acl"; then
-    echo "❌ Q79 failed: default ACL for other users must be ---."
+    echo "❌ Q79 failed: inherited permissions for other users must be disabled."
     return 1
   fi
 
-  local default_mask
-  default_mask="$(awk -F: '$1=="default" && $2=="mask" {print $4}' <<< "$acl")"
-
-  if [[ "$default_mask" != "rwx" ]]; then
-    echo "❌ Q79 failed: default ACL mask must be rwx."
-    return 1
-  fi
-
-  local testfile
-  testfile="$(mktemp "$dir/.q79-test.XXXXXX")" || {
+  if ! touch "$testfile"; then
     echo "❌ Q79 failed: could not create a test file in $dir."
     return 1
-  }
+  fi
 
-  local inherited_acl
-  inherited_acl="$(getfacl -cp "$testfile" 2>/dev/null || true)"
-  rm -f "$testfile"
+  if ! mkdir "$testdir"; then
+    cleanup_Q79
+    echo "❌ Q79 failed: could not create a test directory in $dir."
+    return 1
+  fi
 
-  if ! grep -Fxq 'group:finance:rw-' <<< "$inherited_acl"; then
-    echo "❌ Q79 failed: new files do not inherit finance ACL permissions."
+  inherited_acl="$(getfacl -cpE "$testfile" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'group:finance:rwx' <<< "$inherited_acl"; then
+    cleanup_Q79
+    echo "❌ Q79 failed: new files do not inherit the finance ACL entry."
+    return 1
+  fi
+
+  if ! grep -Fxq 'mask::rw-' <<< "$inherited_acl"; then
+    cleanup_Q79
+    echo "❌ Q79 failed: finance does not have effective read/write access to new files."
     return 1
   fi
 
   if ! grep -Fxq 'other::---' <<< "$inherited_acl"; then
+    cleanup_Q79
     echo "❌ Q79 failed: new files grant access to other users."
     return 1
   fi
 
-  echo "✅ Q79 PASSED: default group ACL configured correctly."
+  inherited_acl="$(getfacl -cpE "$testdir" 2>/dev/null || true)"
+
+  if ! grep -Fxq 'group:finance:rwx' <<< "$inherited_acl"; then
+    cleanup_Q79
+    echo "❌ Q79 failed: new directories do not inherit finance rwx permissions."
+    return 1
+  fi
+
+  if ! grep -Fxq 'mask::rwx' <<< "$inherited_acl"; then
+    cleanup_Q79
+    echo "❌ Q79 failed: finance does not have effective rwx access to new directories."
+    return 1
+  fi
+
+  if ! grep -Fxq 'other::---' <<< "$inherited_acl"; then
+    cleanup_Q79
+    echo "❌ Q79 failed: new directories grant access to other users."
+    return 1
+  fi
+
+  cleanup_Q79
+
+  echo "✅ Q79 PASSED: inherited group permissions configured correctly."
   return 0
 }
-
 
 # ===== Exercise Q80 =====
 Q80_DESC="Back up the ACL configuration of /projects to /root/projects.acl."
