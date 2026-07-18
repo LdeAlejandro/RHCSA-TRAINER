@@ -1743,17 +1743,14 @@ The script must be executable.
   chmod 755 filecheck.sh
 ```
 ---
-## Question 71: Configure a File with SUID Permission
+## Question 71: Configure File Permissions
 
-Create a file named `/secure/passwd-tool`.
+Configure a file `/secure/passwd-tool` to meet the following requirements:
 
-Configure the file so that:
-
-* The owner is root.
-* The group is root.
-* The file has the SUID permission enabled.
-* The owner has read, write, and execute permissions.
-* The group and other users have read and execute permissions.
+- The file is owned by `root`.
+- The group owner is `root`.
+- Users executing the file obtain the privileges of the file owner.
+- Configure the appropriate permissions.
 
 Verify your work.
 
@@ -1775,15 +1772,15 @@ Verify your work.
 
 ---
 
-## Question 72: Configure an SGID Shared Directory
+## Question 72: Configure a Shared Directory
 
-Create a directory named `/shared-devs`.
+Create the directory `/shared-devs`
 
-Configure the directory so that:
+Configure the directory to meet the following requirements:
 
-* The group owner is `devs`.
-* Members of the group can create files inside the directory.
-* New files and directories created inside it inherit the group ownership automatically.
+- The group owner must be `devs`.
+- Members of the `devs` group must be able to create files in the directory.
+- Files and directories created under `/shared-devs` must inherit the directory's group ownership.
 
 Verify your work.
 

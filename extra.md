@@ -47,3 +47,10 @@ Binário	Octal	rwx	Significado
 101	5	r-x	leitura + execução
 110	6	rw-	leitura + escrita
 111	7	rwx	leitura + escrita + execução
+
+
+Permissões especiais
+Permissão	Valor	chmod simbólico	Efeito
+SUID	4000	u+s	Executa com o UID (proprietário) do arquivo.
+SGID	2000	g+s	Executa com o GID (grupo) do arquivo. Em diretórios, novos arquivos herdam o grupo.
+Sticky Bit	1000	+t	Em diretórios, apenas o dono do arquivo (ou root) pode removê-lo.

@@ -2023,7 +2023,7 @@ check_Q64() {
 }
 
 # ===== Exercise Q65 =====
-Q65_DESC="An existing XFS filesystem is mounted on /mnt/xfs_lv. Increase the size of the filesystem by 200 MB without unmounting it and ensure the additional capacity is available immediately."
+Q65_DESC="An existing XFS filesystem is mounted on /mnt/xfs_lv. Increase the size of the filesystem by 300 MB without unmounting it and ensure the additional capacity is available immediately."
 
 check_Q65() {
 
@@ -2138,7 +2138,7 @@ check_Q70() {
 }
 
 # ===== Exercise Q71 =====
-Q71_DESC="Create a file named /secure/passwd-tool. Configure it as root:root with permissions 4755 so that the SUID permission is enabled."
+Q71_DESC="Configure a file /secure/passwd-tool so that it is owned by root:root and has the appropriate permissions to allow execution with the owner's privileges."
 
 check_Q71() {
   local file="/secure/passwd-tool"
@@ -2174,7 +2174,7 @@ check_Q71() {
 
 
 # ===== Exercise Q72 =====
-Q72_DESC="Create /shared-devs with group ownership devs and permissions 2770 so that new files inherit the directory group."
+Q72_DESC="Configure the directory /shared-devs so that members of the devs group can collaborate and newly created files retain the correct group ownership."
 
 check_Q72() {
   local dir="/shared-devs"
@@ -2215,7 +2215,7 @@ check_Q72() {
 
 
 # ===== Exercise Q73 =====
-Q73_DESC="Create /public-share with permissions 1777 so that all users can create files but cannot delete files owned by other users."
+Q73_DESC="Configure the directory /public-share to allow all users to create files while preventing users from deleting files owned by others."
 
 check_Q73() {
   local dir="/public-share"
@@ -2239,7 +2239,7 @@ check_Q73() {
 
 
 # ===== Exercise Q74 =====
-Q74_DESC="Locate all regular files with the SUID permission enabled and save their absolute paths to /root/suid-files.txt."
+Q74_DESC="Identify all regular files that execute with the file owner's privileges and save their absolute paths to /root/suid-files.txt."
 
 check_Q74() {
   local output="/root/suid-files.txt"
@@ -2296,7 +2296,7 @@ check_Q74() {
 
 
 # ===== Exercise Q75 =====
-Q75_DESC="Locate all regular files with the SGID permission enabled and save their absolute paths to /root/sgid-files.txt."
+Q75_DESC="Identify all regular files that execute with the file group's privileges and save their absolute paths to /root/sgid-files.txt."
 
 check_Q75() {
   local output="/root/sgid-files.txt"
@@ -2353,7 +2353,7 @@ check_Q75() {
 
 
 # ===== Exercise Q76 =====
-Q76_DESC="Copy /etc/fstab to /acl-lab/fstab and configure ACL permissions for users adam and maryam."
+Q76_DESC="Copy /etc/fstab to /acl-lab/fstab. Configure the copied file so that the owner has read and write access, the owning group has read-only access, user adam has read and write access, user maryam has no access, and all other users have read-only access."
 
 check_Q76() {
   local file="/acl-lab/fstab"
@@ -2401,18 +2401,21 @@ check_Q76() {
     return 1
   fi
 
-  if (( $(stat -c '%a' "$file") & 111 )); then
+  local mode
+  mode="$(stat -c '%a' "$file")"
+
+  if (( 8#$mode & 0111 )); then
     echo "❌ Q76 failed: file must not be executable."
     return 1
   fi
 
-  echo "✅ Q76 PASSED: ACL permissions configured correctly."
+  echo "✅ Q76 PASSED: access permissions configured correctly."
   return 0
 }
 
 
 # ===== Exercise Q77 =====
-Q77_DESC="Create /project/report.txt and grant user jacob read and write access through an ACL."
+Q77_DESC="Create the file /project/report.txt and configure it so that user jacob has read and write access."
 
 check_Q77() {
   local file="/project/report.txt"
