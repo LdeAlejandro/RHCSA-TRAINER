@@ -2415,8 +2415,7 @@ check_Q76() {
 
 
 # ===== Exercise Q77 =====
-Q77_DESC="Create the file /project/report.txt and configure it so that user jacob has read and write access."
-
+Q77_DESC="Create the file /project/report.txt. Configure it so that the owner has read and write access, the owning group has read-only access, user jacob has read and write access, and all other users have no access."
 check_Q77() {
   local file="/project/report.txt"
 
@@ -2459,48 +2458,114 @@ check_Q77() {
 
 
 # ===== Exercise Q78 =====
-Q78_DESC="Create /projects and configure a default ACL so that user adam receives read and write access to new files and directories."
+Q78_DESC="Create the directory /projects and configure it so that user adam can read, write, and access the directory. Ensure that new files created inside /projects automatically grant adam read and write access, and new directories automatically grant adam read, write, and traverse access."
 
 check_Q78() {
   local dir="/projects"
+  local testfile="$dir/.q78-test-file-$$"
+  local testdir="$dir/.q78-test-dir-$$"
+  local acl
 
   if [[ ! -d "$dir" ]]; then
     echo "❌ Q78 failed: $dir does not exist."
     return 1
   fi
 
-  local acl
-  acl="$(getfacl -cp "$dir" 2>/dev/null || true)"
+  if ! id adam &>/dev/null; then
+    echo "❌ Q78 failed: user adam does not exist."
+    return 1
+  fi
 
+  if ! command -v getfacl &>/dev/null; then
+    echo "❌ Q78 failed: getfacl command is not installed."
+    return 1
+  fi
+
+  if ! command -v runuser &>/dev/null; then
+    echo "❌ Q78 failed: runuser command is not available."
+    return 1
+  fi
+
+  acl="$(getfacl -cpE "$dir" 2>/dev/null || true)"
+
+  # Adam must be able to use the existing /projects directory
+  if ! grep -Fxq 'user:adam:rwx' <<< "$acl"; then
+    echo "❌ Q78 failed: adam must have rwx access to $dir."
+    return 1
+  fi
+
+  # New objects must inherit Adam's ACL entry
   if ! grep -Fxq 'default:user:adam:rwx' <<< "$acl"; then
-    echo "❌ Q78 failed: default ACL for adam must be rwx."
+    echo "❌ Q78 failed: inherited permissions for adam are not configured."
     return 1
   fi
 
-  local default_mask
-  default_mask="$(awk -F: '$1=="default" && $2=="mask" {print $4}' <<< "$acl")"
-
-  if [[ "$default_mask" != "rwx" ]]; then
-    echo "❌ Q78 failed: default ACL mask must be rwx."
+  # The default ACL mask must permit rwx
+  if ! grep -Fxq 'default:mask::rwx' <<< "$acl"; then
+    echo "❌ Q78 failed: the default ACL mask must permit rwx."
     return 1
   fi
 
-  local testfile
-  testfile="$(mktemp "$dir/.q78-test.XXXXXX")" || {
+  # Create objects using normal file and directory creation modes
+  if ! touch "$testfile"; then
     echo "❌ Q78 failed: could not create a test file in $dir."
     return 1
-  }
+  fi
 
-  local inherited_acl
-  inherited_acl="$(getfacl -cp "$testfile" 2>/dev/null || true)"
-  rm -f "$testfile"
-
-  if ! grep -Fxq 'user:adam:rw-' <<< "$inherited_acl"; then
-    echo "❌ Q78 failed: new files do not inherit adam ACL permissions."
+  if ! mkdir "$testdir"; then
+    rm -f "$testfile"
+    echo "❌ Q78 failed: could not create a test directory in $dir."
     return 1
   fi
 
-  echo "✅ Q78 PASSED: default ACL inheritance configured correctly."
+  # Verify that a named ACL entry was inherited
+  if ! getfacl -cpE "$testfile" 2>/dev/null |
+       grep -Eq '^user:adam:rw[x-]$'; then
+    rm -f "$testfile"
+    rmdir "$testdir"
+    echo "❌ Q78 failed: new files do not inherit an ACL entry for adam."
+    return 1
+  fi
+
+  if ! getfacl -cpE "$testdir" 2>/dev/null |
+       grep -Fxq 'user:adam:rwx'; then
+    rm -f "$testfile"
+    rmdir "$testdir"
+    echo "❌ Q78 failed: new directories do not inherit rwx access for adam."
+    return 1
+  fi
+
+  # Test Adam's effective access to the new file
+  if ! runuser -u adam -- test -r "$testfile" ||
+     ! runuser -u adam -- test -w "$testfile"; then
+    rm -f "$testfile"
+    rmdir "$testdir"
+    echo "❌ Q78 failed: adam does not have effective read/write access to new files."
+    return 1
+  fi
+
+  # Regular files must not become executable
+  if runuser -u adam -- test -x "$testfile"; then
+    rm -f "$testfile"
+    rmdir "$testdir"
+    echo "❌ Q78 failed: new regular files must not be executable by adam."
+    return 1
+  fi
+
+  # Test Adam's effective access to the new directory
+  if ! runuser -u adam -- test -r "$testdir" ||
+     ! runuser -u adam -- test -w "$testdir" ||
+     ! runuser -u adam -- test -x "$testdir"; then
+    rm -f "$testfile"
+    rmdir "$testdir"
+    echo "❌ Q78 failed: adam does not have effective rwx access to new directories."
+    return 1
+  fi
+
+  rm -f "$testfile"
+  rmdir "$testdir"
+
+  echo "✅ Q78 PASSED: inherited access permissions configured correctly."
   return 0
 }
 
