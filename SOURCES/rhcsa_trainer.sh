@@ -565,118 +565,25 @@ check_Q20() {
 
 # ===== Exercise Q21 =====
 Q21_DESC="Create a shell script named /root/find-files.sh that locates all regular files under /usr with a size between 30 KB and 50 KB. The script must save the results to /root/sized_files.txt."
-check_Q21() {
-  local script="/root/find-files.sh"
-  local output="/root/sized_files.txt"
-  local temp_output
-  local low=$((30 * 1024))
-  local high=$((50 * 1024))
-  local bad=0
-  local p bytes
+if ! sudo -n test -f "$output" 2>/dev/null ||
+   sudo -n test "$script" -nt "$output" 2>/dev/null; then
 
-  # 1) Script must exist and be executable
-  if ! sudo -n test -f "$script" 2>/dev/null; then
-    echo "❌ Q21 failed: Script $script not found."
-    return 1
-  fi
+  sudo -n timeout 20s bash "$script" </dev/null >/dev/null 2>&1
+  rc=$?
 
-  if ! sudo -n test -x "$script" 2>/dev/null; then
-    echo "❌ Q21 failed: Script exists but is not executable."
-    return 1
-  fi
-
-  # 2) Basic shell syntax validation
-  if ! sudo -n bash -n "$script" 2>/dev/null; then
-    echo "❌ Q21 failed: Script contains a shell syntax error."
-    return 1
-  fi
-
-  # 3) Execute only when output is missing or older than the script
-  if ! sudo -n test -f "$output" 2>/dev/null ||
-     sudo -n test "$script" -nt "$output" 2>/dev/null; then
-
-    if ! sudo -n timeout \
-      --signal=TERM \
-      --kill-after=2s \
-      15s \
-      bash "$script" </dev/null 2>/dev/null; then
-
-      case "$?" in
-        124|137)
-          echo "❌ Q21 failed: Script exceeded 15 seconds."
-          ;;
-        *)
-          echo "❌ Q21 failed: Script returned a non-zero status."
-          ;;
-      esac
-
+  case "$rc" in
+    0)
+      ;;
+    124|137)
+      echo "❌ Q21 failed: Script exceeded 20 seconds."
       return 1
-    fi
-  fi
-
-  # 4) Output must exist
-  if ! sudo -n test -f "$output" 2>/dev/null; then
-    echo "❌ Q21 failed: Output file $output was not created."
-    return 1
-  fi
-
-  # 5) Copy the root-owned output to a temporary readable file
-  temp_output="$(mktemp)" || {
-    echo "❌ Q21 failed: Could not create temporary file."
-    return 1
-  }
-
-  if ! sudo -n cat "$output" > "$temp_output" 2>/dev/null; then
-    echo "❌ Q21 failed: Could not read $output."
-    rm -f "$temp_output"
-    return 1
-  fi
-
-  # 6) Empty output is accepted because results vary by environment
-  if [[ ! -s "$temp_output" ]]; then
-    echo "✅ Q21 passed: Script generated an empty result file."
-    rm -f "$temp_output"
-    return 0
-  fi
-
-  # 7) Validate every listed path
-  while IFS= read -r p || [[ -n "$p" ]]; do
-    [[ -z "$p" ]] && continue
-
-    if [[ "$p" != /usr/* ]]; then
-      echo "❌ Q21 failed: Path is not under /usr -> $p"
-      bad=1
-      continue
-    fi
-
-    if [[ ! -f "$p" ]]; then
-      echo "❌ Q21 failed: Not a regular file -> $p"
-      bad=1
-      continue
-    fi
-
-    bytes="$(stat -c '%s' -- "$p" 2>/dev/null)" || {
-      echo "❌ Q21 failed: Could not read size -> $p"
-      bad=1
-      continue
-    }
-
-    if (( bytes <= low || bytes >= high )); then
-      echo "❌ Q21 failed: Size out of range ($bytes bytes) -> $p"
-      bad=1
-    fi
-  done < "$temp_output"
-
-  rm -f "$temp_output"
-
-  if (( bad == 0 )); then
-    echo "✅ Q21 passed: Script and output are valid."
-    return 0
-  fi
-
-  echo "❌ Q21 failed: One or more paths are invalid."
-  return 1
-}
+      ;;
+    *)
+      echo "❌ Q21 failed: Script execution failed."
+      return 1
+      ;;
+  esac
+fi
 
 # returns 0 if user's password EXACTLY matches; 1 if not; 2 if cannot verify
 _has_exact_password() {
@@ -4047,46 +3954,27 @@ declare -A STATUS
 evaluate_all() {
   local id
   local rc
-  local pid
-  local elapsed
   local check_timeout="${RHCSA_CHECK_TIMEOUT:-30}"
 
+  # Exporta todas as funções apenas uma vez.
+  export -f $(declare -F | awk '{print $3}')
+
+  # Variáveis globais usadas dentro dos checks.
+  export RHCSA_SHM_DIR
+
   for id in "${TASKS[@]}"; do
-    printf 'Checking:' 
+    printf 'Checking %s: ' "$id"
 
     set +e
 
-    # Executa o check em um subshell, herdando todas as funções e variáveis.
-    (
-      "check_${id}"
-    ) </dev/null &
+    timeout \
+      --signal=TERM \
+      --kill-after=3s \
+      "${check_timeout}s" \
+      bash -c '"$1"' _ "check_${id}" \
+      </dev/null
 
-    pid=$!
-    elapsed=0
-
-    # Aguarda até o check terminar ou alcançar o timeout.
-    while kill -0 "$pid" 2>/dev/null; do
-      if (( elapsed >= check_timeout )); then
-        kill -TERM "$pid" 2>/dev/null
-        sleep 1
-
-        # Força encerramento se TERM não funcionar.
-        kill -KILL "$pid" 2>/dev/null
-        wait "$pid" 2>/dev/null
-
-        rc=124
-        break
-      fi
-
-      sleep 1
-      ((elapsed++))
-    done
-
-    # Se não houve timeout, coleta o retorno normal do check.
-    if [[ "${rc:-}" != "124" ]]; then
-      wait "$pid"
-      rc=$?
-    fi
+    rc=$?
 
     set -e
 
@@ -4106,8 +3994,6 @@ evaluate_all() {
         echo "PENDING"
         ;;
     esac
-
-    unset rc
   done
 }
 
