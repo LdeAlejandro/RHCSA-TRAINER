@@ -2237,8 +2237,8 @@ The timer must run from Monday through Friday at 02:00 and execute:
   #Enable user services while chisha is logged out
   loginctl enable-linger chisha
 
-  #Switch to chisha
-  su - chisha
+  #login as chisha in localhost
+  ssh chisha@localhost
 
   #Create user systemd directory
   mkdir -p ~/.config/systemd/user

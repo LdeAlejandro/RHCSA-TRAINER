@@ -566,141 +566,120 @@ check_Q20() {
 # ===== Exercise Q21 =====
 Q21_DESC="Create a shell script named /root/find-files.sh that locates all regular files under /usr with a size between 30 KB and 50 KB. The script must save the results to /root/sized_files.txt."
 check_Q21() {
-  echo "check "
   local script="/root/find-files.sh"
   local output="/root/sized_files.txt"
-  local low=$((30*1024))   # 30720 bytes
-  local high=$((50*1024))  # 51200 bytes, strict upper bound
+  local low=$((30 * 1024))
+  local high=$((50 * 1024))
+  local timeout_seconds=20
 
-  # 1) Script exists and is executable
+  # 1) Validate script
   if ! sudo -n test -f "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script $script not found."
     return 1
   fi
+
   if ! sudo -n test -x "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script exists but is not executable."
     return 1
   fi
 
-  # 2) Run script and ensure output file is (re)generated
-  local prev_mtime
-  prev_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
-  if ! sudo -n bash "$script" 2>/dev/null; then
-    echo "❌ Q21 failed: Script execution returned a non-zero status."
+  # Remove old output to prove that the script creates it again.
+  sudo -n rm -f "$output" 2>/dev/null || {
+    echo "❌ Q21 failed: Could not remove old output file."
     return 1
-  fi
-  if ! sudo -n test -f "$output" 2>/dev/null; then
-    echo "❌ Q21 failed: Output file $output was not created."
+  }
+
+  echo "Checking Q21..."
+
+  # 2) Run with a hard timeout
+  sudo -n timeout --signal=TERM \
+    "$timeout_seconds" bash "$script" >/dev/null 2>&1
+
+  local rc=$?
+
+  if [[ "$rc" -eq 124 ]]; then
+    echo "❌ Q21 failed: Script exceeded ${timeout_seconds} seconds."
+    echo "Hint: search only under /usr and avoid following symbolic links."
     return 1
-  fi
-  local new_mtime
-  new_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
-  if [[ "$new_mtime" -le "$prev_mtime" ]]; then
-    echo "❌ Q21 failed: Output file was not updated by the script."
+  elif [[ "$rc" -ne 0 ]]; then
+    echo "❌ Q21 failed: Script returned exit status $rc."
     return 1
   fi
 
-  # 3) If output has lines, validate each line; allow empty output (environment-dependent)
+  # 3) Output must have been created
+  if ! sudo -n test -f "$output" 2>/dev/null; then
+    echo "❌ Q21 failed: $output was not created."
+    return 1
+  fi
+
   local lines
-  lines="$(sudo -n wc -l < "$output" 2>/dev/null || echo 0)"
+  lines="$(sudo -n wc -l "$output" 2>/dev/null | awk '{print $1}')"
+
+  if [[ ! "$lines" =~ ^[0-9]+$ ]]; then
+    echo "❌ Q21 failed: Could not count output lines."
+    return 1
+  fi
+
   if [[ "$lines" -eq 0 ]]; then
-    echo "⚠️ Q21 note: Output file is empty. Accepting (may vary by environment)."
-    echo "✅ Q21 passed: Script exists, is executable, and generated the output file."
+    echo "⚠️ Q21 note: No matching files were found."
+    echo "✅ Q21 passed: Script executed and generated the output file."
     return 0
   fi
 
-  # 4) Validate each path
-  local bad=0
+  # Safety protection against scripts producing massive output
+  if (( lines > 10000 )); then
+    echo "❌ Q21 failed: Output contains too many lines ($lines)."
+    echo "Hint: the search must be restricted to regular files under /usr."
+    return 1
+  fi
 
-# Hard stop: refuse to read if file is missing or not readable
-if ! test -r "$output"; then
-  echo "❌ Q21 failed: Output file is not readable -> $output"
-  return 1
-fi
-echo "Checking Q21 files"
-# Read file directly (no sudo, no subshell)
-while IFS= read -r p || [[ -n "$p" ]]; do
-  # skip blank lines
-  [[ -z "$p" ]] && continue
+  # 4) Validate output using a root shell
+  if ! sudo -n bash -s -- "$output" "$low" "$high" <<'VALIDATE'
+output="$1"
+low="$2"
+high="$3"
 
-  # must start with /usr
-  if [[ "$p" != /usr/* ]]; then
-    echo "❌ Q21 failed: Path not under /usr -> $p"
+bad=0
+
+while IFS= read -r path || [[ -n "$path" ]]; do
+  [[ -z "$path" ]] && continue
+
+  case "$path" in
+    /usr/*) ;;
+    *)
+      echo "❌ Invalid path outside /usr: $path"
+      bad=1
+      continue
+      ;;
+  esac
+
+  if [[ ! -f "$path" ]]; then
+    echo "❌ Not a regular file: $path"
     bad=1
     continue
   fi
 
-  # must be a regular file
-  if ! test -f "$p" 2>/dev/null; then
-    echo "❌ Q21 failed: Not a regular file -> $p"
+  bytes=$(stat -c '%s' -- "$path" 2>/dev/null) || {
+    echo "❌ Could not read file size: $path"
     bad=1
     continue
-  fi
-
-  # size must be strictly between 30KB and 50KB
-  bytes=$(stat -c '%s' "$p" 2>/dev/null || echo -1)
-
-  if ! [[ "$bytes" =~ ^[0-9]+$ ]]; then
-    echo "❌ Q21 failed: Could not read size -> $p"
-    bad=1
-    continue
-  fi
+  }
 
   if (( bytes <= low || bytes >= high )); then
-    echo "❌ Q21 failed: Size out of range (bytes=$bytes) -> $p"
+    echo "❌ Size outside range (${bytes} bytes): $path"
     bad=1
-    continue
   fi
-
 done < "$output"
 
-  if [[ "$bad" -eq 0 ]]; then
-    echo "✅ Q21 passed: Script executed and output validated without relying on implementation details."
-    return 0
-  else
-    echo "❌ Q21 failed: One or more listed paths did not meet the criteria."
+exit "$bad"
+VALIDATE
+  then
+    echo "❌ Q21 failed: One or more output entries are invalid."
     return 1
   fi
-}
 
-# returns 0 if user's password EXACTLY matches; 1 if not; 2 if cannot verify
-_has_exact_password() {
-  local u="$1" p="$2"
-  local h alg salt calc
-
-  # read hash (try sudo first, then plain in case we're root)
-  h=$(sudo awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
-  [ -z "$h" ] && h=$(awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
-  [ -z "$h" ] && return 2
-
-  # locked / no password?
-  case "$h" in '!'*|'*'|'') return 1 ;; esac
-
-  alg=$(awk -F'$' '{print $2}' <<<"$h")
-  salt=$(awk -F'$' '{print $3}' <<<"$h")
-
-  # Prefer mkpasswd (supports yescrypt $y and sha-512 $6 on RHEL)
-  if command -v mkpasswd >/dev/null 2>&1; then
-    case "$alg" in
-      y) calc=$(mkpasswd -m yescrypt -S "$salt" "$p") ;;
-      6) calc=$(mkpasswd -m sha-512  -S "$salt" "$p") ;;
-      *) calc="" ;;
-    esac
-    [ -n "$calc" ] && { [ "$calc" = "$h" ] && return 0 || return 1; }
-  fi
-
-  # Fallback: Python crypt (silence deprecation warning)
-  if command -v python3 >/dev/null 2>&1; then
-    python3 -W ignore - <<'PY' "$h" "$p"
-import sys, crypt
-h, p = sys.argv[1], sys.argv[2]
-sys.exit(0 if crypt.crypt(p, h)==h else 1)
-PY
-    return $?
-  fi
-
-  # Last resort: cannot verify (no mkpasswd/python3 or unsupported algo)
-  return 2
+  echo "✅ Q21 passed: $lines files validated."
+  return 0
 }
 
 # ===== Exercise Q22 =====
@@ -2720,7 +2699,7 @@ check_Q80() {
 }
 
 # ===== Exercise Q81 =====
-Q81_DESC="Configure a cron job for user student that executes /usr/bin/logger \"daily backup\" every day at 01:30."
+Q81_DESC="Ensure that user student runs /usr/bin/logger \"daily backup\" every day at 01:30."
 
 check_Q81() {
   local user="student"
@@ -2820,7 +2799,7 @@ check_Q83() {
 
 
 # ===== Exercise Q84 =====
-Q84_DESC="Configure cron access so that user maryam is allowed to use cron and user jacob is denied access."
+Q84_DESC="Ensure that user maryam can use cron while user jacob cannot."
 
 check_Q84() {
   if ! getent passwd maryam >/dev/null; then
@@ -3012,7 +2991,9 @@ check_Q86() {
 
 
 # ===== Exercise Q87 =====
-Q87_DESC="Create hello-user.service and hello-user.timer for user chisha. Run the service Monday through Friday at 02:00 and enable linger."
+```bash
+Q87_DESC="For user chisha, create a user service named hello-user.service that runs /usr/bin/logger \"user timer\". Create and enable hello-user.timer so that the service runs Monday through Friday at 02:00. Configure the user's systemd manager to remain active while chisha is logged out."
+```
 
 check_Q87() {
   local user="chisha"
