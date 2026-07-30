@@ -568,96 +568,83 @@ Q21_DESC="Create a shell script named /root/find-files.sh that locates all regul
 check_Q21() {
   local script="/root/find-files.sh"
   local output="/root/sized_files.txt"
-  local low=$((30 * 1024))
-  local high=$((50 * 1024))
+  local expected
+  local actual
   local rc
-  local bad=0
-  local p
-  local bytes
 
-  # 1) Script must exist and be executable
+  # 1) The script must exist
   if ! sudo -n test -f "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script $script not found."
     return 1
   fi
 
+  # 2) The script must be executable
   if ! sudo -n test -x "$script" 2>/dev/null; then
-    echo "❌ Q21 failed: Script exists but is not executable."
+    echo "❌ Q21 failed: Script $script is not executable."
     return 1
   fi
 
-  # 2) Run the script only if the output file does not exist
+  # 3) Execute the script only when the output does not exist
   if ! sudo -n test -f "$output" 2>/dev/null; then
-    sudo -n timeout \
-      --signal=TERM \
-      --kill-after=2s \
-      20s \
-      bash "$script" \
-      </dev/null \
-      >/dev/null 2>&1
-
+    sudo -n bash "$script" </dev/null >/dev/null 2>&1
     rc=$?
 
-    case "$rc" in
-      0)
-        ;;
-      124|137)
-        echo "❌ Q21 failed: Script exceeded 20 seconds."
-        return 1
-        ;;
-      *)
-        echo "❌ Q21 failed: Script execution failed with status $rc."
-        return 1
-        ;;
-    esac
+    if (( rc != 0 )); then
+      echo "❌ Q21 failed: Script execution failed with status $rc."
+      return 1
+    fi
   fi
 
-  # 3) Output file must exist
+  # 4) The output file must exist after executing the script
   if ! sudo -n test -f "$output" 2>/dev/null; then
     echo "❌ Q21 failed: Output file $output was not created."
     return 1
   fi
 
-  # 4) Validate every path in the output
-  while IFS= read -r p || [[ -n "$p" ]]; do
-    [[ -z "$p" ]] && continue
+  # 5) Create temporary files for comparison
+  expected="$(mktemp)" || {
+    echo "❌ Q21 failed: Could not create temporary file."
+    return 1
+  }
 
-    if [[ "$p" != /usr/* ]]; then
-      echo "❌ Q21 failed: Path not under /usr -> $p"
-      bad=1
-      continue
-    fi
+  actual="$(mktemp)" || {
+    rm -f "$expected"
+    echo "❌ Q21 failed: Could not create temporary file."
+    return 1
+  }
 
-    if ! sudo -n test -f "$p" 2>/dev/null; then
-      echo "❌ Q21 failed: Not a regular file -> $p"
-      bad=1
-      continue
-    fi
+  # 6) Generate the expected result
+  sudo -n find /usr \
+    -type f \
+    -size +30k \
+    -size -50k \
+    -print 2>/dev/null |
+    LC_ALL=C sort > "$expected"
 
-    bytes="$(sudo -n stat -c '%s' -- "$p" 2>/dev/null || echo -1)"
+  # 7) Read and normalize the student's result
+  if ! sudo -n cat "$output" 2>/dev/null |
+    sed '/^[[:space:]]*$/d' |
+    LC_ALL=C sort > "$actual"; then
 
-    if ! [[ "$bytes" =~ ^[0-9]+$ ]]; then
-      echo "❌ Q21 failed: Could not read file size -> $p"
-      bad=1
-      continue
-    fi
+    rm -f "$expected" "$actual"
+    echo "❌ Q21 failed: Could not read $output."
+    return 1
+  fi
 
-    if (( bytes <= low || bytes >= high )); then
-      echo "❌ Q21 failed: Size out of range ($bytes bytes) -> $p"
-      bad=1
-    fi
-
-  done < <(sudo -n cat "$output" 2>/dev/null)
-
-  # 5) Final result
-  if (( bad == 0 )); then
-    echo "✅ Q21 passed: Output file validated successfully."
+  # 8) Compare expected and actual results
+  if cmp -s "$expected" "$actual"; then
+    rm -f "$expected" "$actual"
+    echo "✅ Q21 passed: Output file contains the correct files."
     return 0
   fi
 
-  echo "❌ Q21 failed: One or more files did not meet the criteria."
+  rm -f "$expected" "$actual"
+
+  echo "❌ Q21 failed: $output does not contain the expected files."
   return 1
 }
+
+
 
 # returns 0 if user's password EXACTLY matches; 1 if not; 2 if cannot verify
 _has_exact_password() {
