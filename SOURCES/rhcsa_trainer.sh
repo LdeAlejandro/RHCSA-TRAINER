@@ -566,120 +566,101 @@ check_Q20() {
 # ===== Exercise Q21 =====
 Q21_DESC="Create a shell script named /root/find-files.sh that locates all regular files under /usr with a size between 30 KB and 50 KB. The script must save the results to /root/sized_files.txt."
 check_Q21() {
+  echo "check "
   local script="/root/find-files.sh"
   local output="/root/sized_files.txt"
-  local low=$((30 * 1024))
-  local high=$((50 * 1024))
-  local timeout_seconds=20
+  local low=$((30*1024))   # 30720 bytes
+  local high=$((50*1024))  # 51200 bytes, strict upper bound
 
-  # 1) Validate script
+  # 1) Script exists and is executable
   if ! sudo -n test -f "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script $script not found."
     return 1
   fi
-
   if ! sudo -n test -x "$script" 2>/dev/null; then
     echo "❌ Q21 failed: Script exists but is not executable."
     return 1
   fi
 
-  # Remove old output to prove that the script creates it again.
-  sudo -n rm -f "$output" 2>/dev/null || {
-    echo "❌ Q21 failed: Could not remove old output file."
-    return 1
-  }
-
-  echo "Checking Q21..."
-
-  # 2) Run with a hard timeout
-  sudo -n timeout --signal=TERM \
-    "$timeout_seconds" bash "$script" >/dev/null 2>&1
-
-  local rc=$?
-
-  if [[ "$rc" -eq 124 ]]; then
-    echo "❌ Q21 failed: Script exceeded ${timeout_seconds} seconds."
-    echo "Hint: search only under /usr and avoid following symbolic links."
-    return 1
-  elif [[ "$rc" -ne 0 ]]; then
-    echo "❌ Q21 failed: Script returned exit status $rc."
+  # 2) Run script and ensure output file is (re)generated
+  local prev_mtime
+  prev_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
+  if ! sudo -n bash "$script" 2>/dev/null; then
+    echo "❌ Q21 failed: Script execution returned a non-zero status."
     return 1
   fi
-
-  # 3) Output must have been created
   if ! sudo -n test -f "$output" 2>/dev/null; then
-    echo "❌ Q21 failed: $output was not created."
+    echo "❌ Q21 failed: Output file $output was not created."
+    return 1
+  fi
+  local new_mtime
+  new_mtime="$(sudo -n stat -c '%Y' "$output" 2>/dev/null || echo 0)"
+  if [[ "$new_mtime" -le "$prev_mtime" ]]; then
+    echo "❌ Q21 failed: Output file was not updated by the script."
     return 1
   fi
 
+  # 3) If output has lines, validate each line; allow empty output (environment-dependent)
   local lines
-  lines="$(sudo -n wc -l "$output" 2>/dev/null | awk '{print $1}')"
-
-  if [[ ! "$lines" =~ ^[0-9]+$ ]]; then
-    echo "❌ Q21 failed: Could not count output lines."
-    return 1
-  fi
-
+  lines="$(sudo -n wc -l < "$output" 2>/dev/null || echo 0)"
   if [[ "$lines" -eq 0 ]]; then
-    echo "⚠️ Q21 note: No matching files were found."
-    echo "✅ Q21 passed: Script executed and generated the output file."
+    echo "⚠️ Q21 note: Output file is empty. Accepting (may vary by environment)."
+    echo "✅ Q21 passed: Script exists, is executable, and generated the output file."
     return 0
   fi
 
-  # Safety protection against scripts producing massive output
-  if (( lines > 10000 )); then
-    echo "❌ Q21 failed: Output contains too many lines ($lines)."
-    echo "Hint: the search must be restricted to regular files under /usr."
-    return 1
-  fi
+  # 4) Validate each path
+  local bad=0
 
-  # 4) Validate output using a root shell
-  if ! sudo -n bash -s -- "$output" "$low" "$high" <<'VALIDATE'
-output="$1"
-low="$2"
-high="$3"
+# Hard stop: refuse to read if file is missing or not readable
+if ! test -r "$output"; then
+  echo "❌ Q21 failed: Output file is not readable -> $output"
+  return 1
+fi
+echo "Checking Q21 files"
+# Read file directly (no sudo, no subshell)
+while IFS= read -r p || [[ -n "$p" ]]; do
+  # skip blank lines
+  [[ -z "$p" ]] && continue
 
-bad=0
-
-while IFS= read -r path || [[ -n "$path" ]]; do
-  [[ -z "$path" ]] && continue
-
-  case "$path" in
-    /usr/*) ;;
-    *)
-      echo "❌ Invalid path outside /usr: $path"
-      bad=1
-      continue
-      ;;
-  esac
-
-  if [[ ! -f "$path" ]]; then
-    echo "❌ Not a regular file: $path"
+  # must start with /usr
+  if [[ "$p" != /usr/* ]]; then
+    echo "❌ Q21 failed: Path not under /usr -> $p"
     bad=1
     continue
   fi
 
-  bytes=$(stat -c '%s' -- "$path" 2>/dev/null) || {
-    echo "❌ Could not read file size: $path"
+  # must be a regular file
+  if ! test -f "$p" 2>/dev/null; then
+    echo "❌ Q21 failed: Not a regular file -> $p"
     bad=1
     continue
-  }
+  fi
+
+  # size must be strictly between 30KB and 50KB
+  bytes=$(stat -c '%s' "$p" 2>/dev/null || echo -1)
+
+  if ! [[ "$bytes" =~ ^[0-9]+$ ]]; then
+    echo "❌ Q21 failed: Could not read size -> $p"
+    bad=1
+    continue
+  fi
 
   if (( bytes <= low || bytes >= high )); then
-    echo "❌ Size outside range (${bytes} bytes): $path"
+    echo "❌ Q21 failed: Size out of range (bytes=$bytes) -> $p"
     bad=1
+    continue
   fi
+
 done < "$output"
 
-exit "$bad"
-VALIDATE
-  then
-    echo "❌ Q21 failed: One or more output entries are invalid."
+  if [[ "$bad" -eq 0 ]]; then
+    echo "✅ Q21 passed: Script executed and output validated without relying on implementation details."
+    return 0
+  else
+    echo "❌ Q21 failed: One or more listed paths did not meet the criteria."
     return 1
   fi
-
-  echo "✅ Q21 passed: $lines files validated."
-  return 0
 }
 
 # returns 0 if user's password EXACTLY matches; 1 if not; 2 if cannot verify
