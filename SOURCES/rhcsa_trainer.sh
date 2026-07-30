@@ -682,6 +682,46 @@ VALIDATE
   return 0
 }
 
+# returns 0 if user's password EXACTLY matches; 1 if not; 2 if cannot verify
+_has_exact_password() {
+  local u="$1" p="$2"
+  local h alg salt calc
+
+  # read hash (try sudo first, then plain in case we're root)
+  h=$(sudo awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
+  [ -z "$h" ] && h=$(awk -F: -v U="$u" '$1==U{print $2}' /etc/shadow 2>/dev/null)
+  [ -z "$h" ] && return 2
+
+  # locked / no password?
+  case "$h" in '!'*|'*'|'') return 1 ;; esac
+
+  alg=$(awk -F'$' '{print $2}' <<<"$h")
+  salt=$(awk -F'$' '{print $3}' <<<"$h")
+
+  # Prefer mkpasswd (supports yescrypt $y and sha-512 $6 on RHEL)
+  if command -v mkpasswd >/dev/null 2>&1; then
+    case "$alg" in
+      y) calc=$(mkpasswd -m yescrypt -S "$salt" "$p") ;;
+      6) calc=$(mkpasswd -m sha-512  -S "$salt" "$p") ;;
+      *) calc="" ;;
+    esac
+    [ -n "$calc" ] && { [ "$calc" = "$h" ] && return 0 || return 1; }
+  fi
+
+  # Fallback: Python crypt (silence deprecation warning)
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -W ignore - <<'PY' "$h" "$p"
+import sys, crypt
+h, p = sys.argv[1], sys.argv[2]
+sys.exit(0 if crypt.crypt(p, h)==h else 1)
+PY
+    return $?
+  fi
+
+  # Last resort: cannot verify (no mkpasswd/python3 or unsupported algo)
+  return 2
+}
+
 # ===== Exercise Q22 =====
 Q22_DESC="Create a local user account named noob with the password Aa7338!!. Configure the account so that the user is required to change the password at the next login."
 check_Q22() {
