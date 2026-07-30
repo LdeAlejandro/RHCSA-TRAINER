@@ -3012,10 +3012,7 @@ check_Q86() {
 
 
 # ===== Exercise Q87 =====
-```bash
 Q87_DESC="For user chisha, create a user service named hello-user.service that runs /usr/bin/logger \"user timer\". Create and enable hello-user.timer so that the service runs Monday through Friday at 02:00. Configure the user's systemd manager to remain active while chisha is logged out."
-```
-
 check_Q87() {
   local user="chisha"
   local home
@@ -4033,12 +4030,69 @@ TASKS=(
 declare -A STATUS
 
 evaluate_all() {
+  local id
+  local rc
+  local pid
+  local elapsed
+  local check_timeout="${RHCSA_CHECK_TIMEOUT:-30}"
+
   for id in "${TASKS[@]}"; do
-    if "check_${id}"; then 
-      STATUS[$id]="${GREEN}PASSED${RESET}"
-    else
-      STATUS[$id]="${RED}PENDING${RESET}"
+    printf 'Checking %-4s ... ' "$id"
+
+    set +e
+
+    # Executa o check em um subshell, herdando todas as funções e variáveis.
+    (
+      "check_${id}"
+    ) </dev/null &
+
+    pid=$!
+    elapsed=0
+
+    # Aguarda até o check terminar ou alcançar o timeout.
+    while kill -0 "$pid" 2>/dev/null; do
+      if (( elapsed >= check_timeout )); then
+        kill -TERM "$pid" 2>/dev/null
+        sleep 1
+
+        # Força encerramento se TERM não funcionar.
+        kill -KILL "$pid" 2>/dev/null
+        wait "$pid" 2>/dev/null
+
+        rc=124
+        break
+      fi
+
+      sleep 1
+      ((elapsed++))
+    done
+
+    # Se não houve timeout, coleta o retorno normal do check.
+    if [[ "${rc:-}" != "124" ]]; then
+      wait "$pid"
+      rc=$?
     fi
+
+    set -e
+
+    case "$rc" in
+      0)
+        STATUS[$id]="${GREEN}PASSED${RESET}"
+        echo "PASSED"
+        ;;
+
+      124|137)
+        STATUS[$id]="${RED}TIMEOUT${RESET}"
+        echo "TIMEOUT after ${check_timeout}s"
+        ;;
+
+      *)
+        STATUS[$id]="${RED}PENDING${RESET}"
+        echo "PENDING"
+        ;;
+    esac
+
+    unset rc
   done
 }
 
