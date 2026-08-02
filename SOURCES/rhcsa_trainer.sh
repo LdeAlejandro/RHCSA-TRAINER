@@ -1950,7 +1950,7 @@ check_Q62() {
 }
 
 # ===== Exercise Q63 =====
-Q63_DESC="The service must execute the script:
+Q63_DESC=" Create a Custom Service,the service must execute the script:
 
 /root/backup.sh echo 'Backup completed'
 
@@ -3612,7 +3612,7 @@ check_Q98() {
 }
 
 # ===== Exercise Q99 =====
-Q99_DESC="Reduce the ext4 logical volume /dev/data_vg/data_lv from 500 MB to 300 MB. Ensure that the filesystem remains usable and its existing data is preserved."
+Q99_DESC=" (Create if needed)Reduce the ext4 logical volume /dev/data_vg/data_lv from 500 MB to 300 MB. Ensure that the filesystem remains usable and its existing data is preserved."
 
 check_Q99() {
   local lvpath="/dev/data_vg/data_lv"
@@ -3637,14 +3637,14 @@ check_Q99() {
   # LV final size should be approximately 300 MB.
   local size_raw size_mb
   size_raw="$(
-    lvs \
-      --noheadings \
-      --units m \
-      --nosuffix \
-      -o lv_size \
-      "$lvpath" 2>/dev/null |
-    tr -d ' '
-  )"
+  LC_ALL=C lvs \
+    --noheadings \
+    --units m \
+    --nosuffix \
+    -o lv_size \
+    "$lvpath" 2>/dev/null |
+  tr -d ' '
+)"
 
   size_mb="${size_raw%.*}"
 
