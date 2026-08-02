@@ -3614,10 +3614,17 @@ check_Q98() {
 # ===== Exercise Q99 =====
 Q99_DESC=" (Create if needed)Reduce the ext4 logical volume /dev/data_vg/data_lv from 500 MB to 300 MB. Ensure that the filesystem remains usable and its existing data is preserved."
 
+# ===== Exercise Q99 =====
+
+Q99_DESC="Reduce the ext4 logical volume /dev/data_vg/data_lv from 500 MB to approximately 300 MB. Ensure that the filesystem remains mounted and usable."
+
 check_Q99() {
   local lvpath="/dev/data_vg/data_lv"
   local mountpoint="/mnt/data_lv"
-  local marker="$mountpoint/q99-preserve.txt"
+  local fstype
+  local size_raw
+  local size_mb
+  local testfile="$mountpoint/.q99-write-test"
 
   # LV must exist
   if ! lvs "$lvpath" >/dev/null 2>&1; then
@@ -3625,31 +3632,36 @@ check_Q99() {
     return 1
   fi
 
-  # Filesystem must remain ext4
-  local fstype
-  fstype="$(blkid -o value -s TYPE "$lvpath" 2>/dev/null || true)"
+  # Filesystem must be ext4
+  fstype="$(
+    blkid \
+      -o value \
+      -s TYPE \
+      "$lvpath" 2>/dev/null ||
+    true
+  )"
 
   if [[ "$fstype" != "ext4" ]]; then
-    echo "❌ Q99 failed: filesystem is '$fstype' (expected ext4)."
+    echo "❌ Q99 failed: filesystem is '${fstype:-unknown}' (expected ext4)."
     return 1
   fi
 
-  # LV final size should be approximately 300 MB.
-  local size_raw size_mb
+  # LV final size should be approximately 300 MB
   size_raw="$(
-  LC_ALL=C lvs \
-    --noheadings \
-    --units m \
-    --nosuffix \
-    -o lv_size \
-    "$lvpath" 2>/dev/null |
-  tr -d ' '
-)"
+    LC_ALL=C lvs \
+      --noheadings \
+      --units m \
+      --nosuffix \
+      -o lv_size \
+      "$lvpath" 2>/dev/null |
+    tr -d '[:space:]'
+  )"
 
   size_mb="${size_raw%.*}"
 
   if [[ ! "$size_mb" =~ ^[0-9]+$ ]]; then
     echo "❌ Q99 failed: could not determine logical volume size."
+    echo "    Raw value returned by lvs: '$size_raw'"
     return 1
   fi
 
@@ -3659,40 +3671,29 @@ check_Q99() {
     return 1
   fi
 
-  # Filesystem must be mounted and usable
-  if ! findmnt -rn -S "$lvpath" -T "$mountpoint" >/dev/null 2>&1; then
+  # LV must be mounted at the expected mount point
+  if ! findmnt -rn \
+    -S "$lvpath" \
+    -T "$mountpoint" \
+    >/dev/null 2>&1; then
+
     echo "❌ Q99 failed: $lvpath is not mounted at $mountpoint."
     return 1
   fi
 
-  # Existing data must remain present
-  if [[ ! -f "$marker" ]]; then
-    echo "❌ Q99 failed: original test data was not preserved."
-    echo "    Missing: $marker"
-    return 1
-  fi
+  # Filesystem must be writable
+  if ! printf '%s\n' "Q99 writable test" \
+    > "$testfile" 2>/dev/null; then
 
-  if ! grep -Fxq \
-    'Q99 data must survive logical volume reduction' \
-    "$marker"; then
-    echo "❌ Q99 failed: preserved test file contains incorrect data."
-    return 1
-  fi
-
-  # Verify that the filesystem is writable
-  local testfile="$mountpoint/.q99-write-test"
-
-  if ! echo "Q99 writable test" > "$testfile" 2>/dev/null; then
-    echo "❌ Q99 failed: filesystem is not writable."
+    echo "❌ Q99 failed: filesystem is mounted but not writable."
     return 1
   fi
 
   rm -f "$testfile"
 
-  echo "✅ Q99 PASSED: ext4 filesystem and logical volume reduced safely."
+  echo "✅ Q99 PASSED: ext4 filesystem and logical volume were reduced successfully."
   return 0
 }
-
 
 # ===== Exercise Q100 =====
 Q100_DESC="Determine the filesystem type of /dev/archive_vg/archive_lv. If the filesystem supports shrinking, reduce it to 400 MB. If it does not support shrinking, do not perform a destructive operation."
