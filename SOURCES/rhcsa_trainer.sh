@@ -2865,7 +2865,6 @@ check_Q84() {
 
 # ===== Exercise Q85 =====
 Q85_DESC="Create hello.service and hello.timer. The service must log \"hello folks\" and the timer must run every day at 03:00."
-
 check_Q85() {
   local service="/etc/systemd/system/hello.service"
   local timer="/etc/systemd/system/hello.timer"
@@ -3212,7 +3211,9 @@ check_Q90() {
 
 
 # ===== Exercise Q91 =====
-Q91_DESC="Install Flatpak and configure the Flathub repository named userrepo for user chisha only."
+Q91_DESC="Install Flatpak and configure the Flathub repository named userrepo for user chisha only.   
+https://dl.flathub.org/repo/flathub.flatpakrepo
+org.gimp.GIMP"
 
 check_Q91() {
   local user="chisha"
@@ -3434,7 +3435,7 @@ check_Q95() {
 
 
 # ===== Exercise Q96 =====
-Q96_DESC="Locate all regular files under /var owned by developer and copy them to /root/developer-files while preserving their filenames."
+Q96_DESC="Locate all regular files under /var owned by developer and copy them to /root/developer-files while preserving their filenames and directory structure."
 
 check_Q96() {
   local destination="/root/developer-files"
