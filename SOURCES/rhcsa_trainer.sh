@@ -1821,12 +1821,12 @@ check_Q49() {
 Q50_DESC="Configure the active network connection to use DNS servers 1.1.1.1 and 8.8.8.8. Verify that hostname resolution functions correctly."
 check_Q50() {
   local con dns
-  con="$(nmcli -t -f NAME,DEVICE con show --active | awk -F: '$2!="lo"{print $1; exit}')"
+  con="$(nmcli -t -f NAME con show --active | grep -v '^lo$' | head -n1)"
   [[ -n "$con" ]] || { echo "❌ Q50 failed: no active non-loopback connection found."; return 1; }
   dns="$(nmcli -g ipv4.dns con show "$con" 2>/dev/null)"
   echo "$dns" | grep -qw '1.1.1.1' || { echo "❌ Q50 failed: DNS 1.1.1.1 missing on active connection $con."; return 1; }
   echo "$dns" | grep -qw '8.8.8.8' || { echo "❌ Q50 failed: DNS 8.8.8.8 missing on active connection $con."; return 1; }
-  getent hosts example.com >/dev/null 2>&1 || { echo "❌ Q50 failed: hostname resolution test failed."; return 1; }
+ timeout 5 getent hosts example.com >/dev/null 2>&1 || { echo "❌ Q50 failed: hostname resolution test failed or timed out."; return 1; }
   echo "✅ Q50 PASSED."; return 0
 }
  
