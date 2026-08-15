@@ -3373,13 +3373,13 @@ check_Q94() {
 
 
 # ===== Exercise Q95 =====
-Q95_DESC="Modify developer to UID 4500, shell /bin/bash, and home /home/developer-new, moving the existing home contents."
+Q95_DESC="Modify user operator to UID 4500, shell /bin/bash, and home /home/operator-new, moving the existing home contents."
 
 check_Q95() {
-  local user="developer"
+  local user="operator"
   local expected_uid="4500"
   local expected_shell="/bin/bash"
-  local expected_home="/home/developer-new"
+  local expected_home="/home/operator-new"
   local marker="$expected_home/q95-original-home.txt"
 
   if ! getent passwd "$user" >/dev/null; then
@@ -3394,17 +3394,17 @@ check_Q95() {
   shell="$(cut -d: -f7 <<< "$passwd_entry")"
 
   if [[ "$uid" != "$expected_uid" ]]; then
-    echo "❌ Q95 failed: developer UID is $uid; expected $expected_uid."
+    echo "❌ Q95 failed: $user UID is $uid; expected $expected_uid."
     return 1
   fi
 
   if [[ "$shell" != "$expected_shell" ]]; then
-    echo "❌ Q95 failed: developer shell is $shell; expected $expected_shell."
+    echo "❌ Q95 failed: $user shell is $shell; expected $expected_shell."
     return 1
   fi
 
   if [[ "$home" != "$expected_home" ]]; then
-    echo "❌ Q95 failed: developer home is $home; expected $expected_home."
+    echo "❌ Q95 failed: $user home is $home; expected $expected_home."
     return 1
   fi
 
@@ -3414,7 +3414,7 @@ check_Q95() {
   fi
 
   if [[ "$(stat -c '%U' "$expected_home" 2>/dev/null)" != "$user" ]]; then
-    echo "❌ Q95 failed: new home directory is not owned by developer."
+    echo "❌ Q95 failed: new home directory is not owned by $user."
     return 1
   fi
 
@@ -3429,7 +3429,7 @@ check_Q95() {
     return 1
   fi
 
-  echo "✅ Q95 PASSED: developer account modified correctly."
+  echo "✅ Q95 PASSED: $user account modified correctly."
   return 0
 }
 
@@ -4663,51 +4663,35 @@ sudo systemctl disable --now firewalld 2>/dev/null || true
   fi
 
   # ---------------------------------------------------------
-  # Q93 and Q95: developer account and supplementary groups
-  # ---------------------------------------------------------
+# Q93: developer account and supplementary groups
+# ---------------------------------------------------------
 
-  # Remove the account from a previous attempt.
-  if getent passwd developer >/dev/null; then
-    sudo pkill -u developer 2>/dev/null || true
-    sudo userdel -r developer 2>/dev/null || true
-  fi
+# Remove the account from a previous attempt.
+if getent passwd developer >/dev/null; then
+  sudo pkill -u developer 2>/dev/null || true
+  sudo userdel -r developer 2>/dev/null || true
+fi
 
-  sudo rm -rf \
-    /home/developer \
-    /home/developer-new \
-    2>/dev/null || true
+sudo rm -rf \
+  /home/developer \
+  /home/developer-new \
+  2>/dev/null || true
 
-  # Remove exercise groups. They must be created by the student in Q93.
-  for group in devops qa; do
-    if getent group "$group" >/dev/null; then
-      # Avoid failure if an older lab user still has this as primary group.
-      members="$(
-        getent group "$group" |
-        cut -d: -f4
-      )"
+# Remove exercise groups. They must be created by the student in Q93.
+for group in devops qa; do
+  if getent group "$group" >/dev/null; then
+    members="$(
+      getent group "$group" |
+      cut -d: -f4
+    )"
 
-      if [[ -z "$members" ]]; then
-        sudo groupdel "$group" 2>/dev/null || true
-      else
-        echo "WARN: group $group still has members and was not removed."
-      fi
+    if [[ -z "$members" ]]; then
+      sudo groupdel "$group" 2>/dev/null || true
+    else
+      echo "WARN: group $group still has members and was not removed."
     fi
-  done
-
-  # Q95 needs content in developer's original home.
-  # Because developer is created during Q93, prepare a staging file.
-  sudo mkdir -p /var/lib/rhcsa-trainer/q95-template
-
-  echo 'Q95 original home content' |
-    sudo tee \
-      /var/lib/rhcsa-trainer/q95-template/q95-original-home.txt \
-      >/dev/null
-
-  sudo chown root:root \
-    /var/lib/rhcsa-trainer/q95-template/q95-original-home.txt
-
-  sudo chmod 0644 \
-    /var/lib/rhcsa-trainer/q95-template/q95-original-home.txt
+  fi
+done
 
   # ---------------------------------------------------------
   # Q94: group rename lab
@@ -4742,6 +4726,32 @@ sudo systemctl disable --now firewalld 2>/dev/null || true
 
   sudo chmod 0644 \
     /var/lib/rhcsa-trainer/q94-developers-gid
+
+      # ---------------------------------------------------------
+# Q95: operator usermod exercise
+# ---------------------------------------------------------
+
+if getent passwd operator >/dev/null; then
+  sudo pkill -u operator 2>/dev/null || true
+  sudo userdel -r operator 2>/dev/null || true
+fi
+
+sudo rm -rf \
+  /home/operator \
+  /home/operator-new \
+  2>/dev/null || true
+
+sudo useradd -m operator
+
+echo 'Q95 original home content' |
+  sudo tee /home/operator/q95-original-home.txt >/dev/null
+
+sudo chown operator:operator \
+  /home/operator/q95-original-home.txt
+
+sudo chmod 0644 \
+  /home/operator/q95-original-home.txt
+
 
   # ---------------------------------------------------------
   # Q96: files that will belong to developer after UID change
