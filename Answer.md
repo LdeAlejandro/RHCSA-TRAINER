@@ -2436,26 +2436,21 @@ Preserve the existing GID and memberships.
 
 ## Question 95: Modify a User Account
 
-Modify user `developer` so that:
+Modify user `operator` so that:
 
 * The UID is `4500`.
 * The login shell is `/bin/bash`.
-* The home directory is `/home/developer-new`.
+* The home directory is `/home/operator-new`.
 * Existing home directory contents are moved to the new location.
 
 ```bash
   #Modify UID, shell and home directory
-  usermod \
-    -u 4500 \
-    -s /bin/bash \
-    -d /home/developer-new \
-    -m \
-    developer
+  usermod -u 4500 -s /bin/bash -m -d /home/operator-new operator
 
   #Verify
-  id developer
-  getent passwd developer
-  ls -ld /home/developer-new
+  id operator
+  getent passwd operator
+  ls -ld /home/operator-new
 ```
 
 ---

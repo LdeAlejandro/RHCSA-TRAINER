@@ -2006,7 +2006,7 @@ check_Q64() {
 }
 
 # ===== Exercise Q65 =====
-Q65_DESC="An existing XFS filesystem is mounted on /mnt/xfs_lv. Increase the size of the filesystem by 300 MB without unmounting it and ensure the additional capacity is available immediately."
+Q65_DESC="(Initial lv size is 400 MB.)An existing XFS filesystem is mounted on /mnt/xfs_lv. Increase the size of the filesystem by 300 MB without unmounting it and ensure the additional capacity is available immediately."
 
 check_Q65() {
 
