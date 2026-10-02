@@ -2223,10 +2223,10 @@ check_Q73() {
 
 # ===== Exercise Q74 =====
 Q74_DESC="Identify all regular files that execute with the file owner's privileges and save their absolute paths to /root/suid-files.txt."
-
 check_Q74() {
   local output="/root/suid-files.txt"
-  local sentinel="/var/tmp/rhcsa-special-perms/suid-test"
+  local expected="/tmp/q74_expected.$$"
+  local actual="/tmp/q74_actual.$$"
 
   if [[ ! -f "$output" ]]; then
     echo "❌ Q74 failed: $output does not exist."
@@ -2238,42 +2238,25 @@ check_Q74() {
     return 1
   fi
 
-  if ! grep -Fxq "$sentinel" "$output"; then
-    echo "❌ Q74 failed: known SUID test file is missing from the results."
-    echo "    Missing: $sentinel"
+  # Build the expected list directly from the current system state.
+  find / -type f -perm -4000 2>/dev/null | sort -u > "$expected"
+
+  # Normalize the student's output before comparison.
+  sort -u "$output" > "$actual"
+
+  if ! diff -u "$expected" "$actual" >/dev/null 2>&1; then
+    echo "❌ Q74 failed: $output does not contain the correct SUID file list."
+    echo
+    echo "Differences:"
+    diff -u "$expected" "$actual"
+
+    rm -f "$expected" "$actual"
     return 1
   fi
 
-  local path
-  local bad=0
+  rm -f "$expected" "$actual"
 
-  while IFS= read -r path || [[ -n "$path" ]]; do
-    [[ -z "$path" ]] && continue
-
-    if [[ "$path" != /* ]]; then
-      echo "❌ Q74 failed: path is not absolute: $path"
-      bad=1
-      continue
-    fi
-
-    if [[ ! -f "$path" ]]; then
-      echo "❌ Q74 failed: listed path is not a regular file: $path"
-      bad=1
-      continue
-    fi
-
-    if ! find "$path" -maxdepth 0 -type f -perm -4000 -print -quit \
-      2>/dev/null | grep -q .; then
-      echo "❌ Q74 failed: listed file does not have SUID enabled: $path"
-      bad=1
-    fi
-  done < "$output"
-
-  if [[ "$bad" -ne 0 ]]; then
-    return 1
-  fi
-
-  echo "✅ Q74 PASSED: SUID file list is valid."
+  echo "✅ Q74 PASSED: all regular files with SUID enabled were correctly identified."
   return 0
 }
 
@@ -4185,7 +4168,6 @@ sudo vgremove -fy cloud_vg 2>/dev/null || true
 sudo vgremove -fy xfs_vg 2>/dev/null || true
 
 sudo pvremove -ffy /dev/sdc1 2>/dev/null || true
-sudo pvremove -ffy /dev/sdc2 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc3 2>/dev/null || true
 sudo pvremove -ffy /dev/sdc  2>/dev/null || true
 
@@ -4201,8 +4183,6 @@ sudo parted -s /dev/sdc mklabel gpt 2>/dev/null || true
 # /dev/sdc1 -> Q34 devops_vg/devops_lv
 sudo parted -s /dev/sdc mkpart primary 1MiB 800MiB 2>/dev/null || true
 
-# /dev/sdc2 -> Q65 xfs_vg/xfs_lv
-sudo parted -s /dev/sdc mkpart primary 800MiB 1600MiB 2>/dev/null || true
 
 sudo partprobe /dev/sdc 2>/dev/null || true
 sudo udevadm settle 2>/dev/null || true
@@ -4211,25 +4191,65 @@ sudo rm -rf /mnt/devops_lv 2>/dev/null || true
 sudo rm -rf /mnt/cloud_lv  2>/dev/null || true
 sudo rm -rf /mnt/xfs_lv    2>/dev/null || true
 
-# Recreate initial Q65 state on /dev/sdc2
-if [ -b /dev/sdc2 ]; then
-  sudo pvcreate -ff -y /dev/sdc2 >/dev/null
-  sudo vgcreate xfs_vg /dev/sdc2 >/dev/null
-  sudo lvcreate -L 300M -n xfs_lv xfs_vg >/dev/null
+# =========================================================
+# Clean / recreate Q65 XFS lab
+# =========================================================
 
-  sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv >/dev/null
+echo ">> Resetting Q65 XFS lab..."
 
-  sudo mkdir -p /mnt/xfs_lv
+# Remove fstab entry first
+sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
 
-  sudo sed -i '\|/mnt/xfs_lv|d' /etc/fstab 2>/dev/null || true
-  echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | sudo tee -a /etc/fstab >/dev/null
+# Unmount before touching the LV
+sudo umount /mnt/xfs_lv 2>/dev/null || true
 
-  sudo mount /mnt/xfs_lv || {
-    echo "WARN: failed to mount /mnt/xfs_lv"
-    sudo mount -av
-  }
+# Remove existing LV/VG regardless of which disk backed it
+if sudo lvs /dev/xfs_vg/xfs_lv >/dev/null 2>&1; then
+    sudo lvremove -fy /dev/xfs_vg/xfs_lv
+fi
+
+if sudo vgs xfs_vg >/dev/null 2>&1; then
+    sudo vgremove -fy xfs_vg
+fi
+
+# Clean old PV signatures
+sudo pvremove -ffy /dev/sdc2 2>/dev/null || true
+sudo pvremove -ffy /dev/sde1 2>/dev/null || true
+
+# Clean /dev/sde
+sudo wipefs -af /dev/sde1 2>/dev/null || true
+sudo parted -s /dev/sde rm 1 2>/dev/null || true
+sudo partprobe /dev/sde 2>/dev/null || true
+sudo udevadm settle 2>/dev/null || true
+
+sudo rm -rf /mnt/xfs_lv
+
+# Recreate Q65 using isolated /dev/sde
+if [ -b /dev/sde ]; then
+
+    sudo parted -s /dev/sde mklabel gpt
+    sudo parted -s /dev/sde mkpart primary 1MiB 600MiB
+
+    sudo partprobe /dev/sde
+    sudo udevadm settle
+
+    sudo pvcreate -ff -y /dev/sde1
+    sudo vgcreate xfs_vg /dev/sde1
+    sudo lvcreate -L 400M -n xfs_lv xfs_vg
+
+    sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
+
+    sudo mkdir -p /mnt/xfs_lv
+
+    echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' \
+        | sudo tee -a /etc/fstab >/dev/null
+
+    sudo mount /mnt/xfs_lv
+
+    echo ">> Q65 XFS lab recreated successfully."
+
 else
-  echo "WARN: /dev/sdc2 not found; Q65 XFS lab was not recreated."
+    echo "WARN: /dev/sde not found; Q65 XFS lab was not recreated."
 fi
 
   #Clean 38
@@ -4331,41 +4351,6 @@ fi
   sudo systemctl disable --now backup.service 2>/dev/null || true
   sudo rm -f /etc/systemd/system/backup.service /etc/systemd/system/broken.service /root/backup.sh 2>/dev/null || true
   sudo systemctl daemon-reload 2>/dev/null || true
-
-# Clean Q65 XFS lab
-# Handled by the shared /dev/sdc reset block.
-
-sudo lvremove -fy /dev/xfs_vg/xfs_lv 2>/dev/null || true
-sudo vgremove -fy xfs_vg 2>/dev/null || true
-sudo pvremove -ffy /dev/sde1 2>/dev/null || true
-
-sudo wipefs -af /dev/sde1 2>/dev/null || true
-sudo parted -s /dev/sde rm 1 2>/dev/null || true
-sudo partprobe /dev/sde 2>/dev/null || true
-sudo udevadm settle 2>/dev/null || true
-
-sudo rm -rf /mnt/xfs_lv 2>/dev/null || true
-
-# Recreate initial Q65 state using isolated disk /dev/sde
-if [ -b /dev/sde ]; then
-  sudo parted -s /dev/sde mklabel gpt
-  sudo parted -s /dev/sde mkpart primary 1MiB 600MiB
-  sudo partprobe /dev/sde
-  sudo udevadm settle
-
-  sudo pvcreate -ff -y /dev/sde1
-  sudo vgcreate xfs_vg /dev/sde1
-  sudo lvcreate -L 400M -n xfs_lv xfs_vg
-
-  sudo mkfs.xfs -f /dev/xfs_vg/xfs_lv
-
-  sudo mkdir -p /mnt/xfs_lv
-  echo '/dev/xfs_vg/xfs_lv /mnt/xfs_lv xfs defaults 0 0' | sudo tee -a /etc/fstab >/dev/null
-
-  sudo mount -a
-else
-  echo "WARN: /dev/sde not found; Q65 XFS lab was not recreated."
-fi
 
   # Clean Q66-Q68 firewall
 sudo systemctl enable --now firewalld 2>/dev/null || true
